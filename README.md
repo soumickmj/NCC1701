@@ -17,4 +17,4 @@ Registry number of the first USS Enterprise is NCC-1701. Future publications wil
 
 The USS Enterprise (NCC-1701) "will be" a Constitution-class starship that will serve under five captains from 2245 to 2285, including Robert April, Christopher Pike, Will Decker, and in later years Spock. Its most famous commander will be Captain James T. Kirk, whose five-year mission aboard the Enterprise will become legendary.
 
-There will be five subsequent starships bearing the name USS Enterprise with registry numbers from NCC-1701-A to NCC-1701-E, and will serve under four captains: James T. Kirk, John Harriman, Rachel Garrett, and Jean-Luc Picard (will breifly server under William T. Riker and Edward Jellico).
+There will be five subsequent starships bearing the name USS Enterprise with registry numbers from NCC-1701-A to NCC-1701-E, and will serve under four captains: James T. Kirk, John Harriman, Rachel Garrett, and Jean-Luc Picard (will breifly serve under William T. Riker and Edward Jellico).
