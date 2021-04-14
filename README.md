@@ -1,2 +1,3 @@
-# NCC1701
-Initial code of the project, unclean!!!
+# NCC1701	
+Initial Release
+

@@ -23,14 +23,11 @@ class TorchDSInitializer(object):
     """This class Initializes any given Custom Torch DS. This has been called from Model and also other palces (like, TorchDS2MAT) for initializing.
     The Initialize function of this class returns dataset and dataloader"""
 
-    def InitializeDS(self, domain, IsRadial, sliceHandleType, batchSize, pin_memory, dsClass, sliceno, startingSelectSlice, endingSelectSlice, folder_path_fully, folder_path_under, extension_under, num_workers, getROIMode, undersampling_mask=None):
+    def InitializeDS(self, domain, sliceHandleType, batchSize, pin_memory, dsClass, sliceno, startingSelectSlice, endingSelectSlice, folder_path_fully, folder_path_under, extension_under, num_workers, getROIMode, undersampling_mask=None, filename_filter=None, splitXSLX=None, split2use=None):
         if(domain == 'image'):
             listOfTransforms = [transformsMRI.MinMaxNormalization(), transformsMRI.ToTensor3D()]
         else:
             listOfTransforms = [transformsMRI.ToTensor3D(),]
-
-        if(IsRadial):
-            listOfTransforms.insert(0, transformsMRI.RemoveVerySmallEValues(delta=0.1))
 
         if(sliceHandleType == '2DSingleSlice'):
             listOfTransforms.append(transformsMRI.ConvertToSuitableType(type=sliceHandleType,sliceno=sliceno)) # We create a list of transformations (3dto2d, tensor conversion) to apply to the input images.
@@ -42,7 +39,7 @@ class TorchDSInitializer(object):
         transform = transforms.Compose(listOfTransforms)
         
         # Loading the dataset
-        dataset = dsClass(folder_path_fully,folder_path_under,extension_under,domain=domain,transform=transform,getROIMode=getROIMode,undersampling_mask=undersampling_mask)
+        dataset = dsClass(folder_path_fully,folder_path_under,extension_under,domain=domain,transform=transform,getROIMode=getROIMode,undersampling_mask=undersampling_mask,filename_filter=filename_filter,ds_split_xlsx = splitXSLX, ds_split=split2use)
         dataloader = DataLoader(dataset, batch_size = batchSize, shuffle = True, num_workers = num_workers, pin_memory = pin_memory)
 
         return dataloader, dataset
