@@ -7,7 +7,7 @@ Abstract available on RG: https://www.researchgate.net/publication/335473585_A_d
 Extension of this work will be getting updated continously on this repo.
 
 One of the extension has been accepted for presentation at ISMRM 2021.
-Abstract available on RG: https://www.researchgate.net/publication/349589092_Going_beyond_the_image_space_undersampled_MRI_reconstruction_directly_in_the_k-space_using_a_complex_valued_residual_neural_network
+Abstract available on RG: https://www.researchgate.net/publication/349589092_Going_beyond_the_image_space_undersampled_MRI_reconstruction_directly_in_the_k-space_using_a_complex_valued_residual_neural_network and the talk is available on YouTube: https://www.youtube.com/watch?v=WWMyUtQOrqg
 
 The name of this project "NCC1701" was selected as a tribute to starships "USS Enterprise" from the Star Trek franchise.
 Registry number of the first USS Enterprise is NCC-1701. Future publications will be given names with the subsequent registry numbers of ships bearing the name USS Enterprise.
