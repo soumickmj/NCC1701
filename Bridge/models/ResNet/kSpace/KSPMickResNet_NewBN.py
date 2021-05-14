@@ -1,11 +1,18 @@
 #!/usr/bin/env python
 
+"""
+KSpace version (Complex-valued convolution) of MickResNet
+"""
+
+import torch.fft
+import torchcomplex.nn as cnn
 import torch.nn as nn
 from utils.TorchModule.padding import ReflectionPad3d
 from utils.utilities import Interpolator
+from utils.TorchModule.cbatchnorm import ComplexBatchNormal
 
 __author__ = "Soumick Chatterjee"
-__copyright__ = "Copyright 2019, Soumick Chatterjee & OvGU:ESF:MEMoRIAL"
+__copyright__ = "Copyright 2020, Soumick Chatterjee & OvGU:ESF:MEMoRIAL"
 __credits__ = ["Soumick Chatterjee"]
 
 __license__ = "GPL"
@@ -17,14 +24,14 @@ class ResidualBlock(nn.Module):
     def __init__(self, in_features, drop_prob=0.2):
         super(ResidualBlock, self).__init__()
 
-        conv_block = [  layer_pad(1),
-                        layer_conv(in_features, in_features, 3),
-                        layer_norm(in_features),
+        conv_block = [  #layer_pad(1),
+                        layer_conv(in_features, in_features, 3, padding=1),
+                        ComplexBatchNormal(128,192,99),
                         act_relu(),
                         layer_drop(p=drop_prob, inplace=True),
-                        layer_pad(1),
-                        layer_conv(in_features, in_features, 3) ,
-                        layer_norm(in_features) ]
+                        #layer_pad(1),
+                        layer_conv(in_features, in_features, 3, padding=1) ,
+                        ComplexBatchNormal(128,192,99) ]
 
         self.conv_block = nn.Sequential(*conv_block)
 
@@ -36,7 +43,7 @@ class DownsamplingBlock(nn.Module):
         super(DownsamplingBlock, self).__init__()
 
         conv_block = [  layer_conv(in_features, out_features, 3, stride=2, padding=1),
-                        layer_norm(out_features),
+                        #ComplexBatchNormal(),
                         act_relu()  ]
         self.conv_block = nn.Sequential(*conv_block)
 
@@ -56,9 +63,9 @@ class UpsamplingBlock(nn.Module):
         if mode == "convtrans":
             conv_block = [  layer_convtrans(in_features, out_features, 3, stride=2, padding=1, output_padding=1),   ]
         else:
-            conv_block = [  layer_pad(1),
-                            layer_conv(in_features, out_features, 3),   ]
-        conv_block += [ layer_norm(out_features),
+            conv_block = [  #layer_pad(1),
+                            layer_conv(in_features, out_features, 3, padding=1),   ]
+        conv_block += [ #ComplexBatchNormal(),
                         act_relu()  ]
         self.conv_block = nn.Sequential(*conv_block)
 
@@ -76,35 +83,42 @@ class UpsamplingBlock(nn.Module):
             return self.conv_block(self.interpolator(x, out_shape))
 
 class ResNet(nn.Module):
-    def __init__(self, n_channels=1, res_blocks=14, starting_nfeatures=64, updown_blocks=2, is_relu_leaky=False, do_batchnorm=False, res_drop_prob=0.2,
-                        out_act="sigmoid", forwardV=0, upinterp_algo='convtrans', post_interp_convtrans=False, is3D=False): #should use 14 as that gives number of trainable parameters close to number of possible pixel values in a image 256x256 
+    def __init__(self, n_channels=1, res_blocks=7, starting_nfeatures=32, updown_blocks=2, is_relu_leaky=True, do_batchnorm=False, res_drop_prob=0.0,
+                        out_act="sigmoid", forwardV=0, upinterp_algo='convtrans', post_interp_convtrans=False, is3D=False,
+                        img_out_mode=0, under_replace=False, under_mask=None): 
+                        #TODO: starting_nfeatures changed from 64 to 32, res_drop_prob from 0.2 to 0.0, is_relu_leaky from True to False, res_blocks from 14 to 7
         super(ResNet, self).__init__()
+
+        self.img_out_mode = img_out_mode
+        self.under_replace = under_replace
+        self.under_mask = under_mask
+        self.missing_mask = None if under_mask is None else 1 - under_mask
 
         layers = {}
         if is3D:
-            layers["layer_conv"] = nn.Conv3d
-            layers["layer_convtrans"] = nn.ConvTranspose3d
+            layers["layer_conv"] = cnn.Conv3d
+            layers["layer_convtrans"] = cnn.ConvTranspose3d
             if do_batchnorm:
-                layers["layer_norm"] = nn.BatchNorm3d
+                layers["layer_norm"] = cnn.BatchNorm3d
             else:
-                layers["layer_norm"] = nn.InstanceNorm3d
-            layers["layer_drop"] = nn.Dropout3d
+                layers["layer_norm"] = nn.Identity #cnn.BatchNorm3d #cnn.InstanceNorm3d #TODO: complex InstanceNorm
+            layers["layer_drop"] = cnn.Dropout3d
             layers["layer_pad"] = ReflectionPad3d
             layers["interp_mode"] = 'trilinear'
         else:
-            layers["layer_conv"] = nn.Conv2d
-            layers["layer_convtrans"] = nn.ConvTranspose2d
+            layers["layer_conv"] = cnn.Conv2d
+            layers["layer_convtrans"] = cnn.ConvTranspose2d
             if do_batchnorm:
-                layers["layer_norm"] = nn.BatchNorm2d
+                layers["layer_norm"] = cnn.BatchNorm2d
             else:
-                layers["layer_norm"] = nn.InstanceNorm2d
-            layers["layer_drop"] = nn.Dropout2d
+                layers["layer_norm"] = nn.Identity #cnn.BatchNorm2d #cnn.InstanceNorm2d #TODO: complex InstanceNorm
+            layers["layer_drop"] = cnn.Dropout2d
             layers["layer_pad"] = nn.ReflectionPad2d
             layers["interp_mode"] = 'bilinear'            
         if is_relu_leaky:
-            layers["act_relu"] = nn.PReLU
+            layers["act_relu"] = cnn.AdaptiveCmodReLU #cnn.CmodReLU #cnn.AdaptiveCmodReLU
         else:
-            layers["act_relu"] = nn.ReLU
+            layers["act_relu"] = cnn.zReLU
         globals().update(layers)
 
         self.forwardV = forwardV
@@ -115,9 +129,9 @@ class ResNet(nn.Module):
         in_channels = n_channels
         out_channels = n_channels
         # Initial convolution block
-        intialConv = [  layer_pad(3),
-                        layer_conv(in_channels, starting_nfeatures, 7),
-                        layer_norm(starting_nfeatures),
+        intialConv = [  #layer_pad(3),
+                        layer_conv(in_channels, starting_nfeatures, 7, padding=3),
+                        #ComplexBatchNormal(),
                         act_relu() ]
 
         # Downsampling [need to save the shape for upsample]
@@ -143,15 +157,15 @@ class ResNet(nn.Module):
             out_features = in_features//2
 
         # Output layer
-        finalconv = [   layer_pad(3),
-                        layer_conv(starting_nfeatures, out_channels, 7),    ]
+        finalconv = [   #layer_pad(3),
+                        layer_conv(starting_nfeatures, out_channels, 7, padding=3),    ]
 
         if out_act == "sigmoid":
-            finalconv += [   nn.Sigmoid(), ]
+            finalconv += [   cnn.Sigmoid(), ]
         elif out_act == "relu":
             finalconv += [   act_relu(), ]
         elif out_act == "tanh":
-            finalconv += [   nn.Tanh(), ]
+            finalconv += [   cnn.Tanh(), ]
 
         self.intialConv = nn.Sequential(*intialConv)
         self.downsam = nn.ModuleList(downsam)
@@ -160,17 +174,33 @@ class ResNet(nn.Module):
         self.finalconv = nn.Sequential(*finalconv)
 
         if self.forwardV == 0:
-            self.forward = self.forwardV0
+            self.main_forward = self.forwardV0
         elif self.forwardV == 1:
-            self.forward = self.forwardV1
+            self.main_forward = self.forwardV1
         elif self.forwardV == 2:
-            self.forward = self.forwardV2
+            self.main_forward = self.forwardV2
         elif self.forwardV == 3:
-            self.forward = self.forwardV3
+            self.main_forward = self.forwardV3
         elif self.forwardV == 4:
-            self.forward = self.forwardV4
+            self.main_forward = self.forwardV4
         elif self.forwardV == 5:
-            self.forward = self.forwardV5
+            self.main_forward = self.forwardV5
+
+    def forward(self, x):
+        out = self.main_forward(x)
+
+        if self.under_replace:
+            out = self.missing_mask * out
+            out = x + out
+
+        if self.img_out_mode:
+            out = torch.fft.ifftn(out, dim=[-2,-1])
+            if self.img_out_mode == 1:
+                return out
+            elif self.img_out_mode == 2:
+                return torch.abs(out)
+        else:
+            return out
             
     def forwardV0(self, x):
         #v0: Original Version

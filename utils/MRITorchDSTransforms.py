@@ -1,6 +1,6 @@
-MinMaxNormalization
-ToTensor3D
-ConvertToSuitableType
+# MinMaxNormalization
+# ToTensor3D
+# ConvertToSuitableType
 
 #!/usr/bin/env python
 
@@ -15,13 +15,13 @@ Includes transforms taken from fastMRI, where the copyright belongs to Facebook,
 import numpy as np
 import torch
 import torchvision.transforms.functional as TF
-import kornia.geometry.transform as kortrans
+# import kornia.geometry.transform as kortrans
 # from scipy.misc import imrotate
 from skimage.transform import rotate
 import random
-from utils.HandleNifti import Nifti3Dto2D, Nifti2Dto3D
-from Math.FrequencyTransforms import fft2c, ifft2c
-from utils.fastMRI.TorchDSTransforms import fft2 as t_fft2, ifft2 as t_ifft2, complex_abs as t_complex_abs, roll as t_roll
+# from utils.HandleNifti import Nifti3Dto2D, Nifti2Dto3D
+# from Math.FrequencyTransforms import fft2c, ifft2c
+# from utils.fastMRI.TorchDSTransforms import fft2 as t_fft2, ifft2 as t_ifft2, complex_abs as t_complex_abs, roll as t_roll
 
 __author__ = "Soumick Chatterjee"
 __copyright__ = "Copyright 2018, Soumick Chatterjee & OvGU:ESF:MEMoRIAL"

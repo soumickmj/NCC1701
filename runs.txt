@@ -1,0 +1,26 @@
+20201208
+
+python main.py --gpu 1 --trainID KSPMickResNet14Sincup_f32_leaky_nodrop_finalrelu_bs1 --batch_size 1 --num_workers 0
+python main.py --gpu 3 --trainID KSPMickResNet14Sincup_f32_leaky_nodrop_finalrelu_bs3 --batch_size 3 --num_workers 3
+
+python main.py --gpu 1 --trainID MickResNet14_paperL1_bs1 --batch_size 1 --num_workers 0 --domain image --net Bridge.models.ResNet.MickResNet --loss_type 0
+python main.py --gpu 2 --trainID MickResNet14_paperL1_bs10 --batch_size 10 --num_workers 10 --domain image --net Bridge.models.ResNet.MickResNet --loss_type 0
+
+
+20201209
+python main.py --gpu 1 --trainID KSPMickResNet14_f32_leaky_nodrop_finalrelu_bs1 --batch_size 1 --num_workers 0
+python main.py --gpu 2 --trainID KSPMickResNet14_f32_leaky_nodrop_finalrelu_bs2 --batch_size 2 --num_workers 0 <outofmem>
+
+python main.py --gpu 3 --trainID MickResNet14_paper_MulChn --lr_decay_type 1 --batch_size 1 --num_workers 0 --domain image --net Bridge.models.ResNet.MickResNet --loss_type 0 --loss_func SSIM
+python main.py --gpu 3 --trainID MickResNet14_paper_MulChn_bs8 --lr_decay_type 1 --batch_size 8 --num_workers 8 --domain image --net Bridge.models.ResNet.MickResNet --loss_type 0 --loss_func SSIM
+
+
+20201210
+python main.py --gpu 3 --trainID KSPMickResNet14_L1MagPh_f32_leaky_nodrop_finalrelu_bs1 --batch_size 1 --num_workers 0
+python main.py --gpu 1 --trainID CUNet_L1MagPh_nodrop_bs1 --net Bridge.models.ResNet.kSpace.CUNet --batch_size 1 --num_workers 0
+python main.py --gpu 3 --trainID CInvUNet_L1MagPh_nodrop_bs1 --net Bridge.models.ResNet.kSpace.CInvUNet --batch_size 1 --num_workers 0
+
+20201211
+python main.py --gpu 1 --trainID KSPMickResNet14_L1MagPh_ELMagPh_f32_leaky_nodrop_finalrelu_bs1 --loss_type 2 --batch_size 1 --num_workers 0
+python main.py --gpu 3 --trainID KSPMickResNet14_L1Mag_ELMagPh_f32_leaky_nodrop_finalrelu_bs1 --batch_size 1 --num_workers 0
+python main.py --gpu 2 --trainID KSPMickResNet14_L1Mag_ELMag_f32_leaky_nodrop_finalrelu_bs1 --net Bridge.models.ResNet.KSPMickResNet3 --batch_size 1 --num_workers 0

@@ -3,12 +3,14 @@
 """
 KSpace version (Complex-valued convolution) of MickResNet
 """
-
+#TODO: move inside kSpace subpackage
+import torch
 import torch.fft
 import torchcomplex.nn as cnn
 import torch.nn as nn
 from utils.TorchModule.padding import ReflectionPad3d
 from utils.utilities import Interpolator
+from utils.math.freq_trans import ifftNc_pyt
 
 __author__ = "Soumick Chatterjee"
 __copyright__ = "Copyright 2020, Soumick Chatterjee & OvGU:ESF:MEMoRIAL"
@@ -82,15 +84,16 @@ class UpsamplingBlock(nn.Module):
             return self.conv_block(self.interpolator(x, out_shape))
 
 class ResNet(nn.Module):
-    def __init__(self, n_channels=1, res_blocks=14, starting_nfeatures=64, updown_blocks=2, is_relu_leaky=True, do_batchnorm=False, res_drop_prob=0.2,
-                        out_act="sigmoid", forwardV=0, upinterp_algo='convtrans', post_interp_convtrans=False, is3D=False,
-                        img_out_mode=0, under_replace=False, under_mask=None):
+    def __init__(self, n_channels=1, res_blocks=14, starting_nfeatures=32, updown_blocks=0, is_relu_leaky=True, do_batchnorm=False, res_drop_prob=0.0,
+                        out_act="relu", forwardV=0, upinterp_algo='sinc', post_interp_convtrans=False, is3D=False,
+                        img_out_mode=0, under_replace=False, under_mask=None): 
+                        #TODO: starting_nfeatures changed from 64 to 32, res_drop_prob from 0.2 to 0.0, is_relu_leaky from True to False, res_blocks from 14 to 7
         super(ResNet, self).__init__()
 
         self.img_out_mode = img_out_mode
         self.under_replace = under_replace
         self.under_mask = under_mask
-        self.missing_mask = 1 - under_mask
+        self.missing_mask = None if under_mask is None else 1 - under_mask
 
         layers = {}
         if is3D:
@@ -99,24 +102,24 @@ class ResNet(nn.Module):
             if do_batchnorm:
                 layers["layer_norm"] = cnn.BatchNorm3d
             else:
-                layers["layer_norm"] = cnn.InstanceNorm3d
+                layers["layer_norm"] = nn.Identity #cnn.BatchNorm3d #cnn.InstanceNorm3d #TODO: complex InstanceNorm
             layers["layer_drop"] = cnn.Dropout3d
             layers["layer_pad"] = ReflectionPad3d
-            layers["interp_mode"] = 'trilinear'
+            layers["interp_mode"] = 'sinc'
         else:
             layers["layer_conv"] = cnn.Conv2d
             layers["layer_convtrans"] = cnn.ConvTranspose2d
             if do_batchnorm:
                 layers["layer_norm"] = cnn.BatchNorm2d
             else:
-                layers["layer_norm"] = cnn.InstanceNorm2d
+                layers["layer_norm"] = nn.Identity #cnn.BatchNorm2d #cnn.InstanceNorm2d #TODO: complex InstanceNorm
             layers["layer_drop"] = cnn.Dropout2d
             layers["layer_pad"] = nn.ReflectionPad2d
-            layers["interp_mode"] = 'bilinear'            
+            layers["interp_mode"] = 'sinc'            
         if is_relu_leaky:
-            layers["act_relu"] = cnn.PReLU
+            layers["act_relu"] = cnn.AdaptiveCmodReLU #cnn.CmodReLU #cnn.AdaptiveCmodReLU
         else:
-            layers["act_relu"] = cnn.activation.CReLU
+            layers["act_relu"] = cnn.zReLU
         globals().update(layers)
 
         self.forwardV = forwardV
@@ -185,14 +188,18 @@ class ResNet(nn.Module):
             self.main_forward = self.forwardV5
 
     def forward(self, x):
+        factor = torch.abs(x).max()
+        x = x / factor #TODO make param
         out = self.main_forward(x)
 
         if self.under_replace:
             out = self.missing_mask * out
             out = x + out
+        
+        out *= factor #TODO
 
         if self.img_out_mode:
-            out = torch.fft.ifftn(out, dim=[-2,-1])
+            out = ifftNc_pyt(out,norm="ortho")
             if self.img_out_mode == 1:
                 return out
             elif self.img_out_mode == 2:

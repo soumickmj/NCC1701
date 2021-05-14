@@ -23,24 +23,37 @@ class TorchDSInitializer(object):
     """This class Initializes any given Custom Torch DS. This has been called from Model and also other palces (like, TorchDS2MAT) for initializing.
     The Initialize function of this class returns dataset and dataloader"""
 
-    def InitializeDS(self, domain, sliceHandleType, batchSize, pin_memory, dsClass, sliceno, startingSelectSlice, endingSelectSlice, folder_path_fully, folder_path_under, extension_under, num_workers, getROIMode, undersampling_mask=None, filename_filter=None, splitXSLX=None, split2use=None):
-        if(domain == 'image'):
-            listOfTransforms = [transformsMRI.MinMaxNormalization(), transformsMRI.ToTensor3D()]
+    def InitializeDS(self, domain, sliceHandleType, batchSize, pin_memory, dsClass, sliceno, startingSelectSlice, endingSelectSlice, 
+                           folder_path_fully, folder_path_under, extension_under, num_workers, getROIMode, undersampling_mask=None, 
+                           filename_filter=None, splitXSLX=None, split2use=None, corupt_type='fastmriunder', mask_func=None, 
+                           mask_seed=None, top_n_sampled=None, transform=None, isRadial=False):
+        if transform:
+            if type(transform) is list:
+                listOfTransforms = transform 
+            else:
+                listOfTransforms = [transform]
         else:
-            listOfTransforms = [transformsMRI.ToTensor3D(),]
+            listOfTransforms = []
+                
+        if(domain == 'image'):
+            listOfTransforms += [transformsMRI.MinMaxNormalization(), ]
+        # else:
+        #     listOfTransforms += [transformsMRI.ToTensor3D(),]
 
-        if(sliceHandleType == '2DSingleSlice'):
-            listOfTransforms.append(transformsMRI.ConvertToSuitableType(type=sliceHandleType,sliceno=sliceno)) # We create a list of transformations (3dto2d, tensor conversion) to apply to the input images.
-        elif(sliceHandleType == '2DSelectMultiSlice' or sliceHandleType == '3DSelectSlice'):
-            listOfTransforms.append(transformsMRI.ConvertToSuitableType(type=sliceHandleType, startingSelectSlice=startingSelectSlice, endingSelectSlice=endingSelectSlice)) # We create a list of transformations (3dto2d, tensor conversion) to apply to the input images.
-        elif(sliceHandleType == '2DMultiSlice'):
-            listOfTransforms.append(transformsMRI.ConvertToSuitableType(type=sliceHandleType)) # We create a list of transformations (3dto2d, tensor conversion) to apply to the input images.
+        # if(sliceHandleType == '2DSingleSlice'):
+        #     listOfTransforms.append(transformsMRI.ConvertToSuitableType(type=sliceHandleType,sliceno=sliceno)) # We create a list of transformations (3dto2d, tensor conversion) to apply to the input images.
+        # elif(sliceHandleType == '2DSelectMultiSlice' or sliceHandleType == '3DSelectSlice'):
+        #     listOfTransforms.append(transformsMRI.ConvertToSuitableType(type=sliceHandleType, startingSelectSlice=startingSelectSlice, endingSelectSlice=endingSelectSlice)) # We create a list of transformations (3dto2d, tensor conversion) to apply to the input images.
+        # elif(sliceHandleType == '2DMultiSlice'):
+        #     listOfTransforms.append(transformsMRI.ConvertToSuitableType(type=sliceHandleType)) # We create a list of transformations (3dto2d, tensor conversion) to apply to the input images.
         
         transform = transforms.Compose(listOfTransforms)
         
         # Loading the dataset
-        dataset = dsClass(folder_path_fully,folder_path_under,extension_under,domain=domain,transform=transform,getROIMode=getROIMode,undersampling_mask=undersampling_mask,filename_filter=filename_filter,ds_split_xlsx = splitXSLX, ds_split=split2use)
+        dataset = dsClass(root_fully=folder_path_fully, root_under=folder_path_under, extension_under=extension_under, domain=domain,
+                            transform=transform, getROIRes=getROIMode, undersampling_mask=undersampling_mask, filename_filter=filename_filter,
+                            ds_split_xlsx=splitXSLX, ds_split=split2use, corupt_type=corupt_type, mask_func=mask_func, mask_seed=mask_seed,
+                            top_n_sampled=top_n_sampled)
         dataloader = DataLoader(dataset, batch_size = batchSize, shuffle = True, num_workers = num_workers, pin_memory = pin_memory)
 
         return dataloader, dataset
-

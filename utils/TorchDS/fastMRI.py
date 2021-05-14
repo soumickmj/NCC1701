@@ -5,7 +5,7 @@ This module is for creating a Custom Torch Dataset
 This perticular module is created according to the folder sturcture of OASIS1
 
 """
-
+import sys
 import os
 import sys
 import random
@@ -15,12 +15,11 @@ import copy
 import numpy as np
 import pandas as pd
 import h5py
+import torch
 from torch.utils.data import Dataset, DataLoader
-from utils.HandleNifti import FileRead3D
-from utils.GetROI import ClearNonROI
-from Math.FrequencyTransforms import fft2c, rfft2c, fht2c, f2mp
-from Math.Normalizations import fnorm, hnorm
-import utils.fastMRI.TorchDSTransforms as transforms
+from utils.math.freq_trans import ifftNc_pyt, fftNc_pyt, fnorm_pyt
+from utils.math.misc import minmax_complex_pyt, minmax
+from utils.corruptors.fastMRIUnder import apply_mask as fastmriunder_apply_mask
 
 __author__ = "Soumick Chatterjee"
 __copyright__ = "Copyright 2018, Soumick Chatterjee & OvGU:ESF:MEMoRIAL"
@@ -42,15 +41,14 @@ scanner = ['Aera', 'Avanto', 'Biograph_mMR', 'Prisma_fit', 'Skyra', 'TrioTim'] #
 class MRITorchDS(Dataset):
     """Read MR Images (Under and Fully parallely) as Torch (custom) Dataset"""
 
-    def __init__(self, root_fully, domain='fourier', transform=None, getROIRes=None, filename_filter = ['Aera','Biograph_mMR','Prisma_fit', 'Skyra'], ds_split_xlsx = None, corupt_type='fastmriunder', 
-                 mask_func=None, mask_seed=None, undersampling_mat=None, top_n_sampled=None):
+    def __init__(self, **kwargs):
         """
         Initialize the MRI Torch Dataset Images has to be in Nifit format, folder structure is according to the OASIS1 standard
         Args:
             root_fully (string): Directory with all the images - fully sampled.
             domain (string): In which domain network should work? Acceptable values: | fourier | hartley | image| compleximage  
-            transform (callable, optional): Optional transform to be applied on each sample. It can be custom composed transform, or single pre-defined transform. TODO: Implement
-            getROIRes (tuple, option): Either None if no ROI needs to be extracted, or else supply a tuple with size in terms of height and width
+            #TODO transform (callable, optional): Optional transform to be applied on each sample. It can be custom composed transform, or single pre-defined transform. TODO: Implement
+            #TODO getROIRes (tuple, option): Either None if no ROI needs to be extracted, or else supply a tuple with size in terms of height and width
             filename_filter (fastMRI_ScannerModels) = ['Aera': 1.5T,
                             'Biograph_mMR': 3T,
                             'Prisma_fit': 3T,
@@ -62,21 +60,19 @@ class MRITorchDS(Dataset):
                                             motion: motion correction
             mask_func: explained in corupt_type (fastmriunder)
             mask_seed: explained in corupt_type (fastmriunder)
-            undersampling_mat: explained in corupt_type (maskunder)
+            #TODO undersampling_mask: explained in corupt_type (maskunder) 
             top_n_sampled: if set to None, then all volumes will be read. If set to any specific number, then only the top that many volumes will be read
         Both 'root_fully' and 'root_under' needs to follow above mentioned folder sturcture
         Files should be organized identically in both 'root_fully' and 'root_under'
-        """        
-        self.root_fully = root_fully
-        self.transform = transform #TODO
-        self.getROIRes = getROIRes #TODO
-        self.file_list, _ = self.CreateImageBase(filename_filter, ds_split_xlsx, top_n_sampled) #Create a Image Base, which contains all the image paths in flie_listself.domain_transform 
-        self.domain = domain
-        self.undersampling_mat = undersampling_mat #TODO
-        self. corupt_type = corupt_type
-        self.mask_func = mask_func
-        self.seed = mask_seed
+        """     
+        self.__dict__.update(kwargs) 
+        self.file_list, _ = self.CreateImageBase(self.filename_filter, self.ds_split_xlsx, self.top_n_sampled) #Create a Image Base, which contains all the image paths in flie_listself.domain_transform 
 
+        #TODO: make the params
+        self.prenorm_ksp = True
+        self.return_raw = True
+        self.minmax_img = False
+        
     def __len__(self):
         """For returning the length of the file list"""
         return len(self.file_list)
@@ -85,49 +81,62 @@ class MRITorchDS(Dataset):
         """For returning one sample from file_list
         at index idx
         after applying transform on them"""
-        #(vol_fully, vol_under) = self.getROI(FileRead3D(self.file_list[idx]['path2fully']), FileRead3D(self.file_list[idx]['path2under']))
-
+        
         subject, fname, slice = self.file_list[idx]
         with h5py.File(fname, 'r') as data:
-            fully = transforms.to_tensor(data['kspace'][slice])
-            #target = data['reconstruction_rss'][slice] 
+            fully = torch.from_numpy(data['kspace'][slice])
+            slice_max_len = len(str(data['kspace'].shape[0]))
+            target_fastmri = data['reconstruction_rss'][slice] 
 
+        if self.prenorm_ksp:
+            fully = fftNc_pyt(minmax_complex_pyt(ifftNc_pyt(fully, norm="ortho"), channel_wise=False), norm="ortho")     #TODO: param for channel_wise    
+        
         if self. corupt_type =='fastmriunder':
-            under, mask = transforms.apply_mask(fully, mask_func=self.mask_func, seed=self.seed)
+            under, mask = fastmriunder_apply_mask(fully, mask_func=self.mask_func, seed=self.mask_seed)
         elif self. corupt_type =='maskunder':
-            import sys
-            sys.exit()
+            sys.exit("fastMRIDS: maskunder not implemented")
         elif self. corupt_type =='motion':
-            import sys
-            sys.exit()
+            sys.exit("fastMRIDS: motion not implemented")
         else:
-            import sys
-            sys.exit()
+            sys.exit("fastMRIDS: invalid corupt_type")
+
+        if self.return_raw and self.domain != "fourier":
+            sample = {
+                'gt_ksp': fully,
+                'inp_ksp': under,
+            }
+        else:
+            sample = {}
 
         if self.domain == 'fourier':
-            fully = transforms.complex_to_channel(fully)
-            under = transforms.complex_to_channel(under)
+            pass
         elif self.domain == 'hartley':
-            fully = transforms.fourier_to_hartley(fully)
-            under = transforms.fourier_to_hartley(under)
+            sys.exit("fastMRIDS: hartley domain not implemented")
         elif self.domain == 'image':
-            fully = transforms.complex_abs(transforms.ifft2(fully))
-            under = transforms.complex_abs(transforms.ifft2(under))
+            fully = torch.abs(ifftNc_pyt(fully,norm="ortho"))
+            under = torch.abs(ifftNc_pyt(under,norm="ortho"))
+            if self.minmax_img:
+                fully = minmax(fully, channel_wise=False)
+                under = minmax(under, channel_wise=False)
         elif self.domain == 'compleximage':
-            fully = transforms.complex_to_channel(transforms.ifft2(fully))
-            under = transforms.complex_to_channel(transforms.ifft2(under))
+            fully = ifftNc_pyt(fully)
+            under = ifftNc_pyt(under)
+            if self.minmax_img:
+                fully = minmax_complex_pyt(fully, channel_wise=False)
+                under = minmax_complex_pyt(under, channel_wise=False)
         else:
-            import sys
-            sys.exit()        
-
+            sys.exit("fastMRIDS: invalid domain")      
+        
+        ##TODO coil combine as a tranform
         sample = {
-            'fully': fully,
-            'under': under,
-            #'target': target,
+            **sample, 
+            'gt': fully,
+            'inp': under,
+            'target_fastmri': target_fastmri,
             'mask': mask,
             'subjectName': subject,
-            'fileName': fname.stem + '_' + str(slice) #TODO: make is somehow with zero padding names to sort them numarically at the end
-            }
+            'fileName': fname.stem + '_' + str(slice).zfill(slice_max_len) 
+            }        
 
         return sample
 
@@ -154,11 +163,13 @@ class MRITorchDS(Dataset):
             subject = filename.split('.')[0]
 
             if ds_split_xlsx is not None:
-                search_tuple = df['file'].str.contains(filename) &  df['scannermodel'].str.contains('|'.join(scannermodel_subset))
+                # search_tuple = df['file'].str.contains(filename) &  df['scannermodel'].str.contains('|'.join(scannermodel_subset))
+                search_tuple = df['file'].str.contains(filename) &  df['zISMRM_systemModel'].str.contains('|'.join(scannermodel_subset)) #TODO: why and how zISMRM_systemModel
                 if not search_tuple.any():
                     continue
                 else:
-                    num_slices = df.loc[search_tuple, "nslice"].values[0] #considering only one tuple should be returned
+                    # num_slices = df.loc[search_tuple, "nSlice"].values[0] #considering only one tuple should be returned
+                    num_slices = df.loc[search_tuple, "nSlice"].values[0] #considering only one tuple should be returned
                 
             #if ds_split_xlsx is not None:
             #    if not (df['file'].str.contains(filename) &  df['scannermodel'].str.contains('|'.join(ixi_subset))).any():
@@ -167,12 +178,13 @@ class MRITorchDS(Dataset):
             #        num_slices = df.loc[df['file'].str.contains(filename) &  df['scannermodel'].str.contains('|'.join(ixi_subset)), "nslice"].values[0] #considering only one tuple should be returned
             
             #Create a dictonary for the current file, contains path2fully, path2under, fileName without extension, subjectName w.r.t. this image
-            completeFileList += [(subject, fullpath_file_fully, slice) for slice in range(10,num_slices-10)]
+            # completeFileList += [(subject, fullpath_file_fully, slice) for slice in range(10,num_slices-10)]
+            completeFileList += [(subject, fullpath_file_fully, slice) for slice in range(num_slices)] #TODO:starting and ending slice
             if subject not in subjectNames: #create unique list of subject names
                 subjectNames.append(subject)
             count += 1
             if top_n_sampled is not None and count == top_n_sampled:
                 break
-        print(len(completeFileList))
-        print(subjectNames)
+        # print(len(completeFileList))
+        # print(subjectNames)
         return completeFileList, subjectNames
