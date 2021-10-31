@@ -2,7 +2,9 @@
 
 """
 KSpace version (Complex-valued convolution) of MickResNet
+- this is to be replaced with KSPReconResNet
 """
+
 #TODO: move inside kSpace subpackage
 import torch
 import torch.fft
