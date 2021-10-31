@@ -1,0 +1,859 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>bc8b0763-fb2c-4fef-b83b-94fdedfb5471</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>Math\OutputSizeCalc.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>NCC1701</Name>
+    <RootNamespace>NCC1701</RootNamespace>
+    <InterpreterId>CondaEnv|CondaEnv|torchMRINN</InterpreterId>
+    <TestFramework>Pytest</TestFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="00ForClassification.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="01AleForClassificationNumProc0.py" />
+    <Compile Include="01AleForClassification.py" />
+    <Compile Include="01AleForClassificationCorrect.py" />
+    <Compile Include="01ForClassification_norm.py" />
+    <Compile Include="02ForClassification.py" />
+    <Compile Include="01ForClassification.py" />
+    <Compile Include="3DReconAttempt2.py" />
+    <Compile Include="3DReconAttempt6.py" />
+    <Compile Include="3DReconAttempt7.py" />
+    <Compile Include="3DReconAttempt5.py" />
+    <Compile Include="3DReconAttempt4.py" />
+    <Compile Include="3DReconAttempt3.py" />
+    <Compile Include="Baselines\Controller4Conventional.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Baselines\_ref\sigpyreco_mat_rad.py" />
+    <Compile Include="Baselines\_ref\sigpyreco_mat.py" />
+    <Compile Include="Baselines\_ref\sigpyref.py" />
+    <Compile Include="Baselines\_ref\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Baselines\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="BlackBoxUnvail\LossTest.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="BlackBoxUnvail\OneLayerTester.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="BlackBoxUnvail\TesterConvConvTrans.py" />
+    <Compile Include="BlackBoxUnvail\TesterPoolUnpool.py" />
+    <Compile Include="BlackBoxUnvail\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="createDSExcel.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="fastMRIAttempt3_2.py" />
+    <Compile Include="fastMRIAttempt6_2.py" />
+    <Compile Include="fastMRIAttempt10.py" />
+    <Compile Include="fastMRIAttempt9.py" />
+    <Compile Include="fastMRIAttempt8.py" />
+    <Compile Include="fastMRIAttempt7.py" />
+    <Compile Include="fastMRIAttempt6.py" />
+    <Compile Include="fastMRIAttempt5.py" />
+    <Compile Include="fastMRIAttempt4.py" />
+    <Compile Include="fastMRIAttempt3.py" />
+    <Compile Include="fastMRIAttempt2.py" />
+    <Compile Include="Math\DWTSupport.py" />
+    <Compile Include="Math\TorchWaveletTransforms.py" />
+    <Compile Include="Math\_backward\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Math\_ref\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="mocoAttempt5_hpc.py" />
+    <Compile Include="mocoHartleyAttempt3.py" />
+    <Compile Include="mocoHartleyAttempt2.py" />
+    <Compile Include="model\Attention\AttentionModules.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\kSpace\Multiscale1DResNet - Copy.py" />
+    <Compile Include="model\kSpace\Multiscale1DResNet_ref.py" />
+    <Compile Include="model\kSpace\Multiscale1DResNet.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\ModelFastMRIApex.py" />
+    <Compile Include="model\ModelFastMRI2.py" />
+    <Compile Include="model\o.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\Obelisk2D.py" />
+    <Compile Include="model\Obelisk3D.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\ReferenceModels\Automaps.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\kSpace\SoltantoRes.py" />
+    <Compile Include="model\ResNet\_backward\Resnet3Dv2b14_2.py" />
+    <Compile Include="model\ResNet\_backward\Resnet3Dv2b14_3.py" />
+    <Compile Include="model\ResNet\_backward\Resnet3Dv2b14_4.py" />
+    <Compile Include="model\ResNet\_backward\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\UNet\_backward\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\VAE\ConvVAE.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="mocoHartleyAttempt1.py" />
+    <Compile Include="model\VAE\_ref\sample_cvae.py" />
+    <Compile Include="model\VAE\_ref\sample_cvae2.py" />
+    <Compile Include="model\VAE\_ref\sample_vae.py" />
+    <Compile Include="model\VAE\_ref\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\Wavelet\BasicWaveletNet.py" />
+    <Compile Include="model\Wavelet\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\_backward\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="support\DS2File.py" />
+    <Compile Include="support\fastMRIDSSplit.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="support\_backward\DS2MAT_Multi2Single_WoSplit.py" />
+    <Compile Include="support\DSMAT2H5.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="support\_backward\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\fastMRI\createIndexXLS.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\GenerateComputationGraph.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\MRITorchDSTransforms - Copy.py" />
+    <Compile Include="utils\RAW\ISMRMRDReader.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\RAW\MeasurementsDS.py" />
+    <Compile Include="utils\RAW\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchAct\wta.py" />
+    <Compile Include="utils\TorchDS\fastMRIv2.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchDS\_backward\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchDS\H5Handles\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchDS\H5Handles\H5.py" />
+    <Compile Include="utils\TorchDS\H5Handles\MultiTorchDS2SingleH5.py" />
+    <Compile Include="utils\TorchDS\H5Handles\TorchDS2H5.py" />
+    <Compile Include="utils\TorchDS\NPDS.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchDS\SingleH5.py" />
+    <Compile Include="utils\TorchLoss\WeightedLoss.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchModule\convolution.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\Visualization\generateGraphs.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\Visualization\_ref\generateGraphs_references.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\Visualization\_ref\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\_ref\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="WaveletAttempt6.py" />
+    <Compile Include="WaveletAttempt5.py" />
+    <Compile Include="WaveletAttempt4.py" />
+    <Compile Include="WaveletAttempt3.py" />
+    <Compile Include="WaveletAttempt2.py" />
+    <Compile Include="WaveletAttempt1.py" />
+    <Compile Include="mocoAttempt7_gpu18.py" />
+    <Compile Include="mocoAttempt6_hpc.py" />
+    <Compile Include="mocoAttempt6.py" />
+    <Compile Include="mocoAttempt5.py" />
+    <Compile Include="mocoAttempt4.py" />
+    <Compile Include="mocoAttempt3.py" />
+    <Compile Include="mocoAttempt2.py" />
+    <Compile Include="model\Attention\ResNet\Ref\attention_module.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\Attention\ResNet\Ref\basic_layers.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\Attention\ResNet\Ref\residual_attention_network.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\Attention\ResNet\Ref\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\Attention\ResNet\Resnet2Dv2b14.py" />
+    <Compile Include="model\Attention\ResNet\ResNetClassifier2D.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\Attention\ResNet\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\kSpace\EnsambleSpace.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\ResNet\Resnet3Dv2b14_4.py" />
+    <Compile Include="model\ResNet\Resnet3Dv2b14_3.py" />
+    <Compile Include="3DReconAttempt1.py" />
+    <Compile Include="superResAttemp10.py" />
+    <Compile Include="superResAttemp9.py" />
+    <Compile Include="superResAttemp8.py" />
+    <Compile Include="superResAttemp7.py" />
+    <Compile Include="superResAttemp6.py" />
+    <Compile Include="superResAttemp5.py" />
+    <Compile Include="superResAttemp4.py" />
+    <Compile Include="superResAttemp3.py" />
+    <Compile Include="superResAttemp2.py" />
+    <Compile Include="superResAttemp1.py" />
+    <Compile Include="mocoAttempt1.py" />
+    <Compile Include="fastmritest.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="gpu18Attempt10_5.py" />
+    <Compile Include="gpu18Attempt10_4.py" />
+    <Compile Include="gpu18Attempt10_3.py" />
+    <Compile Include="gpu18Attempt10_2.py" />
+    <Compile Include="gpu18Attempt11_5.py" />
+    <Compile Include="gpu18Attempt11_4.py" />
+    <Compile Include="gpu18Attempt11_3.py" />
+    <Compile Include="gpu18Attempt11_2.py" />
+    <Compile Include="gpu18Attempt11.py" />
+    <Compile Include="gpu18Attempt12_2_2.py" />
+    <Compile Include="gpu18Attempt12_2.py" />
+    <Compile Include="gpu18Attempt13_2_2.py" />
+    <Compile Include="gpu18Attempt13_2.py" />
+    <Compile Include="model\Attention\AttnGatingBlock.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\Attention\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\kSpace\CInvUNet.py" />
+    <Compile Include="model\kSpace\_backward\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\ModelFastMRI.py" />
+    <Compile Include="model\ReferenceModels\RAKI.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\kSpace\CUNet.py" />
+    <Compile Include="model\ReferenceModels\UNet.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\ReferenceModels\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\VAE\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="fastMRIAttempt1.py" />
+    <Compile Include="myPCGen3Attempt6.py" />
+    <Compile Include="myPCGen3Attempt5.py" />
+    <Compile Include="myPCGen3Attempt4.py" />
+    <Compile Include="myPCGen3Attempt3.py" />
+    <Compile Include="myPCGen3Attempt2.py" />
+    <Compile Include="myPCGen3Attempt1.py" />
+    <Compile Include="gpu18Attempt14_2.py" />
+    <Compile Include="gpu18Attempt2_4.py" />
+    <Compile Include="gpu18Attempt10.py" />
+    <Compile Include="gpu18Attempt7_5.py" />
+    <Compile Include="gpu18Attempt7_4.py" />
+    <Compile Include="gpu18Attempt7_3.py" />
+    <Compile Include="gpu18Attempt7_2.py" />
+    <Compile Include="gpu18Attempt8_5.py" />
+    <Compile Include="gpu18Attempt8_4.py" />
+    <Compile Include="gpu18Attempt8_3.py" />
+    <Compile Include="gpu18Attempt8_2.py" />
+    <Compile Include="gpu18Attempt9_5.py" />
+    <Compile Include="gpu18Attempt9_4.py" />
+    <Compile Include="gpu18Attempt9_3.py" />
+    <Compile Include="gpu18Attempt9_2.py" />
+    <Compile Include="gpu18Attempt9.py" />
+    <Compile Include="gpu18Attempt8.py" />
+    <Compile Include="gpu18Attempt7.py" />
+    <Compile Include="gpu18Attempt6.py" />
+    <Compile Include="gpu18Attempt3_4.py" />
+    <Compile Include="gpu18Attempt4_2.py" />
+    <Compile Include="gpu18Attempt4_4.py" />
+    <Compile Include="gpu18Attempt5_2.py" />
+    <Compile Include="gpu18Attempt5_4.py" />
+    <Compile Include="gpu18Attempt5.py" />
+    <Compile Include="gpu18Attempt4.py" />
+    <Compile Include="gpu18Attempt3.py" />
+    <Compile Include="gpu18Attempt2.py" />
+    <Compile Include="gpu18Attempt1.py" />
+    <Compile Include="chaosMyPCAttempt1.py" />
+    <Compile Include="main_hadyarefADNI.py" />
+    <Compile Include="main_hadyaref.py" />
+    <Compile Include="Math\FrequencyTransformsTorch.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Math\_backward\bkupold_TorchFrequencyTransforms.py" />
+    <Compile Include="Math\_ref\torch_receptive_field\receptive_field.py" />
+    <Compile Include="Math\_ref\torch_receptive_field\__init__.py" />
+    <Compile Include="model\kSpace\_backward\ImgKSPNet.py" />
+    <Compile Include="model\kSpace\_backward\DenseNet\BottleNeck.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\kSpace\_backward\DenseNet\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\kSpace\_backward\ResNet\LinearResnet2Dv2_ReducedIN.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\LinearResnet2Dv2_MultiGbkup.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\LinearResnet2Dv2_MultiG.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\LinearResnet2Dv2.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\AdvResnet2Dv4.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\AdvResnet2Dv2.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\AdvResnet2Dv1.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\Resnet2Dv2.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\AdvResnet2Dv3.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\Resnet2Dv2b14_ksv2.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\Resnet2Dv2b14_ks.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\Resnet2Dv3.py" />
+    <Compile Include="model\_backward\ModelExperimental.py" />
+    <Compile Include="model\_backward\ModelSSIMLossExperimental.py" />
+    <Compile Include="model\_backward\Model_MultiG.py" />
+    <Compile Include="model\_backward\Model_TempMissingMask.py" />
+    <Compile Include="model\_backward\ModelSSIMLoss.py" />
+    <Compile Include="model\ResNet\_backward\Resnet1Dv2.py" />
+    <Compile Include="model\ResNet\Resnet2Dv2b14XtremeV4.py" />
+    <Compile Include="model\ResNet\Resnet2Dv2b14XtremeV3.py" />
+    <Compile Include="model\ResNet\Resnet2Dv2b14XtremeV2.py" />
+    <Compile Include="model\ResNet\Resnet2Dv2b14XtremeV1.py" />
+    <Compile Include="model\ResNet\Resnet2Dv2b14.py" />
+    <Compile Include="model\ResNet\Resnet2Dv2b14XtremeSupreme.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2Dv2NoDrop.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2Dv2_saveout.py" />
+    <Compile Include="model\ResNet\Resnet3Dv2b14.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2Dv3b9.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2Dv3b14.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2Dv3.py" />
+    <Compile Include="model\ResNet\Resnet3DSeg.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2DSeg.py" />
+    <Compile Include="myPCAttempt16_3.py" />
+    <Compile Include="myPCAttempt38.py" />
+    <Compile Include="myPCAttempt37.py" />
+    <Compile Include="myPCAttempt36.py" />
+    <Compile Include="neumannAttempt48.py" />
+    <Compile Include="neumannAttempt47.py" />
+    <Compile Include="neumannAttempt46.py" />
+    <Compile Include="neumannAttempt45.py" />
+    <Compile Include="neumannAttempt44.py" />
+    <Compile Include="neumannAttempt37v3.py" />
+    <Compile Include="neumannAttempt38v3.py" />
+    <Compile Include="neumannAttempt39v3.py" />
+    <Compile Include="neumannAttempt40v3.py" />
+    <Compile Include="neumannAttempt41v3.py" />
+    <Compile Include="neumannAttempt49.py" />
+    <Compile Include="neumannAttempt50.py" />
+    <Compile Include="neumannAttempt51.py" />
+    <Compile Include="n55_laptopCPUTest.py" />
+    <Compile Include="gpu18TestAttempt.py" />
+    <Compile Include="neumannAttempt54.py" />
+    <Compile Include="neumannAttempt53.py" />
+    <Compile Include="neumannAttempt52.py" />
+    <Compile Include="neummannTrainTest2.py" />
+    <Compile Include="neummannTrainTest1.py" />
+    <Compile Include="neumannAttempt43v3.py" />
+    <Compile Include="neumannAttempt43.py" />
+    <Compile Include="neumannAttempt42v3.py" />
+    <Compile Include="neumannAttempt42.py" />
+    <Compile Include="neumannAttempt41.py" />
+    <Compile Include="neumannAttempt40.py" />
+    <Compile Include="neumannAttempt39.py" />
+    <Compile Include="neumannAttempt38.py" />
+    <Compile Include="neumannAttempt37.py" />
+    <Compile Include="quadroAttempt23.py" />
+    <Compile Include="quadroAttempt22.py" />
+    <Compile Include="quadroAttempt21.py" />
+    <Compile Include="quadroAttempt20.py" />
+    <Compile Include="myPCAttempt35.py" />
+    <Compile Include="myPCAttempt34.py" />
+    <Compile Include="myPCAttempt33.py" />
+    <Compile Include="myPCAttempt32.py" />
+    <Compile Include="myPCAttempt31.py" />
+    <Compile Include="myPCAttempt30.py" />
+    <Compile Include="myPCAttempt19_test.py" />
+    <Compile Include="myPCAttempt19_2.py" />
+    <Compile Include="myPCAttempt20_2.py" />
+    <Compile Include="myPCAttempt29.py" />
+    <Compile Include="myPCAttempt28.py" />
+    <Compile Include="myPCAttempt27.py" />
+    <Compile Include="myPCAttempt26.py" />
+    <Compile Include="myPCAttempt25.py" />
+    <Compile Include="myPCAttempt24.py" />
+    <Compile Include="myPCAttempt23.py" />
+    <Compile Include="myPCAttempt22.py" />
+    <Compile Include="myPCAttempt21.py" />
+    <Compile Include="myPCAttempt19.py" />
+    <Compile Include="myPCAttempt18.py" />
+    <Compile Include="myPCAttempt17.py" />
+    <Compile Include="myPCAttempt16.py" />
+    <Compile Include="myPCAttempt15.py" />
+    <Compile Include="myPCAttempt14.py" />
+    <Compile Include="myPCAttempt13.py" />
+    <Compile Include="myPCAttempt12.py" />
+    <Compile Include="myPCAttempt20.py" />
+    <Compile Include="support\ApplyDataConsistancy.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="marioAttempt17.py" />
+    <Compile Include="model\DenseNet\Densenet2Dv2.py" />
+    <Compile Include="model\DenseNet\Densenet2D.py" />
+    <Compile Include="model\DenseNet\DenseResNeXt.py" />
+    <Compile Include="model\DenseNet\DenseResNet.py" />
+    <Compile Include="model\DenseNet\DenseUNet2D.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\kSpace\_backward\ResNet\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\kSpace\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\ResNeXt\ResNeXt2DRef.py" />
+    <Compile Include="myPCAttempt0FNew.py" />
+    <Compile Include="myPCAttempt0F.py" />
+    <Compile Include="myPCAttempt10.py" />
+    <Compile Include="myPCAttempt11.py" />
+    <Compile Include="myPCAttempt9.py" />
+    <Compile Include="myPCAttempt8.py" />
+    <Compile Include="myPCAttempt7.py" />
+    <Compile Include="myPCAttempt6.py" />
+    <Compile Include="myPCAttempt5.py" />
+    <Compile Include="myPCAttempt4.py" />
+    <Compile Include="myPCAttempt3.py" />
+    <Compile Include="myPCAttempt2.py" />
+    <Compile Include="myPCAttempt1.py" />
+    <Compile Include="myPCAttempt0.py" />
+    <Compile Include="marioAttempt18.py" />
+    <Compile Include="Math\Normalizations.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2DFReal.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2DLogSoft.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2DSoft2D.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2DSoft.py" />
+    <Compile Include="model\kSpace\_backward\ResNet\Resnet2Dv1.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2DF.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2Dv2.py" />
+    <Compile Include="model\ResNet\Resnet3D.py" />
+    <Compile Include="model\_backward\ModelF.py" />
+    <Compile Include="model\ModelMRIPaper.py" />
+    <Compile Include="model\_backward\ModelNorm.py" />
+    <Compile Include="model\ResNet\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\ResNeXt\ResNeXt2D.py" />
+    <Compile Include="model\ResNeXt\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\UNet\UnetMRIPaper.py" />
+    <Compile Include="neumannAttempt10.py" />
+    <Compile Include="neumannAttempt15.py" />
+    <Compile Include="neumannAttempt14.py" />
+    <Compile Include="neumannAttempt13.py" />
+    <Compile Include="neumannAttempt17.py" />
+    <Compile Include="neumannAttempt36.py" />
+    <Compile Include="neumannAttempt35.py" />
+    <Compile Include="neumannAttempt34.py" />
+    <Compile Include="neumannAttempt33.py" />
+    <Compile Include="neumannAttempt30.py" />
+    <Compile Include="neumannAttempt29.py" />
+    <Compile Include="neumannAttempt28.py" />
+    <Compile Include="neumannAttempt27.py" />
+    <Compile Include="neumannAttempt26.py" />
+    <Compile Include="quadroAttempt19.py" />
+    <Compile Include="quadroAttempt18.py" />
+    <Compile Include="neumannAttempt24.py" />
+    <Compile Include="neumannAttempt25.py" />
+    <Compile Include="neumannAttempt23.py" />
+    <Compile Include="neumannAttempt22.py" />
+    <Compile Include="neumannAttempt21.py" />
+    <Compile Include="neumannAttempt20.py" />
+    <Compile Include="neumannAttempt19.py" />
+    <Compile Include="neumannAttempt18.py" />
+    <Compile Include="quadroAttempt17.py" />
+    <Compile Include="neumannAttempt12_2.py" />
+    <Compile Include="neumannAttempt12.py" />
+    <Compile Include="neumannAttempt11.py" />
+    <Compile Include="neumannAttempt9.py" />
+    <Compile Include="quadroAttempt13.py" />
+    <Compile Include="quadroAttempt12.py" />
+    <Compile Include="quadroAttempt12_old.py" />
+    <Compile Include="neumannAttempt8.py" />
+    <Compile Include="neumannAttempt7.py" />
+    <Compile Include="neumannAttempt6.py" />
+    <Compile Include="quadroAttempt11.py" />
+    <Compile Include="quadroAttempt10.py" />
+    <Compile Include="quadroAttempt9.py" />
+    <Compile Include="neumannAttempt5.py" />
+    <Compile Include="marioAttempt16.py" />
+    <Compile Include="marioAttempt15.py" />
+    <Compile Include="main2Loss.py" />
+    <Compile Include="mainMAT.py" />
+    <Compile Include="main_tempCyleGAN.py" />
+    <Compile Include="main2DParallel.py" />
+    <Compile Include="main3D.py" />
+    <Compile Include="mainSSIM.py" />
+    <Compile Include="main.py" />
+    <Compile Include="main_tempCyleGANUnder.py" />
+    <Compile Include="main_tempResnet.py" />
+    <Compile Include="Math\FrequencyTransforms.py" />
+    <Compile Include="Math\OutputSizeCalc.py" />
+    <Compile Include="Math\PyTorchModelSize.py" />
+    <Compile Include="Math\PyTorchModelSummary.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Math\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="modelSizeEstimation.py" />
+    <Compile Include="model\_backward\ConvTrans\Translator3D.py" />
+    <Compile Include="model\_backward\ConvTrans\Translator2D.py" />
+    <Compile Include="model\_backward\ConvTrans\Translator2Dv2.py" />
+    <Compile Include="model\_backward\ConvTrans\Translator3DFastDebug.py" />
+    <Compile Include="model\_backward\ConvTrans\Translator3DIncludesTranspose.py" />
+    <Compile Include="model\_backward\ConvTrans\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\GAN\CycleGANUtils.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\DenseNet\DenseNet2DReference.py" />
+    <Compile Include="model\DenseNet\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\GAN\Discriminator2Dv2.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\GAN\Discriminator3D.py" />
+    <Compile Include="model\GAN\Discriminator2D.py" />
+    <Compile Include="model\GAN\Discriminator3DFastDebug.py" />
+    <Compile Include="model\GAN\Generator3D.py" />
+    <Compile Include="model\GAN\Generator3DFastDebug.py" />
+    <Compile Include="model\GAN\Generator3DIncludesTranspose.py" />
+    <Compile Include="model\ResNet\_backward\Resnet2D.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\GAN\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\Helper.py" />
+    <Compile Include="model\_backward\ModelBkUpBeforeTypeTransform.py" />
+    <Compile Include="model\_backward\ModelCycleGAN.py" />
+    <Compile Include="model\ModelGAN.py" />
+    <Compile Include="model\_backward\Model.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\_backward\Model2DPatches.py" />
+    <Compile Include="model\UNet\DenseUNet2Dv1.py" />
+    <Compile Include="model\UNet\_backward\Unet2Dv1bkup.py" />
+    <Compile Include="model\UNet\Unet2Dv2MarioV2.py" />
+    <Compile Include="model\UNet\Unet2Dv2Parallel.py" />
+    <Compile Include="model\UNet\Unet2Dv23D.py" />
+    <Compile Include="model\UNet\_backward\Unet2Dv2bkup.py" />
+    <Compile Include="model\UNet\Unet2DvMario1.py" />
+    <Compile Include="model\UNet\Unet2Dv1.py" />
+    <Compile Include="model\UNet\Unet2Dv2.py" />
+    <Compile Include="model\UNet\Unet3Dv2.py" />
+    <Compile Include="model\UNet\Unet3Dv1.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\UNet\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="model\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NCC1701.py" />
+    <Compile Include="support\_backward\DS2MAT_Multi2Single.py" />
+    <Compile Include="support\_backward\DS2MAT_CHAOS.py" />
+    <Compile Include="support\_backward\DS2MAT.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="support\ResultAnalyzerExtendedADNI.py" />
+    <Compile Include="support\RotateNIFTIs.py" />
+    <Compile Include="support\OrganizeSkyraDICOMs.py" />
+    <Compile Include="support\OrganizeADNI.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="support\PostProcessing.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="support\read_niftis.py" />
+    <Compile Include="support\MultisliceCombiner.py" />
+    <Compile Include="support\ResultAnalyzerExtended.py" />
+    <Compile Include="support\ResultAnalyzer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="support\save_recons.py" />
+    <Compile Include="support\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="undertest.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\fastMRI\evaluate.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\fastMRI\subsample.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\fastMRI\TorchDSTransforms.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\fastMRI\fastmri_utils.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\fastMRI\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\GetROI.py" />
+    <Compile Include="utils\HandleDicom.py" />
+    <Compile Include="utils\HandleNifti.py" />
+    <Compile Include="utils\HandleTorchModel.py" />
+    <Compile Include="utils\TorchAct\pelu.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchAct\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchDS\fastMRI.py" />
+    <Compile Include="utils\TorchDS\IXI4SuperRes.py" />
+    <Compile Include="utils\TorchDS\IXI.py" />
+    <Compile Include="utils\TorchDS\_backward\AlexDS1.py" />
+    <Compile Include="utils\TorchDS\_backward\AlexDS2_3Mask.py" />
+    <Compile Include="utils\TorchDS\_backward\AlexDS2_6Mask.py" />
+    <Compile Include="utils\TorchDS\_backward\AlexDS3_6Mask.py" />
+    <Compile Include="utils\TorchDS\_backward\AlexDS4_NoMask.py" />
+    <Compile Include="utils\TorchDS\_backward\AlexDS3_NoMask.py" />
+    <Compile Include="utils\TorchDS\_backward\AlexDS2_NoMask.py" />
+    <Compile Include="utils\MRITorchDSTransforms.py" />
+    <Compile Include="utils\TorchDS\_backward\MarioMAT.py" />
+    <Compile Include="utils\TorchDS\MATHandles\MAT.py" />
+    <Compile Include="utils\TorchDS\MATHandles\MultiTorchDS2SingleMAT.py" />
+    <Compile Include="utils\TorchDS\MATHandles\TorchDS2MAT.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchDS\MATHandles\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchDS\CHAOS.py" />
+    <Compile Include="utils\TorchDS\ADNI.py" />
+    <Compile Include="utils\TorchDS\OASIS.py" />
+    <Compile Include="utils\TorchDS\TorchDSInitializer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchDS\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchLoss\ImgSSIMFourierL1Loss.py" />
+    <Compile Include="utils\TorchLoss\ImgSSIMHartleySSDLoss.py" />
+    <Compile Include="utils\TorchLoss\ImgSSIMFromFourierLoss.py" />
+    <Compile Include="utils\TorchLoss\MultiSSIM.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchLoss\PearsonLoss.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchLoss\ImgSSIMFourierSSDLoss.py" />
+    <Compile Include="utils\TorchLoss\SegmentationLossess.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchLoss\SSIM3D.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchLoss\WeightedSSDLoss.py" />
+    <Compile Include="utils\TorchLoss\SSDLoss.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchLoss\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchModule\padding.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\TorchModule\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\Visualization\pytorchFeatureMaps.py" />
+    <Compile Include="utils\Visualization\pytorchFilters.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\Visualization\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="utils\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="_backward\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="_ref\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="CondaEnv|CondaEnv|torchMRINN" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Baselines\" />
+    <Folder Include="Baselines\_ref\" />
+    <Folder Include="BlackBoxUnvail\" />
+    <Folder Include="Math\" />
+    <Folder Include="Math\_ref\torch_receptive_field\" />
+    <Folder Include="Math\_backward\" />
+    <Folder Include="Math\_ref\" />
+    <Folder Include="model\" />
+    <Folder Include="model\Attention\" />
+    <Folder Include="model\Attention\ResNet\" />
+    <Folder Include="model\Attention\ResNet\Ref\" />
+    <Folder Include="model\ResNet\_backward\" />
+    <Folder Include="model\UNet\_backward\" />
+    <Folder Include="model\VAE\_ref\" />
+    <Folder Include="model\_backward\ConvTrans\" />
+    <Folder Include="model\DenseNet\" />
+    <Folder Include="model\GAN\" />
+    <Folder Include="model\kSpace\" />
+    <Folder Include="model\kSpace\_backward\DenseNet\" />
+    <Folder Include="model\kSpace\_backward\" />
+    <Folder Include="model\kSpace\_backward\ResNet\" />
+    <Folder Include="model\ReferenceModels\" />
+    <Folder Include="model\ResNet\" />
+    <Folder Include="model\ResNeXt\" />
+    <Folder Include="model\UNet\" />
+    <Folder Include="model\VAE\" />
+    <Folder Include="model\Wavelet\" />
+    <Folder Include="model\_backward\" />
+    <Folder Include="support\" />
+    <Folder Include="support\_backward\" />
+    <Folder Include="utils\" />
+    <Folder Include="utils\fastMRI\" />
+    <Folder Include="utils\RAW\" />
+    <Folder Include="utils\TorchAct\" />
+    <Folder Include="utils\TorchDS\" />
+    <Folder Include="utils\TorchDS\_backward\" />
+    <Folder Include="utils\TorchDS\H5Handles\" />
+    <Folder Include="utils\TorchDS\MATHandles\" />
+    <Folder Include="utils\TorchLoss\" />
+    <Folder Include="utils\TorchModule\" />
+    <Folder Include="utils\Visualization\" />
+    <Folder Include="utils\Visualization\_ref\" />
+    <Folder Include="utils\_ref\" />
+    <Folder Include="_backward\" />
+    <Folder Include="_ref\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib">
+      <Name>mscorlib</Name>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="PresentationCore">
+      <Name>PresentationCore</Name>
+      <AssemblyName>
+      </AssemblyName>
+      <HintPath>
+      </HintPath>
+    </Reference>
+    <Reference Include="PresentationFramework">
+      <Name>PresentationFramework</Name>
+      <AssemblyName>
+      </AssemblyName>
+      <HintPath>
+      </HintPath>
+    </Reference>
+    <Reference Include="System">
+      <Name>System</Name>
+      <AssemblyName>
+      </AssemblyName>
+      <HintPath>
+      </HintPath>
+    </Reference>
+    <Reference Include="System.Drawing">
+      <Name>System.Drawing</Name>
+      <AssemblyName>
+      </AssemblyName>
+      <HintPath>
+      </HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Forms">
+      <Name>System.Windows.Forms</Name>
+      <AssemblyName>
+      </AssemblyName>
+      <HintPath>
+      </HintPath>
+    </Reference>
+    <Reference Include="System.Xaml">
+      <Name>System.Xaml</Name>
+      <AssemblyName>
+      </AssemblyName>
+      <HintPath>
+      </HintPath>
+    </Reference>
+    <Reference Include="UIAutomationProvider">
+      <Name>UIAutomationProvider</Name>
+      <AssemblyName>
+      </AssemblyName>
+      <HintPath>
+      </HintPath>
+    </Reference>
+    <Reference Include="WindowsBase">
+      <Name>WindowsBase</Name>
+      <AssemblyName>
+      </AssemblyName>
+      <HintPath>
+      </HintPath>
+    </Reference>
+    <Reference Include="WindowsFormsIntegration">
+      <Name>WindowsFormsIntegration</Name>
+      <AssemblyName>
+      </AssemblyName>
+      <HintPath>
+      </HintPath>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>
