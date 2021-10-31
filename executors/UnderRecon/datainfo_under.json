@@ -1,0 +1,22 @@
+{
+    "run_prefix": "",
+    "train_path_inp": "/run/media/soumick/Enterprise/Datasets/IXI/Under/IXI-T1/1DVarden15Mask",
+    "train_path_gt": "/run/media/soumick/Enterprise/Datasets/IXI/IXI-T1",
+    "train_filename_filter": [],
+    "val_path_inp": "/run/media/soumick/Enterprise/Datasets/IXI/Under/IXI-T1/1DVarden15Mask",
+    "val_path_gt": "/run/media/soumick/Enterprise/Datasets/IXI/IXI-T1",
+    "val_filename_filter": [],
+    "test_path_inp": "/run/media/soumick/Enterprise/Datasets/IXI/Under/IXI-T1/1DVarden15Mask",
+    "test_path_gt": "/run/media/soumick/Enterprise/Datasets/IXI/IXI-T1",
+    "test_filename_filter": [],
+    "file_type": "NIFTI",
+    "split_csv": "/run/media/soumick/Enterprise/Datasets/IXI/hh_split.csv",
+    "inplane_dims": [0,1],
+    "dataspace_inp": 0,
+    "dataspace_gt": 1,
+    "static_metamat_file": "Cargo/1DVarden15Mask.mat",
+    "is_radial": false,
+    "isGTNonImg": false,
+    "forceNormAffine": true,
+    "cannonicalResample": false 
+}

@@ -1,0 +1,16 @@
+{
+    "run_prefix": "",
+    "train_path_inp": "",
+    "train_path_gt": "/run/media/soumick/Enterprise/Datasets/IXI_Dummy/IXI-T1",
+    "train_filename_filter": ["Guys"],
+    "val_path_inp": "",
+    "val_path_gt": "/run/media/soumick/Enterprise/Datasets/IXI_Dummy/IXI-T1",
+    "val_filename_filter": ["IOP"],
+    "test_path_inp": "",
+    "test_path_gt": "/run/media/soumick/Enterprise/Datasets/IXI_Dummy/IXI-T1",
+    "test_filename_filter": ["HH"],
+    "file_type": "NIFTI",
+    "isGTNonImg": false,
+    "forceNormAffine": false,
+    "cannonicalResample": false 
+}
