@@ -1,4 +1,5 @@
 import os
+from collections import OrderedDict
 from async_timeout import sys
 import numpy as np
 import torch
@@ -243,3 +244,13 @@ def CustomInitialiseWeights(m):
     elif classname.find('BatchNorm') != -1:
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
+
+#meant for converting the old resnet model Resnet2Dv2b14 (used in v0 pipeline) to the new ReconResNet model
+def ConvertCheckpoint(checkpoint_path, new_checkpoint_path, newModel):
+    checkpoint = torch.load(checkpoint_path, map_location='cpu')
+    del checkpoint['model']
+    old_state_dict = checkpoint['state_dict']
+    new_keys = list(newModel.state_dict().keys())
+    new_state_dict = OrderedDict([(new_keys[i], v) for i, (k, v) in enumerate(old_state_dict.items())])
+    checkpoint['state_dict'] = new_state_dict
+    torch.save(checkpoint, new_checkpoint_path)

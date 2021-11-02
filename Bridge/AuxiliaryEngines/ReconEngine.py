@@ -48,6 +48,11 @@ class ReconEngine(LightningModule):
             # TODO: other models
             sys.exit("Only ResNet has been implemented so far in ReconEngine")
 
+        if bool(self.hparams.preweights_path):
+            print("Pre-weights found, loding...")
+            chk = torch.load(self.hparams.preweights_path, map_location='cpu')
+            self.net.load_state_dict(chk['state_dict'])
+
         if self.hparams.lossID == 0:
             if self.hparams.in_channels != 1 or self.hparams.out_channels != 1:
                 sys.exit(

@@ -16,7 +16,7 @@ def getARGSParser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--taskID', action="store", type=int, default=0, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
     # parser.add_argument('--trainID', action="store", default="testing") ## "testing")  ## "ResNet14"
-    parser.add_argument('--trainID', action="store", default="reproAttempt8new-IXIT1HHVarden1D15") ## "testing")  ## "ResNet14"
+    parser.add_argument('--trainID', action="store", default="reproAttempt8new_100ep-IXIT1HHVarden1D15") ## "testing")  ## "ResNet14"
     parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
@@ -26,8 +26,8 @@ def getARGSParser():
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 256    
     # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_under_dummy.json")
     parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under.json")
-    parser.add_argument('--tblog_path', action="store", default="/run/media/soumick/Enterprise/OutputNewPipe/TBLogs")
-    parser.add_argument('--save_path', action="store", default="/run/media/soumick/Enterprise/OutputNewPipe/Results")
+    parser.add_argument('--tblog_path', action="store", default="/project/schatter/NCC1701repro/TBLogs")
+    parser.add_argument('--save_path', action="store", default="/project/schatter/NCC1701repro/Results")
     parser.add_argument('--cuda', action="store_true", default=True)
     parser.add_argument('--amp', action="store_true", default=False)
     parser.add_argument('--run_mode', action="store", default=4, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
@@ -36,7 +36,7 @@ def getARGSParser():
     parser.add_argument('--fftnorm', action="store", default="ortho")
 
     #Training params
-    parser.add_argument('--num_epochs', action="store", default=50, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
+    parser.add_argument('--num_epochs', action="store", default=100, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
     parser.add_argument('--lr', action="store", default=0.0001, type=float)
     parser.add_argument('--lossID', action="store", default=3, type=int, help="Loss ID."+str(LOSSID))
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)
@@ -55,7 +55,8 @@ def getARGSParser():
     parser.add_argument('--contrast_augment', action="store", default=0, type=int, help="Whether to user contrast augmentations")
 
     #Network Params
-    parser.add_argument('--modelID', action="store", default=1, type=int, help="0: RecoNResNet, 1: ResNetHHPaper")
+    parser.add_argument('--modelID', action="store", default=0, type=int, help="0: RecoNResNet, 1: ResNetHHPaper")
+    parser.add_argument('--preweights_path', action="store", default="", help="checkpoint path for pre-loading")
     parser.add_argument('--is3D', action="store", default=0, type=int, help="Is it a 3D model?")
     parser.add_argument('--model_dataspace_inp', action="store", default=0, type=int, help="Dataspace of the model's input. 0: ImageSapce, 1: kSpace")
     parser.add_argument('--model_dataspace_gt', action="store", default=0, type=int, help="Dataspace of the model's groundturth. 0: ImageSapce, 1: kSpace")
@@ -63,7 +64,7 @@ def getARGSParser():
     parser.add_argument('--dataspace_out', action="store", default=0, type=int, help="Dataspace of the final output. 0: ImageSapce, 1: kSpace")
     parser.add_argument('--in_channels', action="store", default=1, type=int)
     parser.add_argument('--out_channels', action="store", default=1, type=int)
-    parser.add_argument('--model_res_blocks', action="store", default=5, type=int, help="For RecoNResNet")
+    parser.add_argument('--model_res_blocks', action="store", default=14, type=int, help="For RecoNResNet")
     parser.add_argument('--model_starting_nfeatures', action="store", default=64, type=int, help="For RecoNResNet, ShuffleUNet")
     parser.add_argument('--model_updown_blocks', action="store", default=2, type=int, help="For RecoNResNet")
     parser.add_argument('--model_do_batchnorm', action="store_true", default=False, help="For RecoNResNet")
@@ -76,7 +77,7 @@ def getARGSParser():
     parser.add_argument('--use_datacon', action="store_true", default=True, help="Use Data Consistency")
 
     parser.add_argument('--lr_decay_type', action="store", default=1, type=int, help='0: No Decay, 1: StepLR, 2: ReduceLROnPlateau')
-    parser.add_argument('--lr_decay_nepoch', action="store", default=25, type=int, help='Decay the learning rate after every Nth epoch')
+    parser.add_argument('--lr_decay_nepoch', action="store", default=50, type=int, help='Decay the learning rate after every Nth epoch')
     parser.add_argument('--lr_decay_rate', action="store", default=0.1, type=float, help='Decay rate')
 
     #Model tunes with lightning
@@ -105,7 +106,7 @@ def getARGSParser():
     parser.add_argument("-wnba", "--wnbactive", type=int, default=1, help="Use WandB")
     parser.add_argument("-wnbp", "--wnbproject", default='reproNCC1701', help="WandB: Name of the project")
     parser.add_argument("-wnbe", "--wnbentity", default='soumick', help="WandB: Name of the entity")
-    parser.add_argument("-wnbg", "--wnbgroup", default='ResNetHHPaper', help="WandB: Name of the group")
+    parser.add_argument("-wnbg", "--wnbgroup", default='RecoNResNet', help="WandB: Name of the group")
     parser.add_argument("-wnbpf", "--wnbprefix", default='', help="WandB: Prefix for TrainID")
     parser.add_argument("-wnbml", "--wnbmodellog", default='all', help="WandB: While watching the model, what to save: gradients, parameters, all, None")
     parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=100, help="WandB: The number of steps between logging gradients")

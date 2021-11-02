@@ -109,6 +109,10 @@ class Engine(object):
         self.hparams = hparams
         self.train_done = False
 
+        #Impliest that only testing a "preweights" checkpoint
+        if hparams.run_mode == 2 and bool(hparams.preweights_path):
+            self.train_done = True 
+
     def train(self):
         self.trainer.fit(self.model)
         self.train_done = True
