@@ -79,7 +79,8 @@ class ReconEngine(LightningModule):
         if self.hparams.forceNormAffine:
             self.init_transforms += [ForceAffine()]
         self.init_transforms += [IntensityNorm()]
-        dataspace_transforms = self.dataspace.getTransforms()
+        # dataspace_transforms = self.dataspace.getTransforms() #TODO: dataspace transforms are not in use
+        # self.init_transforms += dataspace_transforms
         if self.hparams.contrast_augment:
             self.aug_transforms += [getContrastAugs()]
         if self.hparams.taskID == 1 and not bool(self.hparams.train_path_inp): #if the task if MoCo and pre-corrupted vols are not supplied
