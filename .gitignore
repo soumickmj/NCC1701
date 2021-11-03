@@ -130,3 +130,8 @@ dmypy.json
 scratch.py
 wandb/*
 executors/UnderRecon/testold_repro.py
+Engineering/pLoss/ResNet14_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar
+Engineering/pLoss/SimpleU_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar
+Engineering/pLoss/VesselSeg_UNet3d_DeepSup.pth
+executors/UnderRecon/train_repro____.py
+Bridge/WarpDrives/ReconResNet/Resnet2Dv2b14.py
