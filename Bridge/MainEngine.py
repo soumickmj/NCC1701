@@ -2,13 +2,14 @@ import os
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch import optim
+import torch
 from .AuxiliaryEngines.ReconEngine import ReconEngine
 from pytorch_lightning.loggers import WandbLogger, TensorBoardLogger
 import sys
 import json
 from os.path import join as pjoin
 
-
+import tensorboard
 class Engine(object):
 
     def __init__(self, parser):        
@@ -61,10 +62,21 @@ class Engine(object):
                                         "min_lr": 0} #TODO: args. A lower bound on the learning rate of all param groups or each group respectively.
 
         if not hparams.non_deter:
-            seed_everything(hparams.seed, workers=True)
+            seed_everything(hparams.seed, workers=True)    
+
+        if hparams.resume:
+            if hparams.load_best:
+                checkpoint_dir = pjoin(hparams.save_path, hparams.run_name, "Checkpoints")
+                self.chkpoint = pjoin(checkpoint_dir, sorted([x for x in os.listdir(checkpoint_dir) if "epoch" in x])[-1])
+            else:
+                self.chkpoint = pjoin(hparams.save_path, hparams.run_name, "Checkpoints", "last.ckpt")
+        else:
+            self.chkpoint = None
 
         if hparams.taskID == 0 or hparams.taskID == 1:
             self.model = ReconEngine(**vars(hparams))
+            if hparams.run_mode == 2 and bool(self.chkpoint):
+                self.model.load_state_dict(torch.load(self.chkpoint)['state_dict']) #TODO ckpt_path is not working during testing if not trained in the same run. So loading explicitly. check why
         loggers = []
         if hparams.wnbactive:
             loggers.append(WandbLogger(name=hparams.run_name, id=hparams.run_name, project=hparams.wnbproject,
@@ -79,16 +91,7 @@ class Engine(object):
             dirpath=pjoin(hparams.save_path, hparams.run_name, "Checkpoints"),
             monitor='val_loss',
             save_last=True,
-        )        
-
-        if hparams.resume:
-            if hparams.load_best:
-                checkpoint_dir = pjoin(hparams.save_path, hparams.run_name, "Checkpoints")
-                self.chkpoint = pjoin(checkpoint_dir, sorted([x for x in os.listdir(checkpoint_dir) if "epoch" in x])[-1])
-            else:
-                self.chkpoint = pjoin(hparams.save_path, hparams.run_name, "Checkpoints", "last.ckpt")
-        else:
-            self.chkpoint = None
+        )    
 
         self.trainer = Trainer(
             logger=loggers,
@@ -126,7 +129,7 @@ class Engine(object):
             else:
                 self.trainer.test(model=self.model, test_dataloaders=self.model.test_dataloader())
         else:
-            self.trainer.test(model=self.model, test_dataloaders=self.model.test_dataloader(), ckpt_path=self.chkpoint)
+            self.trainer.test(model=self.model, test_dataloaders=self.model.test_dataloader())#, ckpt_path=self.chkpoint) #TODO: ckpt_path not working, check why
 
     def align(self):
         self.trainer.tune(self.model)

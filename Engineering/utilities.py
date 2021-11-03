@@ -1,5 +1,5 @@
-import os
 from collections import OrderedDict
+import os
 from async_timeout import sys
 import numpy as np
 import torch
@@ -127,22 +127,22 @@ class DataHandler:
 
     #Get kspace
 
-    def __getK(self, x, dataspace, k):
+    def __getK(self, x, dataspace, k, imnorm=False):
         if k is not None:
             return k
         elif dataspace == 1 or x is None:
             return x
         else:
-            return fftNc(data=x, dim=self.dataspace_op.data_dim, norm=self.dataspace_op.fftnorm)
+            return fftNc(data=x if not imnorm else x/x.max(), dim=self.dataspace_op.data_dim, norm=self.dataspace_op.fftnorm)
 
-    def getKInp(self):
-        return self.__getK(self.inp, self.dataspace_op.model_dataspace_inp, self.inpK)
+    def getKInp(self, imnorm=False):
+        return self.__getK(self.inp, self.dataspace_op.model_dataspace_inp, self.inpK, imnorm)
 
-    def getKGT(self):
-        return self.__getK(self.gt, self.dataspace_op.model_dataspace_gt, self.gtK)
+    def getKGT(self, imnorm=False):
+        return self.__getK(self.gt, self.dataspace_op.model_dataspace_gt, self.gtK, imnorm)
 
-    def getKOut(self):
-        return self.__getK(self.out, self.dataspace_op.dataspace_out, self.outK)
+    def getKOut(self, imnorm=False):
+        return self.__getK(self.out, self.dataspace_op.dataspace_out, self.outK, imnorm)
 
     def getKOutCorrected(self):
         return self.outCorrectedK
@@ -217,16 +217,17 @@ class ResSaver():
             metrics = None
       
         if datacon_operator is not None:
-            datumHandler.setOutCorrectedK(datacon_operator.apply(out_ksp=datumHandler.getKOut(), full_ksp=datumHandler.getKGT(), under_ksp=datumHandler.inpK))
-            outCorrected = abs(datumHandler.getImOutCorrected()).float().numpy()
+            datumHandler.setOutCorrectedK(datacon_operator.apply(out_ksp=datumHandler.getKOut(imnorm=True), full_ksp=datumHandler.getKGT(imnorm=True), under_ksp=datumHandler.inpK)) #TODO: param for imnorm
+            # outCorrected = abs(datumHandler.getImOutCorrected()).float().numpy()
+            outCorrected = datumHandler.getImOutCorrected().real.float().numpy() #TODO: param real v abs
             SaveNIFTI(out, os.path.join(outpath, "outCorrected.nii.gz"))
             if gt is not None: 
-                if self.do_norm:
-                    outCorrected = outCorrected/outCorrected.max()
-            outCorrected_metrics, outCorrected_ssimMAP, outCorrected_diff = calc_metircs(gt, outCorrected, tag="OutCorrected")
-            SaveNIFTI(outCorrected_ssimMAP, os.path.join(outpath, "ssimMAPOutCorrected.nii.gz"))
-            SaveNIFTI(outCorrected_diff, os.path.join(outpath, "diffOutCorrected.nii.gz"))
-            metrics = {**metrics, **outCorrected_metrics}
+                # if self.do_norm:
+                #     outCorrected = outCorrected/outCorrected.max()
+                outCorrected_metrics, outCorrected_ssimMAP, outCorrected_diff = calc_metircs(gt, outCorrected, tag="OutCorrected")
+                SaveNIFTI(outCorrected_ssimMAP, os.path.join(outpath, "ssimMAPOutCorrected.nii.gz"))
+                SaveNIFTI(outCorrected_diff, os.path.join(outpath, "diffOutCorrected.nii.gz"))
+                metrics = {**metrics, **outCorrected_metrics}
 
         return metrics
 

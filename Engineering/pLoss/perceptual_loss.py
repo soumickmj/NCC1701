@@ -5,7 +5,7 @@ import torch.nn as nn
 import torchvision
 
 # from utils.utils import *
-# from pytorch_msssim import SSIM, MSSSIM
+from pytorch_msssim import SSIM, MSSSIM
 from .Resnet2D import ResNet
 from .simpleunet import UNet
 from .VesselSeg_UNet3d_DeepSup import U_Net_DeepSup
