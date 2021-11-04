@@ -9,8 +9,8 @@ import sys
 
 
 def createTIOSubDS(
-    root_gt: str,
-    root_input: Optional[str] = None,
+    root_gt: Union[str, Sequence[str]],
+    root_input: Optional[Union[str, Sequence[str]]] = None,
     filename_filter: Optional[Union[str, Sequence[str]]] = None,
     split_csv: str = "",
     split: str = "",
@@ -21,13 +21,22 @@ def createTIOSubDS(
     aug_transforms: Optional[Callable] = None,
     transforms: Optional[Callable] = None,
 ) -> tio.SubjectsDataset:
-    if data_mode == "NIFTI":
-        files = glob(root_gt+"/**/*.nii", recursive=True) + glob(root_gt+"/**/*.nii.gz", recursive=True) +\
-            glob(root_gt+"/**/*.img", recursive=True) + \
-            glob(root_gt+"/**/*.img.gz", recursive=True)
-    else:
-        # TODO: DICOM read
-        sys.exit("DICOM read not implemented inside createTIOSubDS")
+
+    if type(root_gt) is not list:
+        root_gt = [root_gt]
+
+    if bool(root_input) and type(root_input) is not list:
+            root_input = [root_input]
+
+    files = []
+    for gt in root_gt:
+        if data_mode == "NIFTI":
+            files += glob(gt+"/**/*.nii", recursive=True) + glob(gt+"/**/*.nii.gz", recursive=True) +\
+                glob(gt+"/**/*.img", recursive=True) + \
+                glob(gt+"/**/*.img.gz", recursive=True)
+        else:
+            # TODO: DICOM read
+            sys.exit("DICOM read not implemented inside createTIOSubDS")
 
     if bool(filename_filter):
         if type(filename_filter) is str:
@@ -39,12 +48,13 @@ def createTIOSubDS(
         df = pd.read_csv(split_csv)[split]      
         df.dropna(inplace=True)  
         df = list(df)
-        files = [f for f in files if os.path.basename(f).split(".")[0] in df] #TODO: remember, this will give an error if the filename also has dots in the name, apart from the extension (for example abc.def.nii.gz. this will return abc only)
+        files = [f for f in files if any(d in f for d in df)]
 
     subjects = []
     for file in files:
         if bool(root_input):
-            file_in = file.replace(root_gt, root_input)
+            gt_id = [i for i,g in enumerate(root_gt) if g in file][0]
+            file_in = file.replace(root_gt[gt_id], root_input[gt_id])
             subjects.append(tio.Subject(
                 inp=tio.ScalarImage(file_in),
                 gt=tio.LabelMap(file) if isGTNonImg else tio.ScalarImage(file),

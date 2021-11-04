@@ -16,14 +16,15 @@ def getARGSParser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--taskID', action="store", type=int, default=0, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
     parser.add_argument('--trainID', action="store", default="newpipe_Trial1") ## "testing")  ## "ResNet14"
-    parser.add_argument('--resume', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
+    parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
     parser.add_argument('--seed', action="store", default=1701, type=int)
     parser.add_argument('--num_workers', action="store", default=12, type=int)
     parser.add_argument('--batch_size', action="store", default=24, type=int) ## 256    
     parser.add_argument('--accumulate_gradbatch', action="store", default=2, type=int) ## 256    
-    parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_under.json")
+    # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_moco_multiIXI.json")
+    parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under.json")
     parser.add_argument('--tblog_path', action="store", default="TBLogs")
     parser.add_argument('--save_path', action="store", default="Results")
     parser.add_argument('--cuda', action="store_true", default=True)
@@ -54,6 +55,8 @@ def getARGSParser():
 
     #Network Params
     parser.add_argument('--modelID', action="store", default=0, type=int, help="0: RecoNResNet, 1: ShuffleUNet")
+    parser.add_argument('--preweights_path', action="store", default="", help="checkpoint path for pre-loading")
+    parser.add_argument('--is3D', action="store", default=0, type=int, help="Is it a 3D model?")
     parser.add_argument('--model_dataspace_inp', action="store", default=0, type=int, help="Dataspace of the model's input. 0: ImageSapce, 1: kSpace")
     parser.add_argument('--model_dataspace_gt', action="store", default=0, type=int, help="Dataspace of the model's groundturth. 0: ImageSapce, 1: kSpace")
     parser.add_argument('--model_dataspace_out', action="store", default=0, type=int, help="Dataspace of the model's output. 0: ImageSapce, 1: kSpace")
