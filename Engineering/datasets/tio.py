@@ -51,7 +51,9 @@ def createTIOSubDS(
         files = [f for f in files if any(d in f for d in df)]
 
     subjects = []
+    filenames = []
     for file in files:
+        filenames.append(os.path.basename(file))
         if bool(root_input):
             gt_id = [i for i,g in enumerate(root_gt) if g in file][0]
             file_in = file.replace(root_gt[gt_id], root_input[gt_id])
@@ -85,7 +87,7 @@ def createTIOSubDS(
         transforms = tio.Compose(transforms)
 
     subjects_dataset = tio.SubjectsDataset(subjects, transform=transforms)
-    return subjects_dataset
+    return subjects_dataset, filenames
 
 def create_patchQs(train_subs, val_subs, patch_size, patch_qlen, patch_per_vol, inference_strides): 
     train_queue = None

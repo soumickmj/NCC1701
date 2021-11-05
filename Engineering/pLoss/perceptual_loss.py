@@ -5,7 +5,7 @@ import torch.nn as nn
 import torchvision
 
 # from utils.utils import *
-from pytorch_msssim import SSIM, MSSSIM
+from pytorch_msssim import SSIM, MS_SSIM
 from .Resnet2D import ResNet
 from .simpleunet import UNet
 from .VesselSeg_UNet3d_DeepSup import U_Net_DeepSup
@@ -159,7 +159,7 @@ class PerceptualLoss(torch.nn.Module): #currently configured for 1 channel only,
         if loss_type == "L1":
             self.loss_func = torch.nn.functional.l1_loss
         elif loss_type == "MultiSSIM":
-            self.loss_func = MSSSIM(reduction='mean').to(device)
+            self.loss_func = MS_SSIM(reduction='mean').to(device)
         elif loss_type == "SSIM3D":
             self.loss_func = SSIM(data_range=1, size_average=True, channel=1, spatial_dims=3).to(device)
         elif loss_type == "SSIM2D":

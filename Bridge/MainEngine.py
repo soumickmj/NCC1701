@@ -46,6 +46,9 @@ class Engine(object):
             l,w,d = hparams.patch_size.split(',')
             hparams.patch_size = (int(l),int(w),int(d))
             hparams.input_shape = hparams.patch_size
+        else:
+            l,w,d = hparams.input_shape.split(',')
+            hparams.input_shape = (int(l),int(w),int(d))
 
         if hparams.lr_decay_type == 1:
             hparams.lrScheduler_func = optim.lr_scheduler.StepLR

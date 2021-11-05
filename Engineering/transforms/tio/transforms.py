@@ -251,14 +251,28 @@ class RandomMotionGhostingV2(RandomTransform, IntensityTransform, FourierTransfo
             num_ghosts: Tuple[int] = (2, 5),
             intensity: Tuple[float] = (0.01, 0.75),
             restore: Tuple[float] = (0.01, 1.0),
-            motion_image_interpolation: str = 'linear',
+            image_interpolation: str = 'linear',
             ghosting_axes: Tuple[int] = (0, 1),
             p_motion: float = 1,
             p_ghosting: float = 1,
-            norm_after_transform: bool = True,
             **kwargs
     ):
         super().__init__(**kwargs)
+        if type(degrees) == str:
+            degrees = tuple([float(tmp) for tmp in degrees.split(",")])
+        if type(translation) == str:
+            translation = tuple([float(tmp) for tmp in translation.split(",")])
+        if type(num_transforms) == str:
+            num_transforms = tuple([int(tmp) for tmp in num_transforms.split(",")])
+        if type(num_ghosts) == str:
+            num_ghosts = tuple([int(tmp) for tmp in num_ghosts.split(",")])
+        if type(intensity) == str:
+            intensity = tuple([float(tmp) for tmp in intensity.split(",")])
+        if type(restore) == str:
+            restore = tuple([float(tmp) for tmp in restore.split(",")])
+        if type(ghosting_axes) == str:
+            ghosting_axes = tuple([int(tmp) for tmp in ghosting_axes.split(",")])
+
         self.transform = getRandomMotionGhostingFast(
             degrees=degrees,
             translation=translation,
@@ -266,7 +280,7 @@ class RandomMotionGhostingV2(RandomTransform, IntensityTransform, FourierTransfo
             num_ghosts=num_ghosts,
             intensity=intensity,
             restore=restore,
-            motion_image_interpolation=motion_image_interpolation,
+            motion_image_interpolation=image_interpolation,
             ghosting_axes=ghosting_axes,
             p_motion=p_motion,
             p_ghosting=p_ghosting

@@ -20,7 +20,7 @@ from Engineering.transforms.tio.transforms import (ForceAffine, IntensityNorm,
 from Engineering.utilities import CustomInitialiseWeights, DataHandler, DataSpaceHandler, ResSaver, getSSIM, log_images
 from pytorch_lightning.core.lightning import LightningModule
 from pytorch_ssim import SSIM
-# from pytorch_msssim import SSIM, MSSSIM
+from pytorch_msssim import MS_SSIM
 from torch import nn
 from torch.utils.data.dataloader import DataLoader
 from Engineering.data_consistency import DataConsistency
@@ -62,7 +62,7 @@ class ReconEngine(LightningModule):
         elif self.hparams.lossID == 1:
             self.loss = nn.L1Loss(reduction='mean')
         elif self.hparams.lossID == 2:
-            self.loss = MSSSIM(channel=self.hparams.out_channels).to(device)
+            self.loss = MS_SSIM(channel=self.hparams.out_channels).to(device)
         elif self.hparams.lossID == 3:
             self.loss = SSIM(channel=self.hparams.out_channels).to(device)
         else:
@@ -84,7 +84,8 @@ class ReconEngine(LightningModule):
         if self.hparams.contrast_augment:
             self.aug_transforms += [getContrastAugs()]
         if self.hparams.taskID == 1 and not bool(self.hparams.train_path_inp): #if the task if MoCo and pre-corrupted vols are not supplied
-            self.transforms += [RandomMotionGhostingV2(), IntensityNorm()] 
+            motion_params = {k.split('motion_')[1]: v for k, v in self.hparams.items() if k.startswith('motion')}
+            self.transforms += [RandomMotionGhostingV2(**motion_params), IntensityNorm()] 
 
         self.static_metamat = sio.loadmat(self.hparams.static_metamat_file) if bool(self.hparams.static_metamat_file) else None
         if self.hparams.taskID == 0 and self.hparams.use_datacon:
@@ -144,10 +145,10 @@ class ReconEngine(LightningModule):
         if not self.hparams.is3D:
             prediction = prediction.unsqueeze(-1)
         if bool(self.hparams.patch_size):
-            self.patch_aggregators[args[0]['filename'][0]].add_batch(
+            self.out_aggregators[args[0]['filename'][0]].add_batch(
                 prediction.detach().cpu(), args[0][tio.LOCATION])
         else:
-            sys.exit("Test step only implemented for patching mode")
+            self.out_aggregators[args[0]['filename'][0]] = prediction.detach().cpu()
         return {'test_loss': loss}
 
     def training_epoch_end(self, outputs: List[Any]) -> None:
@@ -165,18 +166,24 @@ class ReconEngine(LightningModule):
             outputs = sum(outputs, [])
         avg_loss = torch.stack([x['test_loss'] for x in outputs]).median()
         self.log('test_loss', avg_loss)
-        filenames = self.patch_aggregators.keys()
+        filenames = self.out_aggregators.keys()
         test_metrics = []
         test_ssim = []
         for filename in filenames:
-            out = self.patch_aggregators[filename].get_output_tensor().squeeze()
+            if bool(self.hparams.patch_size):
+                out = self.out_aggregators[filename].get_output_tensor().squeeze()
+                sub = self.grid_samplers[filename].subject
+            else:
+                out = self.out_aggregators[filename].squeeze()
+                sub = self.test_subjectds[self.test_filenames.index(filename)]
+                assert sub['filename'] == filename, "The filename of the test subject doesn't match with the fetched test subject (Index issue!)"
+            inp = sub['inp']['data'].squeeze()
+            gt = sub['gt']['data'].squeeze()
             if isinstance(out, torch.HalfTensor):
                 out = out.float() #TODO: find a better way to do this. This might not be a good way
-            inp = self.grid_samplers[filename].subject['inp'][tio.DATA].squeeze()
-            gt = self.grid_samplers[filename].subject['gt'][tio.DATA].squeeze()
             dHandler = DataHandler(dataspace_op=self.dataspace, inp=inp, gt=gt, out=out)
-            dHandler.setInpK(self.grid_samplers[filename].subject['inpK'][tio.DATA].squeeze() if "inpK" in self.grid_samplers[filename].subject else None)
-            dHandler.setGTK(self.grid_samplers[filename].subject['gtK'][tio.DATA].squeeze() if "gtK" in self.grid_samplers[filename].subject else None)
+            dHandler.setInpK(sub['inpK']['data'].squeeze() if "inpK" in sub else None)
+            dHandler.setGTK(sub['gtK']['data'].squeeze() if "gtK" in sub else None)
             metrics = self.saver.CalcNSave(dHandler, filename.split(".")[0], datacon_operator=self.datacon)
             if metrics is not None:
                 metrics['file'] = filename
@@ -202,7 +209,7 @@ class ReconEngine(LightningModule):
             path_gt = self.hparams.test_path_gt
             path_inp = self.hparams.test_path_inp
             filename_filter = self.hparams.test_filename_filter
-        dataset = createTIOSubDS(root_gt=path_gt, root_input=path_inp, filename_filter=filename_filter, 
+        dataset, filenames = createTIOSubDS(root_gt=path_gt, root_input=path_inp, filename_filter=filename_filter, 
                                  split_csv=self.hparams.split_csv, split=split, data_mode=self.hparams.file_type,
                                  isKSpace=False, isGTNonImg=self.hparams.isGTNonImg, init_transforms=self.init_transforms,
                                  aug_transforms=self.aug_transforms if split != "test" else None, transforms=self.transforms)  # TODO: need to implement for kSpace
@@ -222,7 +229,10 @@ class ReconEngine(LightningModule):
                     train_subs=None, val_subs=dataset, patch_size=self.hparams.patch_size,
                     patch_qlen=self.hparams.patch_qlen, patch_per_vol=self.hparams.patch_per_vol,
                     inference_strides=self.hparams.patch_inference_strides)
-        return dataset
+        if split == "test":
+            return dataset, filenames
+        else:
+            return dataset
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(self.create_dataset(split="train"),
@@ -237,20 +247,22 @@ class ReconEngine(LightningModule):
                           pin_memory=True, num_workers=self.hparams.num_workers)
 
     def test_dataloader(self) -> DataLoader:
-        ds = self.create_dataset(split="test")
+        ds, filenames = self.create_dataset(split="test")
         if bool(self.hparams.patch_size):
-            self.patch_aggregators = {}
             self.grid_samplers = {}
         else:  # If its not patch-based, then it will only return one subject dataset instead of a list of grid_samplers
+            self.test_subjectds = ds
             ds = [ds]
         test_loaders = []
+        self.out_aggregators = {}
+        self.test_filenames = filenames
         for grid_sampler in ds:
             test_loaders.append(DataLoader(grid_sampler,
                                 shuffle=False,
                                 batch_size=self.hparams.batch_size,
                                 pin_memory=True, num_workers=self.hparams.num_workers))
             if bool(self.hparams.patch_size):
-                self.patch_aggregators[grid_sampler.subject.filename] = tio.inference.GridAggregator(
+                self.out_aggregators[grid_sampler.subject.filename] = tio.inference.GridAggregator(
                     grid_sampler, overlap_mode="average")
                 self.grid_samplers[grid_sampler.subject.filename] = grid_sampler
         return test_loaders

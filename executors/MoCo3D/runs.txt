@@ -1,0 +1,5 @@
+#FIN_V100
+CUDA_VISIBLE_DEVICES=0 python executors/MoCo3D/train.py
+CUDA_VISIBLE_DEVICES=0 python executors/MoCo3D/trainhigh.py
+CUDA_VISIBLE_DEVICES=1 python executors/MoCo3D/trainhigh.py --trainID ResNet5_fullVol_L1Loss_alemotion_lr1me4 --lr 0.0001
+CUDA_VISIBLE_DEVICES=0 python executors/MoCo3D/train.py --trainID ResNet5_fullVol_L1Loss_lowmotion_lr1me4 --lr 0.0001
