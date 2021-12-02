@@ -1,30 +1,35 @@
-from argparse import ArgumentParser
 import os
 import sys
+from argparse import ArgumentParser
 from os.path import join as pjoin
 from statistics import median
 from typing import Any, List
-import numpy as np
 
+import numpy as np
 import pandas as pd
+import scipy.io as sio
 import torch
 import torchio as tio
 from Bridge.WarpDrives.ReconResNet.ReconResNet import ResNet
-from Bridge.WarpDrives.ReconResNet.Resnet2Dv2b14 import ResNet as ResNetHHPaper
+from Engineering.data_consistency import DataConsistency
+from Engineering.datasets.medfile import createFileDS
 from Engineering.datasets.tio import create_patchQs, createTIOSubDS
 from Engineering.pLoss.perceptual_loss import PerceptualLoss
-from Engineering.transforms.tio.augmentations import (
-    AdaptiveHistogramEqualization, AdjustGamma, AdjustLog, AdjustSigmoid, getContrastAugs)
-from Engineering.transforms.tio.transforms import (ForceAffine, IntensityNorm,
-                                                   RandomMotionGhostingV2, getDataSpaceTransforms)
-from Engineering.utilities import CustomInitialiseWeights, DataHandler, DataSpaceHandler, ResSaver, getSSIM, log_images
+from Engineering.transforms import augmentations as pytAugmentations
+from Engineering.transforms import motion as pytMotion
+from Engineering.transforms import transforms as pytTransforms
+from Engineering.transforms.tio import augmentations as tioAugmentations
+from Engineering.transforms.tio import motion as tioMotion
+from Engineering.transforms.tio import transforms as tioTransforms
+from Engineering.utilities import (CustomInitialiseWeights, DataHandler,
+                                   DataSpaceHandler, ResSaver, getSSIM,
+                                   log_images)
 from pytorch_lightning.core.lightning import LightningModule
-from pytorch_ssim import SSIM
 from pytorch_msssim import MS_SSIM
+from pytorch_ssim import SSIM
 from torch import nn
 from torch.utils.data.dataloader import DataLoader
-from Engineering.data_consistency import DataConsistency
-import scipy.io as sio
+
 
 class ReconEngine(LightningModule):
     def __init__(self, **kwargs):
@@ -38,15 +43,12 @@ class ReconEngine(LightningModule):
             self.net = ResNet(in_channels=self.hparams.in_channels, out_channels=self.hparams.out_channels, res_blocks=self.hparams.model_res_blocks,
                               starting_nfeatures=self.hparams.model_starting_nfeatures, updown_blocks=self.hparams.model_updown_blocks,
                               is_relu_leaky=self.hparams.model_relu_leaky, do_batchnorm=self.hparams.model_do_batchnorm,
-                              res_drop_prob=self.hparams.model_drop_prob, is_replicatepad=1, out_act="sigmoid", forwardV=self.hparams.model_forwardV,
+                              res_drop_prob=self.hparams.model_drop_prob, is_replicatepad=self.hparams.model_is_replicatepad, out_act=self.hparams.model_out_act, forwardV=self.hparams.model_forwardV,
                               upinterp_algo=self.hparams.model_upinterp_algo, post_interp_convtrans=self.hparams.model_post_interp_convtrans, is3D=self.hparams.is3D)  # TODO think of 2D
             # self.net = nn.Conv3d(in_channels=1, out_channels=1, kernel_size=3, stride=1, padding=1)
-        elif self.hparams.modelID == 1:
-            self.net = ResNetHHPaper()
-            self.net.apply(CustomInitialiseWeights)
         else:
             # TODO: other models
-            sys.exit("Only ResNet has been implemented so far in ReconEngine")
+            sys.exit("Only ReconResNet has been implemented so far in ReconEngine")
 
         if bool(self.hparams.preweights_path):
             print("Pre-weights found, loding...")
@@ -70,30 +72,60 @@ class ReconEngine(LightningModule):
 
         self.dataspace = DataSpaceHandler(**self.hparams)
 
+        if self.hparams.ds_mode == 0:
+            trans = tioTransforms
+            augs = tioAugmentations
+        elif self.hparams.ds_mode == 1:
+            trans = pytTransforms
+            augs = pytAugmentations
+
         # TODO parameterised everything
         self.init_transforms = []
         self.aug_transforms = []
         self.transforms = []
-        if self.hparams.cannonicalResample:
+        if self.hparams.ds_mode == 0 and self.hparams.cannonicalResample:  # Only applicable for TorchIO
             self.init_transforms += [tio.ToCanonical(), tio.Resample('gt')]
-        if self.hparams.forceNormAffine:
-            self.init_transforms += [ForceAffine()]
-        self.init_transforms += [IntensityNorm()]
+        if self.hparams.ds_mode == 0 and self.hparams.forceNormAffine:  # Only applicable for TorchIO
+            self.init_transforms += [trans.ForceAffine()]
+        self.init_transforms += [trans.IntensityNorm()]
+        if self.hparams.croppad and self.hparams.ds_mode == 1:
+            self.init_transforms += [
+                trans.CropOrPad(size=self.hparams.input_shape)]
         # dataspace_transforms = self.dataspace.getTransforms() #TODO: dataspace transforms are not in use
         # self.init_transforms += dataspace_transforms
-        if self.hparams.contrast_augment:
-            self.aug_transforms += [getContrastAugs()]
-        if self.hparams.taskID == 1 and not bool(self.hparams.train_path_inp): #if the task if MoCo and pre-corrupted vols are not supplied
-            motion_params = {k.split('motion_')[1]: v for k, v in self.hparams.items() if k.startswith('motion')}
-            self.transforms += [RandomMotionGhostingV2(**motion_params), IntensityNorm()] 
+        if bool(self.hparams.random_crop) and self.hparams.ds_mode == 1:
+            self.aug_transforms += [augs.RandomCrop(
+                size=self.hparams.random_crop, p=self.hparams.p_random_crop)]
+        if self.hparams.p_contrast_augment > 0:
+            self.aug_transforms += [augs.getContrastAugs(
+                p=self.hparams.p_contrast_augment)]
+        # if the task if MoCo and pre-corrupted vols are not supplied
+        if self.hparams.taskID == 1 and not bool(self.hparams.train_path_inp):
+            if self.hparams.motion_mode == 0 and self.hparams.ds_mode == 0:
+                motion_params = {k.split('motionmg_')[
+                    1]: v for k, v in self.hparams.items() if k.startswith('motionmg')}
+                self.transforms += [tioMotion.RandomMotionGhostingFast(
+                    **motion_params), trans.IntensityNorm()]
+            elif self.hparams.motion_mode == 1 and self.hparams.ds_mode == 1 and not self.hparams.is3D:
+                self.transforms += [pytMotion.Motion2Dv0(
+                    sigma_range=self.hparams.motion_sigma_range, n_threads=self.hparams.motion_n_threads, p=self.hparams.motion_p)]
+            elif self.hparams.motion_mode == 2 and self.hparams.ds_mode == 1 and not self.hparams.is3D:
+                self.transforms += [pytMotion.Motion2Dv1(sigma_range=self.hparams.motion_sigma_range, n_threads=self.hparams.motion_n_threads,
+                                                         restore_original=self.hparams.motion_restore_original, p=self.hparams.motion_p)]
+            else:
+                sys.exit(
+                    "Error: invalid motion_mode, ds_mode, is3D combo. Please double check!")
 
-        self.static_metamat = sio.loadmat(self.hparams.static_metamat_file) if bool(self.hparams.static_metamat_file) else None
+        self.static_metamat = sio.loadmat(self.hparams.static_metamat_file) if bool(
+            self.hparams.static_metamat_file) else None
         if self.hparams.taskID == 0 and self.hparams.use_datacon:
-            self.datacon = DataConsistency(isRadial=self.hparams.is_radial, metadict=self.static_metamat)
+            self.datacon = DataConsistency(
+                isRadial=self.hparams.is_radial, metadict=self.static_metamat)
         else:
             self.datacon = None
 
-        input_shape = self.hparams.input_shape if self.hparams.is3D else self.hparams.input_shape[:-1]
+        input_shape = self.hparams.input_shape if self.hparams.is3D else self.hparams.input_shape[
+            :-1]
         self.example_input_array = torch.empty(
             self.hparams.batch_size, self.hparams.in_channels, *input_shape).float()
         self.saver = ResSaver(
@@ -108,7 +140,7 @@ class ReconEngine(LightningModule):
             'optimizer': optimizer,
             'monitor': 'val_loss',
         }
-        if self.hparams.lr_decay_type: #If this is not zero
+        if self.hparams.lr_decay_type:  # If this is not zero
             optim_dict["lr_scheduler"] = {
                 "scheduler": self.hparams.lrScheduler_func(optimizer, **self.hparams.lrScheduler_param_dict),
                 'monitor': 'val_loss',
@@ -119,7 +151,7 @@ class ReconEngine(LightningModule):
         return self.net(x)
 
     def slice_squeeze(self, x):
-        return x if self.hparams.is3D else x.squeeze(-1)
+        return x.squeeze(-1) if self.hparams.ds_mode == 0 and not self.hparams.is3D else x
 
     def shared_step(self, batch):
         prediction = self(self.slice_squeeze(batch['inp']['data']))
@@ -131,13 +163,16 @@ class ReconEngine(LightningModule):
     def training_step(self, batch, batch_idx):
         prediction, loss = self.shared_step(batch)
         self.log("running_loss", loss)
-        self.img_logger("train", batch_idx, self.slice_squeeze(batch['inp']['data']), prediction, self.slice_squeeze(batch['gt']['data']))
+        self.img_logger("train", batch_idx, self.slice_squeeze(
+            batch['inp']['data']), prediction, self.slice_squeeze(batch['gt']['data']))
         return loss
+
     def validation_step(self, batch, batch_idx):
         prediction, loss = self.shared_step(batch)
         ssim = getSSIM(self.slice_squeeze(batch['gt']['data']).cpu().numpy(),
                        prediction.detach().cpu().numpy(), data_range=1)
-        self.img_logger("val", batch_idx, self.slice_squeeze(batch['inp']['data']), prediction, self.slice_squeeze(batch['gt']['data']))
+        self.img_logger("val", batch_idx, self.slice_squeeze(
+            batch['inp']['data']), prediction, self.slice_squeeze(batch['gt']['data']))
         return {'val_loss': loss, 'val_ssim': ssim}
 
     def test_step(self, *args):
@@ -148,7 +183,8 @@ class ReconEngine(LightningModule):
             self.out_aggregators[args[0]['filename'][0]].add_batch(
                 prediction.detach().cpu(), args[0][tio.LOCATION])
         else:
-            self.out_aggregators[args[0]['filename'][0]] = prediction.detach().cpu()
+            self.out_aggregators[args[0]['filename']
+                                 [0]] = prediction.detach().cpu()
         return {'test_loss': loss}
 
     def training_epoch_end(self, outputs: List[Any]) -> None:
@@ -162,7 +198,8 @@ class ReconEngine(LightningModule):
         self.log('val_ssim', avg_ssim)
 
     def test_epoch_end(self, outputs: List[Any]) -> None:
-        if isinstance(outputs, list) and isinstance(outputs[0], list): #If multiple vols supplied during patch-based testing, outputs will be list of list, otherwise a list of dicts
+        # If multiple vols supplied during patch-based testing, outputs will be list of list, otherwise a list of dicts
+        if isinstance(outputs, list) and isinstance(outputs[0], list):
             outputs = sum(outputs, [])
         avg_loss = torch.stack([x['test_loss'] for x in outputs]).median()
         self.log('test_loss', avg_loss)
@@ -171,20 +208,26 @@ class ReconEngine(LightningModule):
         test_ssim = []
         for filename in filenames:
             if bool(self.hparams.patch_size):
-                out = self.out_aggregators[filename].get_output_tensor().squeeze()
+                out = self.out_aggregators[filename].get_output_tensor(
+                ).squeeze()
                 sub = self.grid_samplers[filename].subject
             else:
                 out = self.out_aggregators[filename].squeeze()
                 sub = self.test_subjectds[self.test_filenames.index(filename)]
-                assert sub['filename'] == filename, "The filename of the test subject doesn't match with the fetched test subject (Index issue!)"
+                assert sub[
+                    'filename'] == filename, "The filename of the test subject doesn't match with the fetched test subject (Index issue!)"
             inp = sub['inp']['data'].squeeze()
             gt = sub['gt']['data'].squeeze()
             if isinstance(out, torch.HalfTensor):
-                out = out.float() #TODO: find a better way to do this. This might not be a good way
-            dHandler = DataHandler(dataspace_op=self.dataspace, inp=inp, gt=gt, out=out)
-            dHandler.setInpK(sub['inpK']['data'].squeeze() if "inpK" in sub else None)
-            dHandler.setGTK(sub['gtK']['data'].squeeze() if "gtK" in sub else None)
-            metrics = self.saver.CalcNSave(dHandler, filename.split(".")[0], datacon_operator=self.datacon)
+                out = out.float()  # TODO: find a better way to do this. This might not be a good way
+            dHandler = DataHandler(dataspace_op=self.dataspace, inp=inp, gt=gt,
+                                   out=out, metadict=sub['metadict'] if 'metadict' in sub else None)
+            dHandler.setInpK(sub['inpK']['data'].squeeze()
+                             if "inpK" in sub else None)
+            dHandler.setGTK(sub['gtK']['data'].squeeze()
+                            if "gtK" in sub else None)
+            metrics = self.saver.CalcNSave(dHandler, filename.split(".")[
+                                           0], datacon_operator=self.datacon)
             if metrics is not None:
                 metrics['file'] = filename
                 test_metrics.append(metrics)
@@ -209,26 +252,38 @@ class ReconEngine(LightningModule):
             path_gt = self.hparams.test_path_gt
             path_inp = self.hparams.test_path_inp
             filename_filter = self.hparams.test_filename_filter
-        dataset, filenames = createTIOSubDS(root_gt=path_gt, root_input=path_inp, filename_filter=filename_filter, 
-                                 split_csv=self.hparams.split_csv, split=split, data_mode=self.hparams.file_type,
-                                 isKSpace=False, isGTNonImg=self.hparams.isGTNonImg, init_transforms=self.init_transforms,
-                                 aug_transforms=self.aug_transforms if split != "test" else None, transforms=self.transforms)  # TODO: need to implement for kSpace
+        params = {"root_gt": path_gt, "root_input": path_inp, "filename_filter": filename_filter,
+                  "split_csv": self.hparams.split_csv, "split": split, "data_mode": self.hparams.file_type,
+                  "isKSpace": False, "isGTNonImg": self.hparams.isGTNonImg, "init_transforms": self.init_transforms,
+                  "aug_transforms": self.aug_transforms if split != "test" else None, "transforms": self.transforms}  # TODO: need to implement for kSpace
+        if self.hparams.ds_mode == 0:
+            dataset, filenames = createTIOSubDS(**params)
+        elif self.hparams.ds_mode == 1:
+            params["is3D"] = self.hparams.is3D
+            params["mid_n"] = self.hparams.ds2D_mid_n
+            params["mid_per"] = self.hparams.ds2D_mid_per
+            params["random_n"] = self.hparams.ds2D_random_n
+            dataset, filenames = createFileDS(**params)
         if bool(self.hparams.patch_size):
-            if split == "train":
-                dataset, _, _ = create_patchQs(
-                    train_subs=dataset, val_subs=None, patch_size=self.hparams.patch_size,
-                    patch_qlen=self.hparams.patch_qlen, patch_per_vol=self.hparams.patch_per_vol,
-                    inference_strides=self.hparams.patch_inference_strides)
-            elif split == "val":
-                _, dataset, _ = create_patchQs(
-                    train_subs=None, val_subs=dataset, patch_size=self.hparams.patch_size,
-                    patch_qlen=self.hparams.patch_qlen, patch_per_vol=self.hparams.patch_per_vol,
-                    inference_strides=self.hparams.patch_inference_strides)
-            elif split == "test":
-                _, _, dataset = create_patchQs(
-                    train_subs=None, val_subs=dataset, patch_size=self.hparams.patch_size,
-                    patch_qlen=self.hparams.patch_qlen, patch_per_vol=self.hparams.patch_per_vol,
-                    inference_strides=self.hparams.patch_inference_strides)
+            if self.hparams.ds_mode == 0:
+                if split == "train":
+                    dataset, _, _ = create_patchQs(
+                        train_subs=dataset, val_subs=None, patch_size=self.hparams.patch_size,
+                        patch_qlen=self.hparams.patch_qlen, patch_per_vol=self.hparams.patch_per_vol,
+                        inference_strides=self.hparams.patch_inference_strides)
+                elif split == "val":
+                    _, dataset, _ = create_patchQs(
+                        train_subs=None, val_subs=dataset, patch_size=self.hparams.patch_size,
+                        patch_qlen=self.hparams.patch_qlen, patch_per_vol=self.hparams.patch_per_vol,
+                        inference_strides=self.hparams.patch_inference_strides)
+                elif split == "test":
+                    _, _, dataset = create_patchQs(
+                        train_subs=None, val_subs=dataset, patch_size=self.hparams.patch_size,
+                        patch_qlen=self.hparams.patch_qlen, patch_per_vol=self.hparams.patch_per_vol,
+                        inference_strides=self.hparams.patch_inference_strides)
+            else:
+                sys.exit(
+                    "Error: patch_size can only be used with ds_mode 0 (TorchIO)")
         if split == "test":
             return dataset, filenames
         else:

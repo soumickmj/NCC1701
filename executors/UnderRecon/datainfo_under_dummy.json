@@ -13,7 +13,7 @@
     "split_csv": "",
     "inplane_dims": [0,1],
     "dataspace_inp": 0,
-    "dataspace_gt": 1,
+    "dataspace_gt": 0,
     "static_metamat_file": "Cargo/1DVarden15Mask.mat",
     "is_radial": false,
     "isGTNonImg": false,

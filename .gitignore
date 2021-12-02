@@ -136,3 +136,7 @@ Engineering/pLoss/VesselSeg_UNet3d_DeepSup.pth
 executors/UnderRecon/train_repro____.py
 Bridge/WarpDrives/ReconResNet/Resnet2Dv2b14.py
 Bridge/WarpDrives/ReconResNet/Resnet2Dv2b14.py
+executors/UnderRecon/debugging.py
+.vscode/launch.json
+executors/MoCo3D/_archive_trainhigh.py
+executors/UnderRecon/_archive_train_repro.py

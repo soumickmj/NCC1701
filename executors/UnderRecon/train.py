@@ -14,8 +14,8 @@ seed_everything(1701)
 
 def getARGSParser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--taskID', action="store", type=int, default=1, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
-    parser.add_argument('--trainID', action="store", default="ResNet14_fullVol2D_L1Loss_lowmotion") ## "testing")  ## "ResNet14"
+    parser.add_argument('--taskID', action="store", type=int, default=0, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
+    parser.add_argument('--trainID', action="store", default="ResNet14_fullVol2D_L1Loss") ## "testing")  ## "ResNet14"
     parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
@@ -23,8 +23,8 @@ def getARGSParser():
     parser.add_argument('--num_workers', action="store", default=0, type=int)
     parser.add_argument('--batch_size', action="store", default=1, type=int)  
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 1 as default  
-    parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_moco_T1IXI.json")
-    # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_moco_dummy_v100.json")
+    # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_under_dummy.json")
+    parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under.json")
     parser.add_argument('--tblog_path', action="store", default="/home/schatter/Soumick/Output/NCC1701/MoCo3D/TBLogs")
     parser.add_argument('--save_path', action="store", default="/home/schatter/Soumick/Output/NCC1701/MoCo3D/Results")
     parser.add_argument('--cuda', action="store_true", default=True)
@@ -36,7 +36,7 @@ def getARGSParser():
 
     #Training params
     parser.add_argument('--num_epochs', action="store", default=2, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
-    parser.add_argument('--lr', action="store", default=1e-3, type=float)
+    parser.add_argument('--lr', action="store", default=0.0001, type=float)
     parser.add_argument('--lossID', action="store", default=1, type=int, help="Loss ID."+str(LOSSID))
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)
     parser.add_argument('--ploss_type', action="store", default="L1")
@@ -78,7 +78,7 @@ def getARGSParser():
     parser.add_argument('--model_out_act', action="store", default="sigmoid", help='For ReconResNet')
     parser.add_argument('--model_post_interp_convtrans', action="store_true", default=True, help="For ReconResNet")
     
-    parser.add_argument('--use_datacon', action="store_true", default=False, help="Use Data Consistency")
+    parser.add_argument('--use_datacon', action="store_true", default=True, help="Use Data Consistency")
 
     parser.add_argument('--lr_decay_type', action="store", default=1, type=int, help='0: No Decay, 1: StepLR, 2: ReduceLROnPlateau')
     parser.add_argument('--lr_decay_nepoch', action="store", default=50, type=int, help='Decay the learning rate after every Nth epoch')
@@ -126,10 +126,10 @@ def getARGSParser():
 
     #WnB related params
     parser.add_argument("-wnba", "--wnbactive", type=int, default=0, help="Use WandB")
-    parser.add_argument("-wnbp", "--wnbproject", default='MoCo3D', help="WandB: Name of the project")
-    parser.add_argument("-wnbe", "--wnbentity", default='mickmeddigit', help="WandB: Name of the entity")
+    parser.add_argument("-wnbp", "--wnbproject", default='UnderRecon', help="WandB: Name of the project")
+    parser.add_argument("-wnbe", "--wnbentity", default='soumick', help="WandB: Name of the entity")
     parser.add_argument("-wnbg", "--wnbgroup", default='NCC1701Set0', help="WandB: Name of the group")
-    parser.add_argument("-wnbpf", "--wnbprefix", default='trial', help="WandB: Prefix for TrainID")
+    parser.add_argument("-wnbpf", "--wnbprefix", default='', help="WandB: Prefix for TrainID")
     parser.add_argument("-wnbml", "--wnbmodellog", default='all', help="WandB: While watching the model, what to save: gradients, parameters, all, None")
     parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=100, help="WandB: The number of steps between logging gradients")
     

@@ -1,0 +1,22 @@
+{
+    "run_prefix": "",
+    "train_path_inp": "",
+    "train_path_gt": "",
+    "train_filename_filter": [],
+    "val_path_inp": "",
+    "val_path_gt": "",
+    "val_filename_filter": [],
+    "test_path_inp": "/run/media/soumick/Enterprise/Datasets/MRA/Hendrik/MiniTest/Padded/Radial30sp",
+    "test_path_gt": "/run/media/soumick/Enterprise/Datasets/MRA/Hendrik/MiniTest/Padded/fully",
+    "test_filename_filter": [],
+    "file_type": "NIFTI",
+    "split_csv": "",
+    "inplane_dims": [0,1],
+    "dataspace_inp": 0,
+    "dataspace_gt": 0,
+    "static_metamat_file": "/run/media/soumick/Enterprise/Datasets/MRA/Hendrik/MiniTest/Padded/Radial30sp/RadialGA30sp.mat",
+    "is_radial": true,
+    "isGTNonImg": false,
+    "forceNormAffine": true,
+    "cannonicalResample": false 
+}

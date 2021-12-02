@@ -1,12 +1,12 @@
 from typing import Tuple
 
-import numpy as np
+import torchvision
 import torch
 import torchio as tio
-from skimage import exposure
 from torchio.transforms import IntensityTransform
 from torchio.transforms.augmentation import RandomTransform
 
+from Engineering.transforms import augmentations as cusAugs
 
 class AdaptiveHistogramEqualization(RandomTransform, IntensityTransform):
     def __init__(
@@ -17,9 +17,7 @@ class AdaptiveHistogramEqualization(RandomTransform, IntensityTransform):
             **kwargs
     ):
         super().__init__(**kwargs)
-        self.kernel_size = kernel_size
-        self.clip_limit = clip_limit
-        self.nbins = nbins
+        self.transformer = cusAugs.AdaptiveHistogramEqualization(kernel_size=kernel_size, clip_limit=clip_limit, nbins=nbins, applyonly=True)
 
     def apply_transform(self, subject: tio.Subject) -> tio.Subject:
         for name, image in self.get_images_dict(subject).items():
@@ -28,8 +26,7 @@ class AdaptiveHistogramEqualization(RandomTransform, IntensityTransform):
             for tensor in image.data:
                 isPYTTensor = type(tensor) is torch.Tensor
                 tensor = tensor.cpu().numpy() if isPYTTensor else tensor
-                transformed_tensor = exposure.equalize_adapthist(tensor, kernel_size=np.random.randint(
-                    self.kernel_size[0], high=self.kernel_size[1], size=(1))[0], clip_limit=self.clip_limit, nbins=self.nbins).astype(tensor.dtype)
+                transformed_tensor = self.transformer(tensor)
                 transformed_tensors.append(torch.from_numpy(
                     transformed_tensor) if isPYTTensor else transformed_tensor)
             image.set_data(torch.stack(transformed_tensors))
@@ -44,8 +41,7 @@ class AdjustGamma(RandomTransform, IntensityTransform):
             **kwargs
     ):
         super().__init__(**kwargs)
-        self.gamma = gamma
-        self.gain = gain
+        self.transformer = cusAugs.AdjustGamma(gamma=gamma, gain=gain, applyonly=True)
 
     def apply_transform(self, subject: tio.Subject) -> tio.Subject:
         for name, image in self.get_images_dict(subject).items():
@@ -54,8 +50,7 @@ class AdjustGamma(RandomTransform, IntensityTransform):
             for tensor in image.data:
                 isPYTTensor = type(tensor) is torch.Tensor
                 tensor = tensor.cpu().numpy() if isPYTTensor else tensor
-                transformed_tensor = exposure.adjust_gamma(tensor, gamma=np.random.uniform(
-                    self.gamma[0], self.gamma[1], 1)[0], gain=self.gain).astype(tensor.dtype)
+                transformed_tensor = self.transformer(tensor)
                 transformed_tensors.append(torch.from_numpy(
                     transformed_tensor) if isPYTTensor else transformed_tensor)
             image.set_data(torch.stack(transformed_tensors))
@@ -71,9 +66,7 @@ class AdjustSigmoid(RandomTransform, IntensityTransform):
             **kwargs
     ):
         super().__init__(**kwargs)
-        self.cutoff = cutoff
-        self.gain = gain
-        self.inv = inv
+        self.transformer = cusAugs.AdjustSigmoid(cutoff=cutoff, gain=gain, inv=inv, applyonly=True)
 
     def apply_transform(self, subject: tio.Subject) -> tio.Subject:
         for name, image in self.get_images_dict(subject).items():
@@ -82,10 +75,7 @@ class AdjustSigmoid(RandomTransform, IntensityTransform):
             for tensor in image.data:
                 isPYTTensor = type(tensor) is torch.Tensor
                 tensor = tensor.cpu().numpy() if isPYTTensor else tensor
-                transformed_tensor = exposure.adjust_sigmoid(tensor, cutoff=np.random.uniform(self.cutoff[0], self.cutoff[1], 1)[0],
-                                                             gain=np.random.randint(
-                                                                 self.gain[0], high=self.gain[1], size=(1))[0],
-                                                             inv=self.inv).astype(tensor.dtype)
+                transformed_tensor = self.transformer(tensor)
                 transformed_tensors.append(torch.from_numpy(
                     transformed_tensor) if isPYTTensor else transformed_tensor)
             image.set_data(torch.stack(transformed_tensors))
@@ -100,8 +90,7 @@ class AdjustLog(RandomTransform, IntensityTransform):
             **kwargs
     ):
         super().__init__(**kwargs)
-        self.gain = gain
-        self.inv = inv
+        self.transformer = cusAugs.AdjustLog(gain=gain, inv=inv, applyonly=True)
 
     def apply_transform(self, subject: tio.Subject) -> tio.Subject:
         for name, image in self.get_images_dict(subject).items():
@@ -110,19 +99,18 @@ class AdjustLog(RandomTransform, IntensityTransform):
             for tensor in image.data:
                 isPYTTensor = type(tensor) is torch.Tensor
                 tensor = tensor.cpu().numpy() if isPYTTensor else tensor
-                transformed_tensor = np.abs(exposure.adjust_log(tensor, gain=np.random.uniform(
-                    self.gain[0], self.gain[1], 1)[0], inv=self.inv)).astype(tensor.dtype)
+                transformed_tensor = self.transformer(tensor)
                 transformed_tensors.append(torch.from_numpy(
                     transformed_tensor) if isPYTTensor else transformed_tensor)
             image.set_data(torch.stack(transformed_tensors))
         return subject
 
-def getContrastAugs():
+def getContrastAugs(p=0.75):
     aug_dict = {
             AdjustSigmoid(): 0.30,
             AdjustLog(): 0.30,
             AdjustGamma(): 0.30,
             AdaptiveHistogramEqualization(): 0.10,
         }
-    return tio.OneOf(aug_dict)
+    return torchvision.transforms.RandomApply([tio.OneOf(aug_dict)], p=p)
     #TODO create params for everything

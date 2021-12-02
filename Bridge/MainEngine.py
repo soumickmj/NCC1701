@@ -1,15 +1,18 @@
-import os
-from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning.callbacks import ModelCheckpoint
-from torch import optim
-import torch
-from .AuxiliaryEngines.ReconEngine import ReconEngine
-from pytorch_lightning.loggers import WandbLogger, TensorBoardLogger
-import sys
 import json
+import os
+import sys
 from os.path import join as pjoin
 
 import tensorboard
+import torch
+from pytorch_lightning import Trainer, seed_everything
+from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
+from torch import optim
+
+from .AuxiliaryEngines.ReconEngine import ReconEngine
+
+
 class Engine(object):
 
     def __init__(self, parser):        
@@ -47,8 +50,10 @@ class Engine(object):
             hparams.patch_size = (int(l),int(w),int(d))
             hparams.input_shape = hparams.patch_size
         else:
-            l,w,d = hparams.input_shape.split(',')
-            hparams.input_shape = (int(l),int(w),int(d))
+            in_shape = hparams.input_shape.split(',')
+            if len(in_shape) == 2:
+                in_shape = (int(in_shape[0]),int(in_shape[1]),1)
+            hparams.input_shape = (int(in_shape[0]),int(in_shape[1]),int(in_shape[2]))
 
         if hparams.lr_decay_type == 1:
             hparams.lrScheduler_func = optim.lr_scheduler.StepLR
@@ -93,7 +98,7 @@ class Engine(object):
         checkpoint_callback = ModelCheckpoint(
             dirpath=pjoin(hparams.save_path, hparams.run_name, "Checkpoints"),
             monitor='val_loss',
-            save_last=True,
+            save_last=True, 
         )    
 
         self.trainer = Trainer(
