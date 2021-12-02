@@ -3,6 +3,7 @@ The original code is from: https://raw.githubusercontent.com/facebookresearch/fa
 which has been modified for new PyTorch complex, and works for both PyTorch and Numpy
 """
 
+
 def complex_mul(x, y):
     """
     Complex multiplication.
@@ -11,11 +12,13 @@ def complex_mul(x, y):
     im = x.real * y.imag + x.imag * y.real
     return re + 1j * im
 
+
 def complex_conj(x):
     """
     Complex conjugate.
     """
     return x.real - 1j * x.imag
+
 
 def complex_abs(x):
     """

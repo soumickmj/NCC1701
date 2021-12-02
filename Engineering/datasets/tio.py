@@ -1,11 +1,12 @@
-import pandas as pd
-from typing import Literal, Optional, Sequence, Union, Callable
-from glob import glob
-import numpy as np
-import torch
-import torchio as tio
 import os
 import sys
+from glob import glob
+from typing import Callable, Literal, Optional, Sequence, Union
+
+import numpy as np
+import pandas as pd
+import torch
+import torchio as tio
 
 
 def createTIOSubDS(
@@ -26,7 +27,7 @@ def createTIOSubDS(
         root_gt = [root_gt]
 
     if bool(root_input) and type(root_input) is not list:
-            root_input = [root_input]
+        root_input = [root_input]
 
     files = []
     for gt in root_gt:
@@ -45,8 +46,8 @@ def createTIOSubDS(
             filt in f for filt in filename_filter)]
 
     if bool(split_csv):
-        df = pd.read_csv(split_csv)[split]      
-        df.dropna(inplace=True)  
+        df = pd.read_csv(split_csv)[split]
+        df.dropna(inplace=True)
         df = list(df)
         files = [f for f in files if any(d in f for d in df)]
 
@@ -55,7 +56,7 @@ def createTIOSubDS(
     for file in files:
         filenames.append(os.path.basename(file))
         if bool(root_input):
-            gt_id = [i for i,g in enumerate(root_gt) if g in file][0]
+            gt_id = [i for i, g in enumerate(root_gt) if g in file][0]
             file_in = file.replace(root_gt[gt_id], root_input[gt_id])
             subjects.append(tio.Subject(
                 inp=tio.ScalarImage(file_in),
@@ -69,7 +70,6 @@ def createTIOSubDS(
                 filename=os.path.basename(file),
                 processed=False
             ))
-            
 
     if isKSpace:
         # TODO: Image to kSpace transform
@@ -89,27 +89,31 @@ def createTIOSubDS(
     subjects_dataset = tio.SubjectsDataset(subjects, transform=transforms)
     return subjects_dataset, filenames
 
-def create_patchQs(train_subs, val_subs, patch_size, patch_qlen, patch_per_vol, inference_strides): 
+
+def create_patchQs(train_subs, val_subs, patch_size, patch_qlen, patch_per_vol, inference_strides):
     train_queue = None
     val_queue = None
-    grid_samplers = [] 
-    
+    grid_samplers = []
+
     if train_subs is not None:
         sampler = tio.data.UniformSampler(patch_size)
         train_queue = tio.Queue(
-                subjects_dataset=train_subs,
-                max_length=patch_qlen,
-                samples_per_volume=patch_per_vol,
-                sampler=sampler,
-                num_workers=0,
-                start_background=True
-            )
+            subjects_dataset=train_subs,
+            max_length=patch_qlen,
+            samples_per_volume=patch_per_vol,
+            sampler=sampler,
+            num_workers=0,
+            start_background=True
+        )
 
     if val_subs is not None:
-        stride_length, stride_width, stride_depth = inference_strides.split(',')
-        overlap = np.subtract(patch_size, (int(stride_length), int(stride_width), int(stride_depth)))           
+        stride_length, stride_width, stride_depth = inference_strides.split(
+            ',')
+        overlap = np.subtract(
+            patch_size, (int(stride_length), int(stride_width), int(stride_depth)))
         for i in range(len(val_subs)):
-            grid_sampler = tio.inference.GridSampler(val_subs[i], patch_size, overlap)
+            grid_sampler = tio.inference.GridSampler(
+                val_subs[i], patch_size, overlap)
             grid_samplers.append(grid_sampler)
         val_queue = torch.utils.data.ConcatDataset(grid_samplers)
 

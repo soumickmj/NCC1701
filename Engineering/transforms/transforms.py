@@ -1,10 +1,12 @@
+from copy import deepcopy
+from typing import Callable, Dict, Optional, Sequence, Tuple, Union
+
+import numpy as np
 import torch
 from Engineering.math.freq_trans import fftNc, ifftNc
-from typing import Union, Tuple, Callable, Optional, Sequence, Dict
-from copy import deepcopy
-import numpy as np
 
 ##################Master Classes###########################
+
 
 class SuperTransformer():
     def __init__(
@@ -12,10 +14,11 @@ class SuperTransformer():
             p: float = 1,
             include: Optional[Sequence[str]] = None,
             exclude: Optional[Sequence[str]] = None,
-            applyonly: bool = False, #To skip all sample-level processes and all params, just simply call apply on the supplied tensor
-            gt2inp: bool = False, 
+            # To skip all sample-level processes and all params, just simply call apply on the supplied tensor
+            applyonly: bool = False,
+            gt2inp: bool = False,
             **kwargs
-            ):
+    ):
         self.p = p
         self.include = [include] if type(include) is str else include
         self.exclude = [exclude] if type(exclude) is str else exclude
@@ -42,11 +45,12 @@ class SuperTransformer():
                 sample[k]['data'] = self.apply(sample[k]['data'])
         return sample
 
+
 class ApplyOneOf():
     def __init__(
             self,
             transforms_dict
-            ):
+    ):
         self.transforms_dict = transforms_dict
 
     def __call__(self, inp):
@@ -60,9 +64,10 @@ class ApplyOneOf():
 
 ################Transformation Functions###################
 
+
 def padIfNeeded(inp, size=None):
     inp_shape = inp.shape
-    pad = [(0,0),]*len(inp_shape)
+    pad = [(0, 0), ]*len(inp_shape)
     pad_requried = False
     for i in range(len(inp_shape)):
         if inp_shape[i] < size[i]:
@@ -74,17 +79,18 @@ def padIfNeeded(inp, size=None):
     else:
         return np.pad(inp, pad)
 
+
 def cropcentreIfNeeded(inp, size=None):
-    if len(inp.shape)==2:
+    if len(inp.shape) == 2:
         w, h = inp.shape
     else:
         w, h, d = inp.shape
     if bool(size[0]) and h > size[0]:
         diff = h-size[0]
-        inp = inp[diff//2:diff//2+size[0],...]
+        inp = inp[diff//2:diff//2+size[0], ...]
     if bool(size[1]) and w > size[1]:
         diff = w-size[1]
-        if len(inp.shape)==2:
+        if len(inp.shape) == 2:
             inp = inp[..., diff//2:diff//2+size[1]]
         else:
             inp = inp[:, diff//2:diff//2+size[1], :]
@@ -92,6 +98,7 @@ def cropcentreIfNeeded(inp, size=None):
         diff = d-size[2]
         inp = inp[..., diff//2:diff//2+size[2]]
     return inp
+
 
 class CropOrPad(SuperTransformer):
     def __init__(
@@ -123,20 +130,6 @@ class IntensityNorm(SuperTransformer):
         elif self.type == "divbymax":
             return inp / (inp.max() + np.finfo(np.float32).eps)
 
-class IntensityNorm(SuperTransformer):
-    def __init__(
-            self,
-            type: str = "minmax",
-            **kwargs
-    ):
-        super().__init__(**kwargs)
-        self.type = type
-
-    def apply(self, inp):
-        if self.type == "minmax":
-            return (inp - inp.min()) / (inp.max() - inp.min() + np.finfo(np.float32).eps)
-        elif self.type == "divbymax":
-            return inp / (inp.max() + np.finfo(np.float32).eps)
 
 class CutNoise(SuperTransformer):
     def __init__(
@@ -151,12 +144,13 @@ class CutNoise(SuperTransformer):
         inp[inp <= self.level] = 0
         return (inp-inp.min())/(inp.max()-inp.min()+np.finfo(np.float32).eps)
 
+
 class ChangeDataSpace(SuperTransformer):
     def __init__(
             self,
-            source_data_space, 
+            source_data_space,
             destin_data_space,
-            data_dim = (-3,-2,-1),
+            data_dim=(-3, -2, -1),
             **kwargs
     ):
         super().__init__(**kwargs)
@@ -170,15 +164,18 @@ class ChangeDataSpace(SuperTransformer):
         elif self.source_data_space == 1 and self.destin_data_space == 0:
             return ifftNc(inp, dim=self.data_dim)
 
+
 def getDataSpaceTransforms(dataspace_inp, model_dataspace_inp, dataspace_gt, model_dataspace_gt):
     if dataspace_inp == dataspace_gt and model_dataspace_inp == model_dataspace_gt and dataspace_inp != model_dataspace_inp:
         return [ChangeDataSpace(dataspace_inp, model_dataspace_inp)]
     else:
         trans = []
         if dataspace_inp != model_dataspace_inp and dataspace_inp != -1 and model_dataspace_inp != -1:
-            trans.append(ChangeDataSpace(dataspace_inp, model_dataspace_inp, include="inp"))
+            trans.append(ChangeDataSpace(
+                dataspace_inp, model_dataspace_inp, include="inp"))
         elif dataspace_gt != model_dataspace_gt and dataspace_gt != -1 and model_dataspace_gt != -1:
-            trans.append(ChangeDataSpace(dataspace_gt, model_dataspace_gt, include="gt"))
+            trans.append(ChangeDataSpace(
+                dataspace_gt, model_dataspace_gt, include="gt"))
         return trans
 
 ###########################################################

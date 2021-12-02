@@ -3,28 +3,31 @@ import math
 import torch
 import torch.nn as nn
 import torchvision
-
 # from utils.utils import *
-from pytorch_msssim import SSIM, MS_SSIM
+from pytorch_msssim import MS_SSIM, SSIM
+
 from .Resnet2D import ResNet
 from .simpleunet import UNet
 from .VesselSeg_UNet3d_DeepSup import U_Net_DeepSup
 
 
-class PerceptualLoss(torch.nn.Module): #currently configured for 1 channel only, with datarange as 1 for SSIM
+# currently configured for 1 channel only, with datarange as 1 for SSIM
+class PerceptualLoss(torch.nn.Module):
     def __init__(self, device="cuda:0", loss_model="densenet161", n_level=math.inf, resize=None, loss_type="L1", mean=[], std=[]):
         super(PerceptualLoss, self).__init__()
         blocks = []
 
-        if loss_model == "resnet2D": #TODO: not finished
+        if loss_model == "resnet2D":  # TODO: not finished
             model = ResNet(in_channels=1, out_channels=1).to(device)
-            chk = torch.load(r"./utils/pLoss/ResNet14_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
+            chk = torch.load(
+                r"./utils/pLoss/ResNet14_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
             model.load_state_dict(chk['state_dict'])
-        elif loss_model == "unet2D": 
+        elif loss_model == "unet2D":
             model = UNet(in_channels=1, out_channels=1, depth=5, wf=6, padding=True,
-                            batch_norm=False, up_mode='upsample', droprate=0.0, is3D=False, 
-                            returnBlocks=False, downPath=True, upPath=True).to(device)
-            chk = torch.load(r"./utils/pLoss/SimpleU_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
+                         batch_norm=False, up_mode='upsample', droprate=0.0, is3D=False,
+                         returnBlocks=False, downPath=True, upPath=True).to(device)
+            chk = torch.load(
+                r"./utils/pLoss/SimpleU_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
             model.load_state_dict(chk['state_dict'])
             blocks.append(model.down_path[0].block.eval())
             if n_level >= 2:
@@ -50,7 +53,8 @@ class PerceptualLoss(torch.nn.Module): #currently configured for 1 channel only,
                 )
         elif loss_model == "unet3Dds":
             model = U_Net_DeepSup().to(device)
-            chk = torch.load(r"./Engineering/pLoss/VesselSeg_UNet3d_DeepSup.pth", map_location=device)
+            chk = torch.load(
+                r"./Engineering/pLoss/VesselSeg_UNet3d_DeepSup.pth", map_location=device)
             model.load_state_dict(chk['state_dict'])
             blocks.append(model.Conv1.conv.eval())
             if n_level >= 2:
@@ -81,23 +85,25 @@ class PerceptualLoss(torch.nn.Module): #currently configured for 1 channel only,
                         model.Conv5.conv.eval()
                     )
                 )
-        elif loss_model == "resnext1012D": 
+        elif loss_model == "resnext1012D":
             model = torchvision.models.resnext101_32x8d()
-            model.conv1 = nn.Conv2d(1, model.conv1.out_channels, kernel_size=model.conv1.kernel_size, 
+            model.conv1 = nn.Conv2d(1, model.conv1.out_channels, kernel_size=model.conv1.kernel_size,
                                     stride=model.conv1.stride, padding=model.conv1.padding, bias=False if model.conv1.bias is None else True)
-            model.fc = nn.Linear(in_features=model.fc.in_features, out_features=33, bias=False if model.fc.bias is None else True)
+            model.fc = nn.Linear(in_features=model.fc.in_features,
+                                 out_features=33, bias=False if model.fc.bias is None else True)
             model.to(device)
             # chk = torch.load(r"./utils/pLoss/ResNet14_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
             # model.load_state_dict(chk['state_dict'])
-            chk = torch.load(r"./utils/pLoss/ResNeXt-3-class-best-latest.pth", map_location=device)
-            ## model.load_state_dict(chk['state_dict'])
+            chk = torch.load(
+                r"./utils/pLoss/ResNeXt-3-class-best-latest.pth", map_location=device)
+            # model.load_state_dict(chk['state_dict'])
             blocks.append(
-                    nn.Sequential(
-                        model.conv1.eval(),
-                        model.bn1.eval(),
-                        model.relu.eval(),
-                    )
+                nn.Sequential(
+                    model.conv1.eval(),
+                    model.bn1.eval(),
+                    model.relu.eval(),
                 )
+            )
             if n_level >= 2:
                 blocks.append(
                     nn.Sequential(
@@ -111,23 +117,24 @@ class PerceptualLoss(torch.nn.Module): #currently configured for 1 channel only,
                 blocks.append(model.layer3.eval())
             if n_level >= 5:
                 blocks.append(model.layer4.eval())
-        elif loss_model == "densenet161": 
+        elif loss_model == "densenet161":
             model = torchvision.models.densenet161()
-            model.features.conv0 = nn.Conv2d(1, model.features.conv0.out_channels, kernel_size=model.features.conv0.kernel_size, 
-                                            stride=model.features.conv0.stride, padding=model.features.conv0.padding, 
-                                            bias=False if model.features.conv0.bias is None else True)
-            model.classifier = nn.Linear(in_features=model.classifier.in_features, out_features=33, bias=False if model.classifier.bias is None else True)
+            model.features.conv0 = nn.Conv2d(1, model.features.conv0.out_channels, kernel_size=model.features.conv0.kernel_size,
+                                             stride=model.features.conv0.stride, padding=model.features.conv0.padding,
+                                             bias=False if model.features.conv0.bias is None else True)
+            model.classifier = nn.Linear(in_features=model.classifier.in_features,
+                                         out_features=33, bias=False if model.classifier.bias is None else True)
             model.to(device)
             # chk = torch.load(r"./utils/pLoss/ResNet14_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
             # model.load_state_dict(chk['state_dict'])
             model = model.features
             blocks.append(
-                    nn.Sequential(
-                        model.conv0.eval(),
-                        model.norm0.eval(),
-                        model.relu0.eval(),
-                    )
+                nn.Sequential(
+                    model.conv0.eval(),
+                    model.norm0.eval(),
+                    model.relu0.eval(),
                 )
+            )
             if n_level >= 2:
                 blocks.append(
                     nn.Sequential(
@@ -145,12 +152,13 @@ class PerceptualLoss(torch.nn.Module): #currently configured for 1 channel only,
         for bl in blocks:
             for params in bl.parameters():
                 params.requires_grad = False
-                
+
         self.blocks = nn.ModuleList(blocks)
         self.transform = nn.functional.interpolate
         if (mean is not None and len(mean) > 1) and (std is not None and len(std) > 1) and (len(mean) == len(std)):
-            self.mean = nn.Parameter(torch.tensor(mean).view(1,len(mean),1,1))
-            self.std = nn.Parameter(torch.tensor(std).view(1,len(std),1,1))
+            self.mean = nn.Parameter(
+                torch.tensor(mean).view(1, len(mean), 1, 1))
+            self.std = nn.Parameter(torch.tensor(std).view(1, len(std), 1, 1))
         else:
             self.mean = None
             self.std = None
@@ -161,17 +169,21 @@ class PerceptualLoss(torch.nn.Module): #currently configured for 1 channel only,
         elif loss_type == "MultiSSIM":
             self.loss_func = MS_SSIM(reduction='mean').to(device)
         elif loss_type == "SSIM3D":
-            self.loss_func = SSIM(data_range=1, size_average=True, channel=1, spatial_dims=3).to(device)
+            self.loss_func = SSIM(
+                data_range=1, size_average=True, channel=1, spatial_dims=3).to(device)
         elif loss_type == "SSIM2D":
-            self.loss_func = SSIM(data_range=1, size_average=True, channel=1, spatial_dims=2).to(device)
+            self.loss_func = SSIM(
+                data_range=1, size_average=True, channel=1, spatial_dims=2).to(device)
 
     def forward(self, input, target):
         if self.mean is not None:
             input = (input-self.mean) / self.std
             target = (target-self.mean) / self.std
         if self.resize:
-            input = self.transform(input, mode='trilinear' if len(input.shape) == 5 else 'bilinear', size=self.resize, align_corners=False)
-            target = self.transform(target, mode='trilinear' if len(input.shape) == 5 else 'bilinear', size=self.resize, align_corners=False)
+            input = self.transform(input, mode='trilinear' if len(
+                input.shape) == 5 else 'bilinear', size=self.resize, align_corners=False)
+            target = self.transform(target, mode='trilinear' if len(
+                input.shape) == 5 else 'bilinear', size=self.resize, align_corners=False)
         loss = 0.0
         x = input
         y = target
@@ -181,9 +193,10 @@ class PerceptualLoss(torch.nn.Module): #currently configured for 1 channel only,
             loss += self.loss_func(x, y)
         return loss
 
+
 if __name__ == '__main__':
     x = PerceptualLoss(resize=None).cuda()
-    a = torch.rand(2,1,24,24).cuda()
-    b = torch.rand(2,1,24,24).cuda()
-    l = x(a,b)
+    a = torch.rand(2, 1, 24, 24).cuda()
+    b = torch.rand(2, 1, 24, 24).cuda()
+    l = x(a, b)
     sdsd

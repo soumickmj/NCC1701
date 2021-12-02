@@ -1,14 +1,15 @@
 from typing import Tuple, Union
 
 import numpy as np
-from scipy.fftpack import ss_diff
 import torch
-from skimage import exposure
 import torchvision
-
-from Engineering.transforms.transforms import ApplyOneOf, SuperTransformer, padIfNeeded
+from Engineering.transforms.transforms import (ApplyOneOf, SuperTransformer,
+                                               padIfNeeded)
+from scipy.fftpack import ss_diff
+from skimage import exposure
 
 ################# Contrast Augmentations #########################
+
 
 class AdaptiveHistogramEqualization(SuperTransformer):
     def __init__(
@@ -25,8 +26,8 @@ class AdaptiveHistogramEqualization(SuperTransformer):
 
     def apply(self, inp):
         out = exposure.equalize_adapthist(inp, kernel_size=np.random.randint(
-                    self.kernel_size[0], high=self.kernel_size[1], size=(1))[0], clip_limit=self.clip_limit, nbins=self.nbins).astype(inp.dtype)
-        return (out-out.min())/(out.max()-out.min()+np.finfo(np.float32).eps) 
+            self.kernel_size[0], high=self.kernel_size[1], size=(1))[0], clip_limit=self.clip_limit, nbins=self.nbins).astype(inp.dtype)
+        return (out-out.min())/(out.max()-out.min()+np.finfo(np.float32).eps)
 
 
 class AdjustGamma(SuperTransformer):
@@ -42,8 +43,8 @@ class AdjustGamma(SuperTransformer):
 
     def apply(self, inp):
         out = exposure.adjust_gamma(inp, gamma=np.random.uniform(
-                    self.gamma[0], self.gamma[1], 1)[0], gain=self.gain).astype(inp.dtype)
-        return (out-out.min())/(out.max()-out.min()+np.finfo(np.float32).eps) 
+            self.gamma[0], self.gamma[1], 1)[0], gain=self.gain).astype(inp.dtype)
+        return (out-out.min())/(out.max()-out.min()+np.finfo(np.float32).eps)
 
 
 class AdjustSigmoid(SuperTransformer):
@@ -61,10 +62,10 @@ class AdjustSigmoid(SuperTransformer):
 
     def apply(self, inp):
         out = exposure.adjust_sigmoid(inp, cutoff=np.random.uniform(self.cutoff[0], self.cutoff[1], 1)[0],
-                                                             gain=np.random.randint(
-                                                                 self.gain[0], high=self.gain[1], size=(1))[0],
-                                                             inv=self.inv).astype(inp.dtype)
-        return (out-out.min())/(out.max()-out.min()+np.finfo(np.float32).eps) 
+                                      gain=np.random.randint(
+            self.gain[0], high=self.gain[1], size=(1))[0],
+            inv=self.inv).astype(inp.dtype)
+        return (out-out.min())/(out.max()-out.min()+np.finfo(np.float32).eps)
 
 
 class AdjustLog(SuperTransformer):
@@ -80,20 +81,22 @@ class AdjustLog(SuperTransformer):
 
     def apply(self, inp):
         out = np.abs(exposure.adjust_log(inp, gain=np.random.uniform(
-                    self.gain[0], self.gain[1], 1)[0], inv=self.inv)).astype(inp.dtype)
-        return (out-out.min())/(out.max()-out.min()+np.finfo(np.float32).eps) 
+            self.gain[0], self.gain[1], 1)[0], inv=self.inv)).astype(inp.dtype)
+        return (out-out.min())/(out.max()-out.min()+np.finfo(np.float32).eps)
+
 
 def getContrastAugs(p=0.75):
     aug_dict = {
-            AdjustSigmoid(): 0.30,
-            AdjustLog(): 0.30,
-            AdjustGamma(): 0.30,
-            AdaptiveHistogramEqualization(): 0.10,
-        }
+        AdjustSigmoid(): 0.30,
+        AdjustLog(): 0.30,
+        AdjustGamma(): 0.30,
+        AdaptiveHistogramEqualization(): 0.10,
+    }
     return torchvision.transforms.RandomApply([ApplyOneOf(aug_dict)], p=p)
-    #TODO create params for everything
+    # TODO create params for everything
 
 ################# Contrast Augmentations #########################
+
 
 class RandomCrop(SuperTransformer):
     def __init__(

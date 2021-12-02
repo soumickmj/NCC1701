@@ -1,22 +1,26 @@
 from collections import defaultdict
 from copy import deepcopy
 from typing import Tuple, Union
+
 import numpy as np
 import torch
-from torchio.transforms.augmentation import RandomTransform
-from torchio.transforms import IntensityTransform, FourierTransform, RandomMotion, RandomGhosting, Transform
-from torchio import Motion, Ghosting
 import torchio as tio
-from torchio import Subject
+from torchio import Ghosting, Motion, Subject
+from torchio.transforms import (FourierTransform, IntensityTransform,
+                                RandomGhosting, RandomMotion, Transform)
+from torchio.transforms.augmentation import RandomTransform
 
 ########### RandomMotionGhosting ##############
 
 ### Basic Version ###
+
+
 class RandomMotionGhosting(RandomTransform, IntensityTransform, FourierTransform):
     """
         Combines RandomMotion and RandomGhosting transforms of TorchIO into one transformation. 
         Randomly composes them during the application process for each subject
     """
+
     def __init__(
             self,
             degrees: Tuple[float] = (1.0, 3.0),
@@ -73,10 +77,13 @@ class RandomMotionGhosting(RandomTransform, IntensityTransform, FourierTransform
         return subject
 
 ### Support class(es) and function(s) for the Advanced version ###
+
+
 class RandomMotionExtended(RandomMotion):
     """
         Extends RandomMotion and gives the abbility to select the level randomly for each subject within a given range
     """
+
     def __init__(
         self,
         degrees: Tuple[float] = (1.0, 3.0),
@@ -114,6 +121,7 @@ class RandomGhostingExtended(RandomGhosting):
     """
         Extends RandomGhosting and gives the abbility to select the level randomly for each subject within a given range
     """
+
     def __init__(
         self,
         num_ghosts: Union[int, Tuple[int, int]] = (2, 5),
@@ -180,12 +188,15 @@ def getRandomMotionGhostingFast(
     return transform
 
 ### Extended / Faster Version ###
+
+
 class RandomMotionGhostingFast(RandomTransform, IntensityTransform, FourierTransform):
     """
         Combines RandomMotion and RandomGhosting transforms of TorchIO into one transformation. 
         Instead of Randomly composing them during the application process for each subject, this version uses the "Extened" version of those transforms to be able to
         apply without re-creating objects for each
     """
+
     def __init__(
             self,
             degrees: Tuple[float] = (1.0, 3.0),
@@ -206,7 +217,8 @@ class RandomMotionGhostingFast(RandomTransform, IntensityTransform, FourierTrans
         if type(translation) == str:
             translation = tuple([float(tmp) for tmp in translation.split(",")])
         if type(num_transforms) == str:
-            num_transforms = tuple([int(tmp) for tmp in num_transforms.split(",")])
+            num_transforms = tuple([int(tmp)
+                                   for tmp in num_transforms.split(",")])
         if type(num_ghosts) == str:
             num_ghosts = tuple([int(tmp) for tmp in num_ghosts.split(",")])
         if type(intensity) == str:
@@ -214,7 +226,8 @@ class RandomMotionGhostingFast(RandomTransform, IntensityTransform, FourierTrans
         if type(restore) == str:
             restore = tuple([float(tmp) for tmp in restore.split(",")])
         if type(ghosting_axes) == str:
-            ghosting_axes = tuple([int(tmp) for tmp in ghosting_axes.split(",")])
+            ghosting_axes = tuple([int(tmp)
+                                  for tmp in ghosting_axes.split(",")])
 
         self.transform = getRandomMotionGhostingFast(
             degrees=degrees,

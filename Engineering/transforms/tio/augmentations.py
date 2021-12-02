@@ -1,12 +1,12 @@
 from typing import Tuple
 
-import torchvision
 import torch
 import torchio as tio
+import torchvision
+from Engineering.transforms import augmentations as cusAugs
 from torchio.transforms import IntensityTransform
 from torchio.transforms.augmentation import RandomTransform
 
-from Engineering.transforms import augmentations as cusAugs
 
 class AdaptiveHistogramEqualization(RandomTransform, IntensityTransform):
     def __init__(
@@ -17,7 +17,8 @@ class AdaptiveHistogramEqualization(RandomTransform, IntensityTransform):
             **kwargs
     ):
         super().__init__(**kwargs)
-        self.transformer = cusAugs.AdaptiveHistogramEqualization(kernel_size=kernel_size, clip_limit=clip_limit, nbins=nbins, applyonly=True)
+        self.transformer = cusAugs.AdaptiveHistogramEqualization(
+            kernel_size=kernel_size, clip_limit=clip_limit, nbins=nbins, applyonly=True)
 
     def apply_transform(self, subject: tio.Subject) -> tio.Subject:
         for name, image in self.get_images_dict(subject).items():
@@ -41,7 +42,8 @@ class AdjustGamma(RandomTransform, IntensityTransform):
             **kwargs
     ):
         super().__init__(**kwargs)
-        self.transformer = cusAugs.AdjustGamma(gamma=gamma, gain=gain, applyonly=True)
+        self.transformer = cusAugs.AdjustGamma(
+            gamma=gamma, gain=gain, applyonly=True)
 
     def apply_transform(self, subject: tio.Subject) -> tio.Subject:
         for name, image in self.get_images_dict(subject).items():
@@ -66,7 +68,8 @@ class AdjustSigmoid(RandomTransform, IntensityTransform):
             **kwargs
     ):
         super().__init__(**kwargs)
-        self.transformer = cusAugs.AdjustSigmoid(cutoff=cutoff, gain=gain, inv=inv, applyonly=True)
+        self.transformer = cusAugs.AdjustSigmoid(
+            cutoff=cutoff, gain=gain, inv=inv, applyonly=True)
 
     def apply_transform(self, subject: tio.Subject) -> tio.Subject:
         for name, image in self.get_images_dict(subject).items():
@@ -90,7 +93,8 @@ class AdjustLog(RandomTransform, IntensityTransform):
             **kwargs
     ):
         super().__init__(**kwargs)
-        self.transformer = cusAugs.AdjustLog(gain=gain, inv=inv, applyonly=True)
+        self.transformer = cusAugs.AdjustLog(
+            gain=gain, inv=inv, applyonly=True)
 
     def apply_transform(self, subject: tio.Subject) -> tio.Subject:
         for name, image in self.get_images_dict(subject).items():
@@ -105,12 +109,13 @@ class AdjustLog(RandomTransform, IntensityTransform):
             image.set_data(torch.stack(transformed_tensors))
         return subject
 
+
 def getContrastAugs(p=0.75):
     aug_dict = {
-            AdjustSigmoid(): 0.30,
-            AdjustLog(): 0.30,
-            AdjustGamma(): 0.30,
-            AdaptiveHistogramEqualization(): 0.10,
-        }
+        AdjustSigmoid(): 0.30,
+        AdjustLog(): 0.30,
+        AdjustGamma(): 0.30,
+        AdaptiveHistogramEqualization(): 0.10,
+    }
     return torchvision.transforms.RandomApply([tio.OneOf(aug_dict)], p=p)
-    #TODO create params for everything
+    # TODO create params for everything

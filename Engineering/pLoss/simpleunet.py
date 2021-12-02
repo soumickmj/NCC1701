@@ -9,13 +9,13 @@ class UNetConvBlock(nn.Module):
         block = []
 
         block.append(layer_conv(in_size, out_size, kernel_size=3,
-                               padding=int(padding)))
+                                padding=int(padding)))
         block.append(nn.ReLU())
         if batch_norm:
             block.append(layer_batchnorm(out_size))
 
         block.append(layer_conv(out_size, out_size, kernel_size=3,
-                               padding=int(padding)))
+                                padding=int(padding)))
         block.append(nn.ReLU())
         if batch_norm:
             block.append(layer_batchnorm(out_size))
@@ -32,7 +32,7 @@ class UNetUpBlock(nn.Module):
         super(UNetUpBlock, self).__init__()
         if up_mode == 'upconv':
             self.up = layer_convtrans(in_size, out_size, kernel_size=2,
-                                         stride=2)
+                                      stride=2)
         elif up_mode == 'upsample':
             self.up = nn.Sequential(nn.Upsample(mode=interp_mode, scale_factor=2),
                                     layer_conv(in_size, out_size, kernel_size=1))
@@ -58,6 +58,7 @@ class UNetUpBlock(nn.Module):
         out = self.conv_block(out)
 
         return out
+
 
 class UNet(nn.Module):
     """
@@ -92,8 +93,9 @@ class UNet(nn.Module):
         x (Tensor): Input Tensor
         blocks (list of Tensors): If only upPath is set to True, then this will be used during the forward of the uppath. If not desired, then supply blank list
     """
+
     def __init__(self, in_channels=1, out_channels=1, depth=3, wf=6, padding=True,
-                 batch_norm=False, up_mode='upconv', droprate=0.0, is3D=False, 
+                 batch_norm=False, up_mode='upconv', droprate=0.0, is3D=False,
                  returnBlocks=False, downPath=True, upPath=True):
         super(UNet, self).__init__()
         layers = {}
@@ -119,9 +121,9 @@ class UNet(nn.Module):
 
         self.padding = padding
         self.depth = depth
-        self.dropout = layer_drop(p=droprate) 
+        self.dropout = layer_drop(p=droprate)
         prev_channels = in_channels
-        
+
         self.down_path = nn.ModuleList()
         for i in range(depth):
             if self.do_down:
@@ -129,7 +131,7 @@ class UNet(nn.Module):
                                                     padding, batch_norm))
             prev_channels = 2**(wf+i)
         self.latent_channels = prev_channels
-        
+
         self.up_path = nn.ModuleList()
         for i in reversed(range(depth - 1)):
             if self.do_up:
@@ -159,10 +161,11 @@ class UNet(nn.Module):
         else:
             return x
 
+
 if __name__ == '__main__':
     print('#### Test Case ###')
     from torch.autograd import Variable
-    x = Variable(torch.rand(2,1,64,64)).cuda()
+    x = Variable(torch.rand(2, 1, 64, 64)).cuda()
     model = UNet().cuda()
     y = model(x)
     print(y.shape)

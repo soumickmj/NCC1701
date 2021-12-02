@@ -1,19 +1,21 @@
-import nibabel as nib
-from torch.utils.data import Dataset
-import pandas as pd
-from typing import Literal, Optional, Sequence, Union, Callable
+import os
+import random
+import sys
 from glob import glob
+from typing import Callable, Literal, Optional, Sequence, Union
+
+import nibabel as nib
 import numpy as np
+import pandas as pd
 import torch
 import torchio as tio
-import os
-import sys
-import random
 import torchvision
+from torch.utils.data import Dataset
+
 
 def __count_volslice(vol_path, mid_n=-1, mid_per=-1, random_n=-1):
     n_slices = nib.load(vol_path).shape[-1]
-    slices = list(range(0,n_slices))
+    slices = list(range(0, n_slices))
     if mid_n == -1 and abs(mid_per) != 1:
         mid_n = round(n_slices * mid_per)
     if mid_n != -1:
@@ -27,7 +29,8 @@ def __count_volslice(vol_path, mid_n=-1, mid_per=-1, random_n=-1):
         "sliceID": slices
     }
     return datum_dict
-    
+
+
 class MRITorchDS(Dataset):
     def __init__(self, df, is3D=True, transform=None, expand_ch=True) -> None:
         self.df = df
@@ -40,7 +43,8 @@ class MRITorchDS(Dataset):
 
     def __getitem__(self, idx):
         datum = self.df.iloc[idx]
-        gt = np.array(nib.load(datum['gtpath']).dataobj[..., datum['sliceID']]) if not self.is3D else np.array(nib.load(datum['gtpath']).get_fdata())
+        gt = np.array(nib.load(datum['gtpath']).dataobj[..., datum['sliceID']]
+                      ) if not self.is3D else np.array(nib.load(datum['gtpath']).get_fdata())
         sample = {
             "gt": {
                 "data": gt.astype(np.float32),
@@ -49,7 +53,8 @@ class MRITorchDS(Dataset):
             "filename": datum["filename"]
         }
         if "inpath" in datum:
-            inp = np.array(nib.load(datum['inpath']).dataobj[..., datum['sliceID']]) if not self.is3D else np.array(nib.load(datum['inpath']).get_fdata())
+            inp = np.array(nib.load(datum['inpath']).dataobj[..., datum['sliceID']]) if not self.is3D else np.array(
+                nib.load(datum['inpath']).get_fdata())
             sample["inp"] = {
                 "data": inp.astype(np.float32),
                 "path": datum['inpath']
@@ -59,8 +64,10 @@ class MRITorchDS(Dataset):
         if self.expand_ch:
             sample['gt']['data'] = np.expand_dims(sample['gt']['data'], 0)
             if 'inp' in sample:
-                sample['inp']['data'] = np.expand_dims(sample['inp']['data'], 0)
+                sample['inp']['data'] = np.expand_dims(
+                    sample['inp']['data'], 0)
         return sample
+
 
 def createFileDS(
     root_gt: Union[str, Sequence[str]],
@@ -75,16 +82,16 @@ def createFileDS(
     aug_transforms: Optional[Callable] = None,
     transforms: Optional[Callable] = None,
     is3D: bool = False,
-    mid_n: int = -1, #Only if is3D=False
-    mid_per: float = -1, #Only if is3D=False
-    random_n: int = -1, #Only if is3D=False
+    mid_n: int = -1,  # Only if is3D=False
+    mid_per: float = -1,  # Only if is3D=False
+    random_n: int = -1,  # Only if is3D=False
 ) -> MRITorchDS:
 
     if type(root_gt) is not list:
         root_gt = [root_gt]
 
     if bool(root_input) and type(root_input) is not list:
-            root_input = [root_input]
+        root_input = [root_input]
 
     files = []
     for gt in root_gt:
@@ -103,8 +110,8 @@ def createFileDS(
             filt in f for filt in filename_filter)]
 
     if bool(split_csv):
-        df = pd.read_csv(split_csv)[split]      
-        df.dropna(inplace=True)  
+        df = pd.read_csv(split_csv)[split]
+        df.dropna(inplace=True)
         df = list(df)
         files = [f for f in files if any(d in f for d in df)]
 
@@ -115,7 +122,8 @@ def createFileDS(
             continue
         filenames.append(os.path.basename(file))
         if not is3D:
-            datum_dict = __count_volslice(file, mid_n=mid_n, mid_per=mid_per, random_n=random_n)
+            datum_dict = __count_volslice(
+                file, mid_n=mid_n, mid_per=mid_per, random_n=random_n)
             datum_dict["gtpath"] = datum_dict.pop("path")
         else:
             datum_dict = {
@@ -124,14 +132,14 @@ def createFileDS(
             }
         datum_dict["filename"] = [filenames[-1]] * len(datum_dict["sliceID"])
         if bool(root_input):
-            gt_id = [i for i,g in enumerate(root_gt) if g in file][0]
+            gt_id = [i for i, g in enumerate(root_gt) if g in file][0]
             file_in = file.replace(root_gt[gt_id], root_input[gt_id])
             if not os.path.isfile(file_in):
                 continue
             datum_dict["inpath"] = [file_in] * len(datum_dict["sliceID"])
-        data_dfs.append(pd.DataFrame.from_dict(datum_dict))        
+        data_dfs.append(pd.DataFrame.from_dict(datum_dict))
     data_df = pd.concat(data_dfs)
-    
+
     if isKSpace:
         # TODO: Image to kSpace transform
         sys.exit("Image to kSpace transform not implemented inside createTIOSubDS")
@@ -150,4 +158,6 @@ def createFileDS(
     dataset = MRITorchDS(data_df, is3D=is3D, transform=transforms)
     return dataset, filenames
 
-createFileDS("/run/media/soumick/Voyager/Data/Ale/kspcMoCo-IXI/single-contrast/test")
+
+createFileDS(
+    "/run/media/soumick/Voyager/Data/Ale/kspcMoCo-IXI/single-contrast/test")

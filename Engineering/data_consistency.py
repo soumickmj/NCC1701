@@ -1,8 +1,11 @@
 import sys
-import torch
-from Engineering.math.freq_trans import fftNc, ifftNc
-import torchkbnufft as tkbn
+
 import numpy as np
+import torch
+import torchkbnufft as tkbn
+
+from Engineering.math.freq_trans import fftNc, ifftNc
+
 
 class DataConsistency():
     def __init__(self, isRadial=False, metadict=None):
@@ -27,7 +30,7 @@ class DataConsistency():
         if not isinstance(mask, torch.Tensor):
             mask = torch.from_numpy(mask)
         mask = mask.to(out_ksp.device)
-        if len(full_ksp.shape) == 3: #TODO: do it nicely, its too strict now
+        if len(full_ksp.shape) == 3:  # TODO: do it nicely, its too strict now
             mask = mask.unsqueeze(-1)
         missing_mask = 1-mask
         missing_ksp = out_ksp * missing_mask
@@ -60,11 +63,11 @@ class DataConsistency():
         #     grid_size=Nd,
         # ).to(torch.complex64).to("cuda")
 
-        out_img = ifftNc(data=out_ksp, dim=(0,1), norm="ortho").to("cuda")
-        full_img = ifftNc(data=full_ksp, dim=(0,1), norm="ortho").to("cuda")
+        out_img = ifftNc(data=out_ksp, dim=(0, 1), norm="ortho").to("cuda")
+        full_img = ifftNc(data=full_ksp, dim=(0, 1), norm="ortho").to("cuda")
 
-        out_img = torch.permute(out_img, dims=(2,0,1)).unsqueeze(1)
-        full_img = torch.permute(full_img, dims=(2,0,1)).unsqueeze(1)
+        out_img = torch.permute(out_img, dims=(2, 0, 1)).unsqueeze(1)
+        full_img = torch.permute(full_img, dims=(2, 0, 1)).unsqueeze(1)
 
         # out_img = torch.permute(out_ksp, dims=(2,0,1)).unsqueeze(1).to("cuda")
         # full_img = torch.permute(full_ksp, dims=(2,0,1)).unsqueeze(1).to("cuda")
@@ -80,29 +83,34 @@ class DataConsistency():
         for i in range(1, nspokes):
             kx[:, i] = np.cos(ga) * kx[:, i - 1] - np.sin(ga) * ky[:, i - 1]
             ky[:, i] = np.sin(ga) * kx[:, i - 1] + np.cos(ga) * ky[:, i - 1]
-            
+
         ky = np.transpose(ky)
         kx = np.transpose(kx)
 
-        fullom = torch.from_numpy(np.stack((ky.flatten(), kx.flatten()), axis=0)).to(torch.float).to("cuda")
-        om = fullom[:,:30720]
-        invom = fullom[:,30720:]
-        dcfFullRes = tkbn.calc_density_compensation_function(ktraj=fullom, im_size=imsize).to("cuda")
+        fullom = torch.from_numpy(np.stack((ky.flatten(), kx.flatten()), axis=0)).to(
+            torch.float).to("cuda")
+        om = fullom[:, :30720]
+        invom = fullom[:, 30720:]
+        dcfFullRes = tkbn.calc_density_compensation_function(
+            ktraj=fullom, im_size=imsize).to("cuda")
 
         yUnder = nufft_ob(full_img, om, norm="ortho")
         yMissing = nufft_ob(out_img, invom, norm="ortho")
         # yUnder = intrp_ob(full_img, om)
         # yMissing = intrp_ob(out_img, invom)
-        yCorrected = torch.concat((yUnder,yMissing), dim=-1)
+        yCorrected = torch.concat((yUnder, yMissing), dim=-1)
         yCorrected = dcfFullRes * yCorrected
-        out_corrected_img = adjnufft_ob(yCorrected, fullom, norm="ortho").squeeze()
+        out_corrected_img = adjnufft_ob(
+            yCorrected, fullom, norm="ortho").squeeze()
 
         out_corrected_img = torch.abs(out_corrected_img)
-        out_corrected_img = (out_corrected_img - out_corrected_img.min()) / (out_corrected_img.max() - out_corrected_img.min())
+        out_corrected_img = (out_corrected_img - out_corrected_img.min()) / \
+            (out_corrected_img.max() - out_corrected_img.min())
 
-        out_corrected_img = torch.permute(out_corrected_img, dims=(1,2,0))
+        out_corrected_img = torch.permute(out_corrected_img, dims=(1, 2, 0))
 
-        out_corrected_ksp = fftNc(data=out_corrected_img, dim=(0,1), norm="ortho").cpu()
+        out_corrected_ksp = fftNc(
+            data=out_corrected_img, dim=(0, 1), norm="ortho").cpu()
         return out_corrected_ksp
 
     def apply(self, out_ksp, full_ksp, under_ksp, metadict=None):
