@@ -11,6 +11,7 @@ import scipy.io as sio
 import torch
 import torchio as tio
 from Bridge.WarpDrives.ReconResNet.ReconResNet import ResNet
+from Bridge.WarpDrives.ReconResNet.DualSpaceReconResNet import DualSpaceResNet
 from Engineering.data_consistency import DataConsistency
 from Engineering.datasets.medfile import createFileDS
 from Engineering.datasets.tio import create_patchQs, createTIOSubDS
@@ -46,9 +47,16 @@ class ReconEngine(LightningModule):
                               res_drop_prob=self.hparams.model_drop_prob, is_replicatepad=self.hparams.model_is_replicatepad, out_act=self.hparams.model_out_act, forwardV=self.hparams.model_forwardV,
                               upinterp_algo=self.hparams.model_upinterp_algo, post_interp_convtrans=self.hparams.model_post_interp_convtrans, is3D=self.hparams.is3D)  # TODO think of 2D
             # self.net = nn.Conv3d(in_channels=1, out_channels=1, kernel_size=3, stride=1, padding=1)
+        elif self.hparams.modelID == 2:
+            self.net = DualSpaceResNet(in_channels=self.hparams.in_channels, out_channels=self.hparams.out_channels, res_blocks=self.hparams.model_res_blocks,
+                                        starting_nfeatures=self.hparams.model_starting_nfeatures, updown_blocks=self.hparams.model_updown_blocks,
+                                        is_relu_leaky=self.hparams.model_relu_leaky, do_batchnorm=self.hparams.model_do_batchnorm,
+                                        res_drop_prob=self.hparams.model_drop_prob, is_replicatepad=self.hparams.model_is_replicatepad, out_act=self.hparams.model_out_act, forwardV=self.hparams.model_forwardV,
+                                        upinterp_algo=self.hparams.model_upinterp_algo, post_interp_convtrans=self.hparams.model_post_interp_convtrans, is3D=self.hparams.is3D,
+                                        connect_mode=self.hparams.model_dspace_connect_mode, inner_norm_ksp=self.hparams.model_inner_norm_ksp)
         else:
             # TODO: other models
-            sys.exit("Only ReconResNet has been implemented so far in ReconEngine")
+            sys.exit("Only ReconResNet and DualSpaceResNet have been implemented so far in ReconEngine")
 
         if bool(self.hparams.preweights_path):
             print("Pre-weights found, loding...")
@@ -87,10 +95,10 @@ class ReconEngine(LightningModule):
             self.init_transforms += [tio.ToCanonical(), tio.Resample('gt')]
         if self.hparams.ds_mode == 0 and self.hparams.forceNormAffine:  # Only applicable for TorchIO
             self.init_transforms += [trans.ForceAffine()]
-        self.init_transforms += [trans.IntensityNorm()]
         if self.hparams.croppad and self.hparams.ds_mode == 1:
             self.init_transforms += [
                 trans.CropOrPad(size=self.hparams.input_shape)]
+        self.init_transforms += [trans.IntensityNorm()]
         # dataspace_transforms = self.dataspace.getTransforms() #TODO: dataspace transforms are not in use
         # self.init_transforms += dataspace_transforms
         if bool(self.hparams.random_crop) and self.hparams.ds_mode == 1:

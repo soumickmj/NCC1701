@@ -57,7 +57,7 @@ def getARGSParser():
     parser.add_argument('--p_random_crop', action="store", default=0.75, type=float, help="Probability of Randomcrop, only if is3D=False. This should be 1 if batch size is more than 1.")
 
     #Network Params
-    parser.add_argument('--modelID', action="store", default=0, type=int, help="0: ReconResNet")
+    parser.add_argument('--modelID', action="store", default=0, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet")
     parser.add_argument('--preweights_path', action="store", default="", help="checkpoint path for pre-loading")
     parser.add_argument('--is3D', action="store", default=0, type=int, help="Is it a 3D model?")
     parser.add_argument('--model_dataspace_inp', action="store", default=0, type=int, help="Dataspace of the model's input. 0: ImageSapce, 1: kSpace")
@@ -77,6 +77,8 @@ def getARGSParser():
     parser.add_argument('--model_upinterp_algo', action="store", default="convtrans", help='"convtrans", or interpolation technique: "sinc", "nearest", "linear", "bilinear", "bicubic", "trilinear", "area"')
     parser.add_argument('--model_out_act', action="store", default="sigmoid", help='For ReconResNet')
     parser.add_argument('--model_post_interp_convtrans', action="store_true", default=True, help="For ReconResNet")
+    parser.add_argument('--model_dspace_connect_mode', action="store", default="serial", help='w_parallel, parallel, serial. For DualSpaceReconResNet')
+    parser.add_argument('--model_inner_norm_ksp', action="store_true", default=True, help="For KSPReconResNet. DualSpaceReconResNet")
     
     parser.add_argument('--use_datacon', action="store_true", default=True, help="Use Data Consistency")
 
