@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 
+from Engineering.math.freq_trans import fftNc_pyt
+
 
 def root_sum_of_squares_pyt(data, dim=0, keepdim=False):
     return torch.sqrt((data ** 2).sum(dim=dim, keepdim=keepdim))
@@ -54,3 +56,45 @@ def entropy_loss(ent_out, ent_gt):
         # return mag+ph
     else:
         return torch.square(ent_gt - ent_out)
+
+class NormUnorm(object):
+    def __init__(self, tensor: torch.Tensor = None, type = "zscore", factor = 1.0):
+        if type == "zscore":
+            self.mean = tensor.mean(dim=(-2, -1), keepdims=True)
+            self.std = tensor.std(dim=(-2, -1), keepdims=True)
+        elif type == "max":
+            self.max = tensor.max()
+        elif type == "minmax":
+            self.min = tensor.min()
+            self.max = tensor.max()
+        elif type == "magmax":
+            self.max = torch.abs(tensor).max()
+        elif type == "offset_magmax":
+            self.realmin = tensor.real.min()
+            self.imagmin = tensor.imag.min()
+            _tensor_centreoffset = tensor - self.realmin - 1j*self.imagmin
+            self.max = torch.abs(_tensor_centreoffset).max()
+        elif type == "factor":
+            self.max = factor
+        self.type = type
+
+    def normalise(self, tensor: torch.Tensor) -> torch.Tensor:
+        if self.type == "zscore":
+            return (tensor - self.mean)/self.std
+        elif self.type in ["max", "magmax", "factor"]:
+            return tensor / self.max
+        elif self.type == "minmax":
+            return (tensor - self.min) / (self.max - self.min)
+        elif self.type == "offset_magmax":
+            _tensor_centreoffset = tensor - self.realmin - 1j*self.imagmin
+            return _tensor_centreoffset / self.max
+
+    def unnormalise(self, tensor: torch.Tensor) -> torch.Tensor:
+        if self.type == "zscore":
+            return tensor * self.std + self.mean
+        elif self.type in ["max", "magmax", "factor"]:
+            return tensor * self.max
+        elif self.type == "minmax":
+            return (tensor * (self.max - self.min)) + self.min
+        elif self.type == "offset_magmax":
+            return (tensor * self.max) + self.realmin + 1j*self.imagmin

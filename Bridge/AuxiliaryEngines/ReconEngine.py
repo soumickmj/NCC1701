@@ -10,6 +10,7 @@ import pandas as pd
 import scipy.io as sio
 import torch
 import torchio as tio
+from Bridge.WarpDrives.PDUNet.pd import PrimalDualNetwork
 from Bridge.WarpDrives.ReconResNet.ReconResNet import ResNet
 from Bridge.WarpDrives.ReconResNet.DualSpaceReconResNet import DualSpaceResNet
 from Engineering.data_consistency import DataConsistency
@@ -54,6 +55,29 @@ class ReconEngine(LightningModule):
                                         res_drop_prob=self.hparams.model_drop_prob, is_replicatepad=self.hparams.model_is_replicatepad, out_act=self.hparams.model_out_act, forwardV=self.hparams.model_forwardV,
                                         upinterp_algo=self.hparams.model_upinterp_algo, post_interp_convtrans=self.hparams.model_post_interp_convtrans, is3D=self.hparams.is3D,
                                         connect_mode=self.hparams.model_dspace_connect_mode, inner_norm_ksp=self.hparams.model_inner_norm_ksp)
+        elif self.hparams.modelID == 3: #Primal-Dual Network, complex Primal
+            self.net = PrimalDualNetwork(n_primary=5, n_dual=5, n_iterations=10,
+                            use_original_block = True,
+                            use_original_init = True,
+                            use_complex_primal = True,
+                            g_normtype = "magmax",
+                            transform = "Fourier",
+                            return_abs = True)
+        elif self.hparams.modelID == 4: #Primal-Dual Network, absolute Primal
+            self.net = PrimalDualNetwork(n_primary=5, n_dual=5, n_iterations=10,
+                            use_original_block = True,
+                            use_original_init = True,
+                            use_complex_primal = False,
+                            g_normtype = "magmax",
+                            transform = "Fourier")
+        elif self.hparams.modelID == 5: #Primal-Dual UNet Network, absolute Primal
+            self.net = PrimalDualNetwork(n_primary=4, n_dual=5, n_iterations=2,
+                            use_original_block = False,
+                            use_original_init = False,
+                            use_complex_primal = False,
+                            g_normtype = "magmax",
+                            transform = "Fourier")
+
         else:
             # TODO: other models
             sys.exit("Only ReconResNet and DualSpaceResNet have been implemented so far in ReconEngine")

@@ -21,17 +21,20 @@ __status__ = "Under Testing"
 
 
 class ResidualBlock(nn.Module):
-    def __init__(self, in_features, drop_prob=0.2):
+    def __init__(self, in_features, drop_prob=0.2, complex_weights=True):
         super(ResidualBlock, self).__init__()
 
         conv_block = [  # layer_pad(1),
-                        layer_conv(in_features, in_features, 3, padding=1),
-                        layer_norm(in_features),
+                        layer_conv(in_features, in_features, 3,
+                                   padding=1, complex_weights=complex_weights),
+                        layer_norm(
+                            in_features, complex_weights=complex_weights),
                         act_relu(),
                         layer_drop(p=drop_prob, inplace=True),
                         # layer_pad(1),
-                        layer_conv(in_features, in_features, 3, padding=1),
-                        layer_norm(in_features)]
+                        layer_conv(in_features, in_features, 3,
+                                   padding=1, complex_weights=complex_weights),
+                        layer_norm(in_features, complex_weights=complex_weights)]
 
         self.conv_block = nn.Sequential(*conv_block)
 
@@ -40,11 +43,12 @@ class ResidualBlock(nn.Module):
 
 
 class DownsamplingBlock(nn.Module):
-    def __init__(self, in_features, out_features):
+    def __init__(self, in_features, out_features, complex_weights=True):
         super(DownsamplingBlock, self).__init__()
 
-        conv_block = [layer_conv(in_features, out_features, 3, stride=2, padding=1),
-                      layer_norm(out_features),
+        conv_block = [layer_conv(in_features, out_features, 3, stride=2, padding=1, complex_weights=complex_weights),
+                      layer_norm(
+                          out_features, complex_weights=complex_weights),
                       act_relu()]
         self.conv_block = nn.Sequential(*conv_block)
 
@@ -53,22 +57,23 @@ class DownsamplingBlock(nn.Module):
 
 
 class UpsamplingBlock(nn.Module):
-    def __init__(self, in_features, out_features, mode="convtrans", interpolator=None, post_interp_convtrans=False):
+    def __init__(self, in_features, out_features, mode="convtrans", interpolator=None, post_interp_convtrans=False, complex_weights=True):
         super(UpsamplingBlock, self).__init__()
 
         self.interpolator = interpolator
         self.mode = mode
         self.post_interp_convtrans = post_interp_convtrans
         if self.post_interp_convtrans:
-            self.post_conv = layer_conv(out_features, out_features, 1)
+            self.post_conv = layer_conv(
+                out_features, out_features, 1, complex_weights=complex_weights)
 
         if mode == "convtrans":
             conv_block = [layer_convtrans(
-                in_features, out_features, 3, stride=2, padding=1, output_padding=1), ]
+                in_features, out_features, 3, stride=2, padding=1, output_padding=1, complex_weights=complex_weights), ]
         else:
             conv_block = [  # layer_pad(1),
-                            layer_conv(in_features, out_features, 3, padding=1), ]
-        conv_block += [layer_norm(out_features),
+                            layer_conv(in_features, out_features, 3, padding=1, complex_weights=complex_weights), ]
+        conv_block += [layer_norm(out_features, complex_weights=complex_weights),
                        act_relu()]
         self.conv_block = nn.Sequential(*conv_block)
 
@@ -89,7 +94,7 @@ class UpsamplingBlock(nn.Module):
 class ResNet(nn.Module):
     def __init__(self, n_channels=1, out_channels=1, res_blocks=14, starting_nfeatures=64, updown_blocks=0, is_relu_leaky=True, do_batchnorm=False, res_drop_prob=0.2,
                  is_replicatepad=0, out_act="relu", forwardV=0, upinterp_algo='sinc', post_interp_convtrans=False, is3D=False,
-                 img_out_mode=0, fourier_norm_4imgout="ortho", under_replace=False, under_mask=None, inner_norm_ksp=True):
+                 img_out_mode=0, fourier_norm_4imgout="ortho", under_replace=False, under_mask=None, inner_norm_ksp=True, complex_weights=True):
         # TODO: starting_nfeatures changed from 64 to 32, res_drop_prob from 0.2 to 0.0, is_relu_leaky from True to False, res_blocks from 14 to 7
         super(ResNet, self).__init__()
 
@@ -147,8 +152,9 @@ class ResNet(nn.Module):
         # Initial convolution block
         intialConv = [  # layer_pad(3),
                         layer_conv(in_channels, starting_nfeatures,
-                                   7, padding=3),
-                        layer_norm(starting_nfeatures),
+                                   7, padding=3, complex_weights=complex_weights),
+                        layer_norm(starting_nfeatures,
+                                   complex_weights=complex_weights),
                         act_relu()]
 
         # Downsampling [need to save the shape for upsample]
@@ -156,27 +162,29 @@ class ResNet(nn.Module):
         in_features = starting_nfeatures
         out_features = in_features*2
         for _ in range(updown_blocks):
-            downsam.append(DownsamplingBlock(in_features, out_features))
+            downsam.append(DownsamplingBlock(
+                in_features, out_features, complex_weights=complex_weights))
             in_features = out_features
             out_features = in_features*2
 
         # Residual blocks
         resblocks = []
         for _ in range(res_blocks):
-            resblocks += [ResidualBlock(in_features, res_drop_prob)]
+            resblocks += [ResidualBlock(in_features, res_drop_prob,
+                                        complex_weights=complex_weights)]
 
         # Upsampling
         upsam = []
         out_features = in_features//2
         for _ in range(updown_blocks):
             upsam.append(UpsamplingBlock(in_features, out_features,
-                         self.upinterp_algo, interpolator, post_interp_convtrans))
+                         self.upinterp_algo, interpolator, post_interp_convtrans, complex_weights=complex_weights))
             in_features = out_features
             out_features = in_features//2
 
         # Output layer
         finalconv = [  # layer_pad(3),
-            layer_conv(starting_nfeatures, out_channels, 7, padding=3), ]
+            layer_conv(starting_nfeatures, out_channels, 7, padding=3, complex_weights=complex_weights), ]
 
         if out_act == "sigmoid":
             finalconv += [cnn.Sigmoid(), ]

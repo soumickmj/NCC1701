@@ -57,7 +57,7 @@ def getARGSParser():
     parser.add_argument('--p_random_crop', action="store", default=0.75, type=float, help="Probability of Randomcrop, only if is3D=False. This should be 1 if batch size is more than 1.")
 
     #Network Params
-    parser.add_argument('--modelID', action="store", default=0, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet")
+    parser.add_argument('--modelID', action="store", default=2, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet, 3: PDNet, complex primal, 4: PDNet, 5: PDUNet")
     parser.add_argument('--preweights_path', action="store", default="", help="checkpoint path for pre-loading")
     parser.add_argument('--is3D', action="store", default=0, type=int, help="Is it a 3D model?")
     parser.add_argument('--model_dataspace_inp', action="store", default=0, type=int, help="Dataspace of the model's input. 0: ImageSapce, 1: kSpace")
@@ -69,7 +69,7 @@ def getARGSParser():
     parser.add_argument('--model_res_blocks', action="store", default=14, type=int, help="For ReconResNet")
     parser.add_argument('--model_starting_nfeatures', action="store", default=64, type=int, help="For ReconResNet, ShuffleUNet")
     parser.add_argument('--model_updown_blocks', action="store", default=2, type=int, help="For ReconResNet")
-    parser.add_argument('--model_do_batchnorm', action="store_true", default=False, help="For ReconResNet")
+    parser.add_argument('--model_do_batchnorm', action="store_true", default=True, help="For ReconResNet")
     parser.add_argument('--model_relu_leaky', action="store_true", default=True, help="For ReconResNet")
     parser.add_argument('--model_is_replicatepad', action="store_true", default=False, help="For ReconResNet. Whether to use ReplacationPad instead of ReflectionPad, the later being the default")
     parser.add_argument('--model_forwardV', action="store", default=0, type=int, help="For ReconResNet")
