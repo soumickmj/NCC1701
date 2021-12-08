@@ -130,6 +130,9 @@ class Engine(object):
             auto_lr_find=hparams.auto_lr
         )
 
+        if not hparams.non_deter:
+            torch.use_deterministic_algorithms(True, warn_only=True)
+
         self.hparams = hparams
         self.train_done = False
 

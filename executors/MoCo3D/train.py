@@ -35,9 +35,9 @@ def getARGSParser():
     parser.add_argument('--fftnorm', action="store", default="ortho")
 
     #Training params
-    parser.add_argument('--num_epochs', action="store", default=2, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
-    parser.add_argument('--lr', action="store", default=1e-3, type=float)
-    parser.add_argument('--lossID', action="store", default=1, type=int, help="Loss ID."+str(LOSSID))
+    parser.add_argument('--num_epochs', action="store", default=250, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
+    parser.add_argument('--lr', action="store", default=1e-4, type=float)
+    parser.add_argument('--lossID', action="store", default=3, type=int, help="Loss ID."+str(LOSSID))
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)
     parser.add_argument('--ploss_type', action="store", default="L1")
     parser.add_argument('--patch_size', action="store", default="", help="length, width, depth")
@@ -57,7 +57,7 @@ def getARGSParser():
     parser.add_argument('--p_random_crop', action="store", default=0.75, type=float, help="Probability of Randomcrop, only if is3D=False. This should be 1 if batch size is more than 1.")
 
     #Network Params
-    parser.add_argument('--modelID', action="store", default=2, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet, 3: PDNet, complex primal, 4: PDNet, 5: PDUNet")
+    parser.add_argument('--modelID', action="store", default=0, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet, 3: PDNet, complex primal, 4: PDNet, 5: PDUNet")
     parser.add_argument('--preweights_path', action="store", default="", help="checkpoint path for pre-loading")
     parser.add_argument('--is3D', action="store", default=0, type=int, help="Is it a 3D model?")
     parser.add_argument('--model_dataspace_inp', action="store", default=0, type=int, help="Dataspace of the model's input. 0: ImageSapce, 1: kSpace")
@@ -128,9 +128,9 @@ def getARGSParser():
 
     #WnB related params
     parser.add_argument("-wnba", "--wnbactive", type=int, default=0, help="Use WandB")
-    parser.add_argument("-wnbp", "--wnbproject", default='MoCo3D', help="WandB: Name of the project")
+    parser.add_argument("-wnbp", "--wnbproject", default='MoCo2D', help="WandB: Name of the project")
     parser.add_argument("-wnbe", "--wnbentity", default='mickmeddigit', help="WandB: Name of the entity")
-    parser.add_argument("-wnbg", "--wnbgroup", default='NCC1701Set0', help="WandB: Name of the group")
+    parser.add_argument("-wnbg", "--wnbgroup", default='NCC1701Set1', help="WandB: Name of the group")
     parser.add_argument("-wnbpf", "--wnbprefix", default='trial', help="WandB: Prefix for TrainID")
     parser.add_argument("-wnbml", "--wnbmodellog", default='all', help="WandB: While watching the model, what to save: gradients, parameters, all, None")
     parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=100, help="WandB: The number of steps between logging gradients")

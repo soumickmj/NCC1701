@@ -27,8 +27,7 @@ from Engineering.utilities import (CustomInitialiseWeights, DataHandler,
                                    DataSpaceHandler, ResSaver, getSSIM,
                                    log_images)
 from pytorch_lightning.core.lightning import LightningModule
-from pytorch_msssim import MS_SSIM
-from pytorch_ssim import SSIM
+from pytorch_msssim import MS_SSIM, SSIM
 from torch import nn
 from torch.utils.data.dataloader import DataLoader
 
@@ -96,9 +95,9 @@ class ReconEngine(LightningModule):
         elif self.hparams.lossID == 1:
             self.loss = nn.L1Loss(reduction='mean')
         elif self.hparams.lossID == 2:
-            self.loss = MS_SSIM(channel=self.hparams.out_channels).to(device)
+            self.loss = MS_SSIM(channel=self.hparams.out_channels, data_range=1, spatial_dims=3 if self.hparams.is3D else 2, nonnegative_ssim=False).to(device)
         elif self.hparams.lossID == 3:
-            self.loss = SSIM(channel=self.hparams.out_channels).to(device)
+            self.loss = SSIM(channel=self.hparams.out_channels, data_range=1, spatial_dims=3 if self.hparams.is3D else 2, nonnegative_ssim=False).to(device)
         else:
             sys.exit("Invalid Loss ID")
 
@@ -254,10 +253,10 @@ class ReconEngine(LightningModule):
                 out = out.float()  # TODO: find a better way to do this. This might not be a good way
             dHandler = DataHandler(dataspace_op=self.dataspace, inp=inp, gt=gt,
                                    out=out, metadict=sub['metadict'] if 'metadict' in sub else None)
-            dHandler.setInpK(sub['inpK']['data'].squeeze()
-                             if "inpK" in sub else None)
-            dHandler.setGTK(sub['gtK']['data'].squeeze()
-                            if "gtK" in sub else None)
+            dHandler.setInpK(sub['inp']['ksp'].squeeze()
+                             if "ksp" in sub['inp'] else None)
+            dHandler.setGTK(sub['gt']['ksp'].squeeze()
+                            if "ksp" in sub['gt'] else None)
             metrics = self.saver.CalcNSave(dHandler, filename.split(".")[
                                            0], datacon_operator=self.datacon)
             if metrics is not None:

@@ -109,11 +109,12 @@ class DataSpaceHandler:
 
 
 class DataHandler:
-    def __init__(self, dataspace_op: DataSpaceHandler, inp=None, gt=None, out=None):
+    def __init__(self, dataspace_op: DataSpaceHandler, inp=None, gt=None, out=None, metadict=None):
         self.dataspace_op = dataspace_op
         self.inp = inp
         self.gt = gt
         self.out = out
+        self.metadict = metadict
         self.inpK = None
         self.gtK = None
         self.outK = None
