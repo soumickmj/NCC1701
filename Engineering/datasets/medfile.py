@@ -158,6 +158,3 @@ def createFileDS(
     dataset = MRITorchDS(data_df, is3D=is3D, transform=transforms)
     return dataset, filenames
 
-
-createFileDS(
-    "/run/media/soumick/Voyager/Data/Ale/kspcMoCo-IXI/single-contrast/test")

@@ -100,7 +100,8 @@ class Engine(object):
         if hparams.wnbactive:
             loggers.append(WandbLogger(name=hparams.run_name, id=hparams.run_name, project=hparams.wnbproject,
                                        group=hparams.wnbgroup, entity=hparams.wnbentity, config=hparams))
-            loggers[-1].watch(self.model, log='all', log_freq=100)
+            if bool(hparams.wnbmodellog) and hparams.wnbmodellog!= "None":
+                loggers[-1].watch(self.model, log=hparams.wnbmodellog, log_freq=hparams.wnbmodelfreq)
         else:
             os.environ["WANDB_MODE"] = "dryrun"
         if hparams.tbactive:
