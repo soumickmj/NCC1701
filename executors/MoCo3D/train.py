@@ -36,7 +36,7 @@ def getARGSParser():
 
     #Training params
     parser.add_argument('--num_epochs', action="store", default=250, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
-    parser.add_argument('--lr', action="store", default=1e-4, type=float)
+    parser.add_argument('--lr', action="store", default=1e-3, type=float)
     parser.add_argument('--lossID', action="store", default=3, type=int, help="Loss ID."+str(LOSSID))
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)
     parser.add_argument('--ploss_type', action="store", default="L1")
@@ -124,14 +124,14 @@ def getARGSParser():
     # parser.add_argument('--motion_random_sigma', action="store_true", default=False, help="Only for motion_mode 2 - to randomise the sigma value, treating the provided sigma as upper limit and 0 as lower")
     # parser.add_argument('--motion_n_threads', action="store", default=8, type=int, help="Only for motion_mode 2 - to apply motion for each thread encoding line parallel, max thread controlled by this. Set to 0 to perform serially.")
 
-    parser.add_argument("-tba", "--tbactive", type=int, default=0, help="User Tensorboard")
+    parser.add_argument("-tba", "--tbactive", type=int, default=1, help="User Tensorboard")
 
     #WnB related params
-    parser.add_argument("-wnba", "--wnbactive", type=int, default=0, help="Use WandB")
+    parser.add_argument("-wnba", "--wnbactive", type=int, default=1, help="Use WandB")
     parser.add_argument("-wnbp", "--wnbproject", default='MoCo2D', help="WandB: Name of the project")
     parser.add_argument("-wnbe", "--wnbentity", default='mickmeddigit', help="WandB: Name of the entity")
     parser.add_argument("-wnbg", "--wnbgroup", default='NCC1701Set1', help="WandB: Name of the group")
-    parser.add_argument("-wnbpf", "--wnbprefix", default='trial', help="WandB: Prefix for TrainID")
+    parser.add_argument("-wnbpf", "--wnbprefix", default='', help="WandB: Prefix for TrainID")
     parser.add_argument("-wnbml", "--wnbmodellog", default='all', help="WandB: While watching the model, what to save: gradients, parameters, all, None")
     parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=100, help="WandB: The number of steps between logging gradients")
     
