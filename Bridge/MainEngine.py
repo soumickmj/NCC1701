@@ -36,6 +36,7 @@ class Engine(object):
             hparams.trainID if bool(hparams.run_prefix) else hparams.trainID
         hparams.res_path = pjoin(
             hparams.save_path, hparams.run_name, "Results")
+        os.makedirs(hparams.res_path, exist_ok=True)
 
         if (hparams.lossID == 0 and hparams.ploss_type == "L1") or (hparams.lossID == 1):
             hparams.IsNegLoss = False
@@ -106,6 +107,7 @@ class Engine(object):
             os.environ["WANDB_MODE"] = "dryrun"
         if hparams.tbactive:
             # TODO log_graph as True making it crash due to backward hooks
+            os.makedirs(hparams.tblog_path, exist_ok=True)
             loggers.append(TensorBoardLogger(hparams.tblog_path,
                            name=hparams.run_name, log_graph=False))
 
@@ -128,7 +130,9 @@ class Engine(object):
             resume_from_checkpoint=self.chkpoint,
             check_val_every_n_epoch=1 if hparams.do_val else hparams.num_epochs+1,
             auto_scale_batch_size='binsearch' if hparams.auto_bs else None,
-            auto_lr_find=hparams.auto_lr
+            auto_lr_find=hparams.auto_lr,
+            log_every_n_steps=hparams.log_freq,
+            flush_logs_every_n_steps=hparams.log_freq*2
         )
 
         if not hparams.non_deter:

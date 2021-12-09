@@ -1,5 +1,5 @@
 {
-    "run_prefix": "T1IXI_resamT2",
+    "run_prefix": "T1IXI-ax-1mm-iso",
     "train_path_inp": "",
     "train_path_gt": ["/run/media/soumick/Enterprise/Datasets/IXI/ISO_Resampled2T2/T1"],
     "train_filename_filter": [],

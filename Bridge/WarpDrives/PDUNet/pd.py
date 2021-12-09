@@ -88,7 +88,7 @@ class DualBlock(nn.Module):
             cnn.AdaptiveCmodReLU(32) if complex else nn.PReLU(32),
             PrePadDualConv2D(32, features, 3, complex=complex, complex_weights=complex_weights),
         )
-        self.diff_weight = nn.Parameter(torch.ones(1, features, 1, 1))
+        self.diff_weight = nn.Parameter(torch.ones(1, features, 1, 1, dtype=torch.cfloat if complex else torch.float32))
 
     def forward(self, h: torch.Tensor, f: torch.Tensor, g: torch.Tensor):
         B, _, H, W = h.shape
@@ -106,7 +106,10 @@ class PrimalBlock(nn.Module):
             cnn.AdaptiveCmodReLU(32) if complex else nn.PReLU(32),
             PrePadPrimalConv2D(32, features, 3, complex=complex, complex_weights=complex_weights),
         )
-        self.diff_weight = nn.Parameter(torch.zeros(1, features, 1, 1))
+        if complex:
+            self.diff_weight = nn.Parameter(torch.zeros(1, features, 1, 1, dtype=torch.cfloat) + torch.finfo(torch.cfloat).eps)
+        else:
+            self.diff_weight = nn.Parameter(torch.zeros(1, features, 1, 1))
 
     def forward(self, h: torch.Tensor, f: torch.Tensor):
         B, _, H, W = f.shape
@@ -204,7 +207,7 @@ class PrimalDualNetwork(nn.Module):
             f = primary_block(f_norm.normalise(_tmp_h), f)
             if self.output_stages:
                 stages.append(torch.mean(f, dim=1, keepdim=True))
-
+                    
         out = torch.mean(f_norm.unnormalise(f), dim=1, keepdim=True)
         if self.use_complex_primal and self.transform == "Fourier" and self.return_abs:
             out = torch.abs(out)
