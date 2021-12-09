@@ -32,8 +32,7 @@ class DualSpaceResNet(nn.Module):
 
         self.connect_mode = connect_mode
         if connect_mode == "w_parallel":
-            self.parallel_weights = torch.nn.parameter.Parameter(
-                torch.FloatTensor([0.5, 0.5]))
+            self.parallel_kspweight = torch.nn.parameter.Parameter(torch.ones(1)*0.5)
 
         if out_act == "sigmoid":
             self.finalact = nn.Sigmoid()
@@ -43,10 +42,10 @@ class DualSpaceResNet(nn.Module):
             x_imnet_ksp = fftNc_pyt(self.imnet(x))
             x_kspnet_ksp = self.kspnet(fftNc_pyt(x))
             if self.connect_mode == "w_parallel":
-                x_ksp = self.parallel_weights[0]*x_imnet_ksp + \
-                    self.parallel_weights[1]*x_kspnet_ksp
+                x_ksp = (1-self.parallel_kspweight)*x_imnet_ksp + \
+                    self.parallel_kspweight*x_kspnet_ksp
             else:
-                x_ksp = x_imnet_ksp + x_kspnet_ksp
+                x_ksp = (0.5*x_imnet_ksp) + (0.5*x_kspnet_ksp)
             out = torch.abs(ifftNc_pyt(x_ksp, norm="ortho"))
         elif self.connect_mode == "serial":
             x_kspnet = self.finalact(self.kspnet(fftNc_pyt(x)))
