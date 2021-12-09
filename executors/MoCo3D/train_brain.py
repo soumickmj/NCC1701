@@ -10,12 +10,13 @@ from Bridge.MainEngine import Engine
 from Engineering.constants import *
 from pytorch_lightning import seed_everything
 
+
 seed_everything(1701)
 
 def getARGSParser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--taskID', action="store", type=int, default=1, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
-    parser.add_argument('--trainID', action="store", default="run2PDOrigCmplxPrim-Mot1t2-rnd50") ## "testing")  ## "ResNet14"
+    parser.add_argument('--trainID', action="store", default="ResNet14_fullVol2D_L1Loss_lowmotion") ## "testing")  ## "ResNet14"
     parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
@@ -23,10 +24,10 @@ def getARGSParser():
     parser.add_argument('--num_workers', action="store", default=0, type=int)
     parser.add_argument('--batch_size', action="store", default=1, type=int)  
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 1 as default  
-    parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_moco_T1IXI.json")
+    parser.add_argument('--datajson_path', action="store", default="/home/sciarra/NCC1701-main/executors/MoCo3D/datainfo_moco_T1IXI.json")
     # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_moco_dummy_v100.json")
-    parser.add_argument('--tblog_path', action="store", default="/run/media/soumick/Voyager/Output/NCC1701New_MoCoSet1/TBLogs")
-    parser.add_argument('--save_path', action="store", default="/run/media/soumick/Voyager/Output/NCC1701New_MoCoSet1/Output")
+    parser.add_argument('--tblog_path', action="store", default="/home/sciarra/NCC1701-main/TBLogs")
+    parser.add_argument('--save_path', action="store", default="/home/sciarra/NCC1701-main/Results")
     parser.add_argument('--cuda', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--amp', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--run_mode', action="store", default=4, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
@@ -47,7 +48,7 @@ def getARGSParser():
     parser.add_argument('--patch_per_vol', action="store", default=150, type=int)  # 1000 - 10
     parser.add_argument('--patch_inference_strides', action="store", default="224,224,1", help="stride_length, stride_width, stride_depth")
     parser.add_argument('--im_log_freq', action="store", default=250, type=int, help="For Tensorboard image logs, n_iteration. Set it to -1 if not desired")
-    parser.add_argument('--log_freq', action="store", default=100, type=int, help="Log every n-th step. Lightning default is 50. Flush will be twice this.")
+    parser.add_argument('--log_freq', action="store", default=250, type=int, help="Log every n-th step. Lightning default is 50. Flush will be twice this.")
     parser.add_argument('--save_freq', action="store", default=1, type=int, help="For Checkpoint save, n_epochs")
     parser.add_argument('--save_inp', action="store", default=1, type=int, help="Whether to save the input during testing")
     parser.add_argument('--do_savenorm', action="store", default=1, type=int, help="Whether to normalise before saving and calculating metrics during testing")
@@ -58,7 +59,7 @@ def getARGSParser():
     parser.add_argument('--p_random_crop', action="store", default=0.75, type=float, help="Probability of Randomcrop, only if is3D=False. This should be 1 if batch size is more than 1.")
 
     #Network Params
-    parser.add_argument('--modelID', action="store", default=3, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet, 3: PDNet, complex primal, 4: PDNet, 5: PDUNet")
+    parser.add_argument('--modelID', action="store", default=0, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet, 3: PDNet, complex primal, 4: PDNet, 5: PDUNet")
     parser.add_argument('--preweights_path', action="store", default="", help="checkpoint path for pre-loading")
     parser.add_argument('--is3D', action="store", default=0, type=int, help="Is it a 3D model?")
     parser.add_argument('--model_dataspace_inp', action="store", default=0, type=int, help="Dataspace of the model's input. 0: ImageSapce, 1: kSpace")
@@ -133,8 +134,8 @@ def getARGSParser():
     parser.add_argument("-wnbe", "--wnbentity", default='mickmeddigit', help="WandB: Name of the entity")
     parser.add_argument("-wnbg", "--wnbgroup", default='NCC1701Set1', help="WandB: Name of the group")
     parser.add_argument("-wnbpf", "--wnbprefix", default='', help="WandB: Prefix for TrainID")
-    parser.add_argument("-wnbml", "--wnbmodellog", default="None", help="WandB: While watching the model, what to save: gradients, parameters, all, None")
-    parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=10, help="WandB: The number of steps between logging gradients")
+    parser.add_argument("-wnbml", "--wnbmodellog", default='all', help="WandB: While watching the model, what to save: gradients, parameters, all, None")
+    parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=100, help="WandB: The number of steps between logging gradients")
     
     return parser
 

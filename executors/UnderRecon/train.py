@@ -27,11 +27,11 @@ def getARGSParser():
     parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under.json")
     parser.add_argument('--tblog_path', action="store", default="/home/schatter/Soumick/Output/NCC1701/MoCo3D/TBLogs")
     parser.add_argument('--save_path', action="store", default="/home/schatter/Soumick/Output/NCC1701/MoCo3D/Results")
-    parser.add_argument('--cuda', action="store_true", default=True)
-    parser.add_argument('--amp', action="store_true", default=True)
+    parser.add_argument('--cuda', action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument('--amp', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--run_mode', action="store", default=4, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
-    parser.add_argument('--do_profile', action="store_true", default=False)
-    parser.add_argument('--non_deter', action="store_true", default=False)
+    parser.add_argument('--do_profile', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('--non_deter', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--fftnorm', action="store", default="ortho")
 
     #Training params
@@ -42,7 +42,7 @@ def getARGSParser():
     parser.add_argument('--ploss_type', action="store", default="L1")
     parser.add_argument('--patch_size', action="store", default="", help="length, width, depth")
     parser.add_argument('--input_shape', action="store", default="256,256", help="length, width, depth (to be used if patch_size is not given)")
-    parser.add_argument('--croppad', action="store_true", default=False, help="If True, then it will crop or pad the volume/slice to the given input_shape")  
+    parser.add_argument('--croppad', action=argparse.BooleanOptionalAction, default=False, help="If True, then it will crop or pad the volume/slice to the given input_shape")  
     parser.add_argument('--patch_qlen', action="store", default=150, type=int)  ## 5000 - 50
     parser.add_argument('--patch_per_vol', action="store", default=150, type=int)  # 1000 - 10
     parser.add_argument('--patch_inference_strides', action="store", default="224,224,1", help="stride_length, stride_width, stride_depth")
@@ -69,18 +69,18 @@ def getARGSParser():
     parser.add_argument('--model_res_blocks', action="store", default=14, type=int, help="For ReconResNet")
     parser.add_argument('--model_starting_nfeatures', action="store", default=64, type=int, help="For ReconResNet, ShuffleUNet")
     parser.add_argument('--model_updown_blocks', action="store", default=2, type=int, help="For ReconResNet")
-    parser.add_argument('--model_do_batchnorm', action="store_true", default=False, help="For ReconResNet")
-    parser.add_argument('--model_relu_leaky', action="store_true", default=True, help="For ReconResNet")
-    parser.add_argument('--model_is_replicatepad', action="store_true", default=False, help="For ReconResNet. Whether to use ReplacationPad instead of ReflectionPad, the later being the default")
+    parser.add_argument('--model_do_batchnorm', action=argparse.BooleanOptionalAction, default=False, help="For ReconResNet")
+    parser.add_argument('--model_relu_leaky', action=argparse.BooleanOptionalAction, default=True, help="For ReconResNet")
+    parser.add_argument('--model_is_replicatepad', action=argparse.BooleanOptionalAction, default=False, help="For ReconResNet. Whether to use ReplacationPad instead of ReflectionPad, the later being the default")
     parser.add_argument('--model_forwardV', action="store", default=0, type=int, help="For ReconResNet")
     parser.add_argument('--model_drop_prob', action="store", default=0.2, type=float, help="For ReconResNet")
     parser.add_argument('--model_upinterp_algo', action="store", default="convtrans", help='"convtrans", or interpolation technique: "sinc", "nearest", "linear", "bilinear", "bicubic", "trilinear", "area"')
     parser.add_argument('--model_out_act', action="store", default="sigmoid", help='For ReconResNet')
-    parser.add_argument('--model_post_interp_convtrans', action="store_true", default=True, help="For ReconResNet")
+    parser.add_argument('--model_post_interp_convtrans', action=argparse.BooleanOptionalAction, default=True, help="For ReconResNet")
     parser.add_argument('--model_dspace_connect_mode', action="store", default="serial", help='w_parallel, parallel, serial. For DualSpaceReconResNet')
-    parser.add_argument('--model_inner_norm_ksp', action="store_true", default=True, help="For KSPReconResNet. DualSpaceReconResNet")
+    parser.add_argument('--model_inner_norm_ksp', action=argparse.BooleanOptionalAction, default=True, help="For KSPReconResNet. DualSpaceReconResNet")
     
-    parser.add_argument('--use_datacon', action="store_true", default=True, help="Use Data Consistency")
+    parser.add_argument('--use_datacon', action=argparse.BooleanOptionalAction, default=True, help="Use Data Consistency")
 
     parser.add_argument('--lr_decay_type', action="store", default=1, type=int, help='0: No Decay, 1: StepLR, 2: ReduceLROnPlateau')
     parser.add_argument('--lr_decay_nepoch', action="store", default=50, type=int, help='Decay the learning rate after every Nth epoch')
@@ -118,10 +118,10 @@ def getARGSParser():
     #TODO currently not in use, params are hardcoded 
     #Controlling motion corruption, whether to run on the fly or use the pre-created ones. If live_corrupt is True, only then the following params will be used
     # parser.add_argument('--corrupt_prob', action="store", default=0.75, type=float, help="Probability of the corruption to be applied or corrupted volume to be used")
-    # parser.add_argument('--live_corrupt', action="store_true", default=False)
+    # parser.add_argument('--live_corrupt', action=argparse.BooleanOptionalAction, default=False)
     # parser.add_argument('--motion_mode', action="store", default=2, type=int, help="Mode 0: TorchIO's, 1: Custom direction specific")
     # parser.add_argument('--motion_sigma', action="store", default=0.1, type=float, help="Only for motion_mode 2")
-    # parser.add_argument('--motion_random_sigma', action="store_true", default=False, help="Only for motion_mode 2 - to randomise the sigma value, treating the provided sigma as upper limit and 0 as lower")
+    # parser.add_argument('--motion_random_sigma', action=argparse.BooleanOptionalAction, default=False, help="Only for motion_mode 2 - to randomise the sigma value, treating the provided sigma as upper limit and 0 as lower")
     # parser.add_argument('--motion_n_threads', action="store", default=8, type=int, help="Only for motion_mode 2 - to apply motion for each thread encoding line parallel, max thread controlled by this. Set to 0 to perform serially.")
 
     parser.add_argument("-tba", "--tbactive", type=int, default=0, help="User Tensorboard")

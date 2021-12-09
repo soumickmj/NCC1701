@@ -1,3 +1,4 @@
+import argparse
 import os
 from collections import OrderedDict
 from statistics import median
@@ -20,6 +21,17 @@ from Engineering.data_consistency import DataConsistency
 from Engineering.math.freq_trans import fftNc, ifftNc
 from Engineering.transforms.tio.transforms import getDataSpaceTransforms
 
+def BoolArgs(v):
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, int):
+        return bool(v)
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError("Boolean value expected. Can be supplied as: ['yes', 'true', 't', 'y', '1'] or ['no', 'false', 'f', 'n', '0']")
 
 def sitkShow(data, slice_last=True):
     if issubclass(type(data), tio.Image):
