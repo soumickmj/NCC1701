@@ -5,6 +5,8 @@ import torch.nn as nn
 from tricorder.math.transforms.fourier import fftNc_pyt, ifftNc_pyt
 from tricorder.torch.transforms import Interpolator
 
+from Engineering.utilities import CustomInitialiseWeights
+
 from .KSPReconResNet import ResNet as KspResNet
 from .ReconResNet import ResNet as ImResNet
 
@@ -36,6 +38,8 @@ class DualSpaceResNet(nn.Module):
 
         if out_act == "sigmoid":
             self.finalact = nn.Sigmoid()
+            
+        self.apply(CustomInitialiseWeights)
 
     def forward(self, x):
         if "parallel" in self.connect_mode:
