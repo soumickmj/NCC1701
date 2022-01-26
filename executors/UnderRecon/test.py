@@ -15,8 +15,8 @@ seed_everything(1701)
 def getARGSParser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--taskID', action="store", type=int, default=0, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
-    parser.add_argument('--trainID', action="store", default="rough_ResNet14_fullVol2D_L1Loss") ## "testing")  ## "ResNet14"
-    parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
+    parser.add_argument('--trainID', action="store", default="rough_h7_AllSlices_Varden1D30") ## "testing")  ## "ResNet14"
+    parser.add_argument('--resume', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_test_ckpt', action="store", default=1, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
@@ -78,7 +78,7 @@ def getARGSParser():
     parser.add_argument('--model_drop_prob', action="store", default=0.2, type=float, help="For ReconResNet")
     parser.add_argument('--model_upinterp_algo', action="store", default="convtrans", help='"convtrans", or interpolation technique: "sinc", "nearest", "linear", "bilinear", "bicubic", "trilinear", "area"')
     parser.add_argument('--model_out_act', action="store", default="sigmoid", help='For ReconResNet')
-    parser.add_argument('--model_post_interp_convtrans', action=argparse.BooleanOptionalAction, default=True, help="For ReconResNet")
+    parser.add_argument('--model_post_interp_convtrans', action=argparse.BooleanOptionalAction, default=False, help="For ReconResNet")
     parser.add_argument('--model_dspace_connect_mode', action="store", default="serial", help='w_parallel, parallel, serial. For DualSpaceReconResNet')
     parser.add_argument('--model_inner_norm_ksp', action=argparse.BooleanOptionalAction, default=True, help="For KSPReconResNet. DualSpaceReconResNet")
     

@@ -81,6 +81,7 @@ class Engine(object):
 
         if hparams.resume:
             if hparams.load_test_ckpt:
+                print("Loading trained model for testing....")
                 path2chk = hparams.test_trainedmodel
             else:
                 path2chk = pjoin(hparams.save_path, hparams.run_name)
