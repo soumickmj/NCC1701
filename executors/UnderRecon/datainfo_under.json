@@ -9,6 +9,7 @@
     "test_path_inp": "/run/media/soumick/Enterprise/Datasets/IXI/Under/IXI-T1/1DVarden15Mask",
     "test_path_gt": "/run/media/soumick/Enterprise/Datasets/IXI/IXI-T1",
     "test_filename_filter": [],
+    "test_trainedmodel": "",
     "file_type": "NIFTI",
     "split_csv": "/run/media/soumick/Enterprise/Datasets/IXI/hh_split.csv",
     "inplane_dims": [0,1],

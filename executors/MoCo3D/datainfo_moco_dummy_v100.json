@@ -9,6 +9,7 @@
     "test_path_inp": "",
     "test_path_gt": "/vol3/schatter/IXI/IXI-Dummy",
     "test_filename_filter": ["IOP"],
+    "test_trainedmodel": "",
     "file_type": "NIFTI",
     "split_csv": "",
     "inplane_dims": [0,1],

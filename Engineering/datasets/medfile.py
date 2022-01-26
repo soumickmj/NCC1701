@@ -135,7 +135,12 @@ def createFileDS(
             gt_id = [i for i, g in enumerate(root_gt) if g in file][0]
             file_in = file.replace(root_gt[gt_id], root_input[gt_id])
             if not os.path.isfile(file_in):
-                continue
+                if data_mode == "NIFTI" and ".gz" not in file_in:
+                    file_in += ".gz"
+                    if not os.path.isfile(file_in):
+                        continue
+                else:
+                    continue
             datum_dict["inpath"] = [file_in] * len(datum_dict["sliceID"])
         data_dfs.append(pd.DataFrame.from_dict(datum_dict))
     data_df = pd.concat(data_dfs)

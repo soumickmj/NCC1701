@@ -9,6 +9,7 @@
     "test_path_inp": "",
     "test_path_gt": ["/vol3/schatter/IXI/IXI-T1", "/vol3/schatter/IXI/IXI-T2", "/vol3/schatter/IXI/IXI-PD"],
     "test_filename_filter": [],
+    "test_trainedmodel": "",
     "file_type": "NIFTI",
     "split_csv": "/vol3/schatter/IXI/guysNhh_split_100fromeach.csv",
     "inplane_dims": [0,1],

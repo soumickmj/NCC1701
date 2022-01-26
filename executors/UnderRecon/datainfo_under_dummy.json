@@ -9,6 +9,7 @@
     "test_path_inp": "/run/media/soumick/Enterprise/Datasets/IXI_Dummy/Under/IXI-T1/1DVarden30Mask",
     "test_path_gt": "/run/media/soumick/Enterprise/Datasets/IXI_Dummy/IXI-T1",
     "test_filename_filter": ["IOP"],
+    "test_trainedmodel": "",
     "file_type": "NIFTI",
     "split_csv": "",
     "inplane_dims": [0,1],

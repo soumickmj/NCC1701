@@ -80,14 +80,16 @@ class Engine(object):
             seed_everything(hparams.seed, workers=True)
 
         if hparams.resume:
+            if hparams.load_test_ckpt:
+                path2chk = hparams.test_trainedmodel
+            else:
+                path2chk = pjoin(hparams.save_path, hparams.run_name)
             if hparams.load_best:
-                checkpoint_dir = pjoin(
-                    hparams.save_path, hparams.run_name, "Checkpoints")
+                checkpoint_dir = pjoin(path2chk, "Checkpoints")
                 self.chkpoint = pjoin(checkpoint_dir, sorted(
                     [x for x in os.listdir(checkpoint_dir) if "epoch" in x])[-1])
             else:
-                self.chkpoint = pjoin(
-                    hparams.save_path, hparams.run_name, "Checkpoints", "last.ckpt")
+                self.chkpoint = pjoin(path2chk, "Checkpoints", "last.ckpt")
         else:
             self.chkpoint = None
 
