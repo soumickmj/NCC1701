@@ -142,3 +142,4 @@ executors/MoCo3D/_archive_trainhigh.py
 executors/UnderRecon/_archive_train_repro.py
 rough.py
 Engineering/ssimbenchmarking/*
+___model/*

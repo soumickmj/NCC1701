@@ -278,6 +278,7 @@ def CustomInitialiseWeights(m):
 
 def ConvertCheckpoint(checkpoint_path, new_checkpoint_path, newModel):
     checkpoint = torch.load(checkpoint_path, map_location='cpu')
+    assert len(checkpoint['model'].state_dict().keys()) == len(newModel.state_dict().keys()), "Number of Params in New and Old models do not match"
     del checkpoint['model']
     old_state_dict = checkpoint['state_dict']
     new_keys = list(newModel.state_dict().keys())
@@ -286,13 +287,13 @@ def ConvertCheckpoint(checkpoint_path, new_checkpoint_path, newModel):
     checkpoint['state_dict'] = new_state_dict
     torch.save(checkpoint, new_checkpoint_path)
 
-class MetaLogger():
-    def __init__(self, active=True) -> None:
-        self.activate = active
+# class MetaLogger():
+#     def __init__(self, active=True) -> None:
+#         self.activate = active
 
-    def __call__(self, tag, batch_idx, metas):
-        if self.active:
+#     def __call__(self, tag, batch_idx, metas):
+#         if self.active:
             
 
 
-    metas = {key:val for (key,val) in batch['inp'].items() if "Meta" in key}
+#     metas = {key:val for (key,val) in batch['inp'].items() if "Meta" in key}
