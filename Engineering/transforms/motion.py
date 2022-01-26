@@ -7,13 +7,14 @@ from scipy import ndimage
 
 
 class Motion2Dv0(SuperTransformer):
-    def __init__(self, sigma_range=(0.10, 2.5), n_threads=10, **kwargs):
+    def __init__(self, sigma_range=(0.10, 2.5), n_threads=10, return_meta=False, **kwargs):
         kwargs['gt2inp'] = True
         super().__init__(**kwargs)
         if type(sigma_range) == str:
             sigma_range = tuple([float(tmp) for tmp in sigma_range.split(",")])
         self.sigma_range = sigma_range
         self.n_threads = n_threads
+        self.return_meta = return_meta
 
     def __perform_singlePE(self, idx):
         rot = self.sigma*random.randint(-1, 1)
@@ -38,12 +39,19 @@ class Motion2Dv0(SuperTransformer):
             for idx in range(self.aux.shape[1] if self.axis_selection == 0 else self.aux.shape[0]):
                 self.__perform_singlePE(idx)
         cor = np.abs(np.fft.ifft2(self.aux)).astype(img.dtype)
+        sigma, axis = self.sigma, self.axis_selection
         del self.img, self.aux, self.axis_selection, self.sigma
-        return (cor-cor.min())/(cor.max()-cor.min()+np.finfo(np.float32).eps)
+        if self.return_meta:
+            return (cor-cor.min())/(cor.max()-cor.min()+np.finfo(np.float32).eps), {"MotionMeta": {
+                "sigma": sigma,
+                "axis": axis
+            }}
+        else:
+            return (cor-cor.min())/(cor.max()-cor.min()+np.finfo(np.float32).eps)
 
 
 class Motion2Dv1(SuperTransformer):
-    def __init__(self, sigma_range=(0.10, 2.5), restore_original=0, n_threads=20, **kwargs):
+    def __init__(self, sigma_range=(0.10, 2.5), restore_original=0, n_threads=20, return_meta=False, **kwargs):
         kwargs['gt2inp'] = True
         super().__init__(**kwargs)
         if type(sigma_range) == str:
@@ -51,6 +59,7 @@ class Motion2Dv1(SuperTransformer):
         self.sigma_range = sigma_range
         self.restore_original = restore_original
         self.n_threads = n_threads
+        self.return_meta = return_meta
 
     def __perform_singlePE(self, idx):
         img_aux = ndimage.rotate(
@@ -101,6 +110,13 @@ class Motion2Dv1(SuperTransformer):
                 self.__perform_singlePE(idx)
         cor = (np.abs(np.fft.ifft2(self.aux)) +
                (self.restore_original * img)).astype(img.dtype)
-
-        del self.img, self.aux, self.axis_selection, self.portion, self.random_rots
-        return (cor-cor.min())/(cor.max()-cor.min()+np.finfo(np.float32).eps)
+        sigma, axis, rots = self.sigma, self.axis_selection, self.random_rots
+        del self.img, self.aux, self.axis_selection, self.sigma, self.portion, self.random_rots
+        if self.return_meta:
+            return (cor-cor.min())/(cor.max()-cor.min()+np.finfo(np.float32).eps), {"MotionMeta": {
+                "sigma": sigma,
+                "axis": axis,
+                "rots": rots
+            }}
+        else:
+            return (cor-cor.min())/(cor.max()-cor.min()+np.finfo(np.float32).eps)

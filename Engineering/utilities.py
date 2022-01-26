@@ -285,3 +285,14 @@ def ConvertCheckpoint(checkpoint_path, new_checkpoint_path, newModel):
         [(new_keys[i], v) for i, (k, v) in enumerate(old_state_dict.items())])
     checkpoint['state_dict'] = new_state_dict
     torch.save(checkpoint, new_checkpoint_path)
+
+class MetaLogger():
+    def __init__(self, active=True) -> None:
+        self.activate = active
+
+    def __call__(self, tag, batch_idx, metas):
+        if self.active:
+            
+
+
+    metas = {key:val for (key,val) in batch['inp'].items() if "Meta" in key}

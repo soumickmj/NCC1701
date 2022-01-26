@@ -24,25 +24,44 @@ class SuperTransformer():
         self.exclude = [exclude] if type(exclude) is str else exclude
         self.applyonly = applyonly
         self.gt2inp = gt2inp
+        self.return_meta = False
 
     def __call__(self, sample):
         if self.applyonly:
-            return self.apply(sample)
+            out = self.apply(sample)
+            if self.return_meta:
+                return out[0]
+            else:
+                return out
         if self.gt2inp:
             if torch.rand(1).item() > self.p:
                 sample['inp'] = deepcopy(sample['gt'])
             else:
-                sample['inp'] = {
-                    'data': self.apply(sample['gt']['data']),
+                out = self.apply(sample['gt']['data'])
+                if self.return_meta:
+                    sample['inp'] = {
+                    'data': out[0],
                     'path': ""
-                }
+                    }
+                    sample['inp'] = sample['inp'] | out[1]
+                else:
+                    sample['inp'] = {
+                    'data': out,
+                    'path': ""
+                    }
+                
         else:
             if torch.rand(1).item() > self.p:
                 return sample
             for k in sample.keys():
                 if (type(sample[k]) is not dict) or ("data" not in sample[k]) or (bool(self.include) and k not in self.include) or (not bool(self.include) and bool(self.exclude) and k in self.exclude):
                     continue
-                sample[k]['data'] = self.apply(sample[k]['data'])
+                out = self.apply(sample[k]['data'])
+                if self.return_meta:
+                    sample[k] = {'data': out[0]}
+                    sample[k] = sample[k] | out[1]
+                else:
+                    sample[k] = {'data': out}
         return sample
 
 
@@ -118,17 +137,25 @@ class CropOrPad(SuperTransformer):
 class IntensityNorm(SuperTransformer):
     def __init__(
             self,
-            type: str = "minmax",
+            type: str = "minmax", 
+            return_meta: bool = False,
             **kwargs
     ):
         super().__init__(**kwargs)
         self.type = type
+        self.return_meta = return_meta
 
     def apply(self, inp):
         if self.type == "minmax":
-            return (inp - inp.min()) / (inp.max() - inp.min() + np.finfo(np.float32).eps)
+            if self.return_meta:
+                return (inp - inp.min()) / (inp.max() - inp.min() + np.finfo(np.float32).eps), {"NormMeta": {"min": inp.min(), "max": inp.max()}}
+            else:
+                return (inp - inp.min()) / (inp.max() - inp.min() + np.finfo(np.float32).eps)
         elif self.type == "divbymax":
-            return inp / (inp.max() + np.finfo(np.float32).eps)
+            if self.return_meta:
+                return inp / (inp.max() + np.finfo(np.float32).eps), {"NormMeta": {"max": inp.max()}}
+            else:
+                return inp / (inp.max() + np.finfo(np.float32).eps)
 
 
 class CutNoise(SuperTransformer):

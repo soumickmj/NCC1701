@@ -11,6 +11,7 @@ import scipy.io as sio
 import torch
 import torchio as tio
 from Bridge.WarpDrives.PDUNet.pd import PrimalDualNetwork
+from Bridge.WarpDrives.PDUNet.pd2 import PrimalDualNetwork as PrimalDualNetworkNoResidue
 from Bridge.WarpDrives.ReconResNet.ReconResNet import ResNet
 from Bridge.WarpDrives.ReconResNet.DualSpaceReconResNet import DualSpaceResNet
 from Engineering.data_consistency import DataConsistency
@@ -76,6 +77,15 @@ class ReconEngine(LightningModule):
                             use_complex_primal = False,
                             g_normtype = "magmax",
                             transform = "Fourier")
+        elif self.hparams.modelID == 6: #Primal-Dual Network v2 (no residual), complex Primal
+            self.net = PrimalDualNetworkNoResidue(n_primary=5, n_dual=5, n_iterations=10,
+                            use_original_block = True,
+                            use_original_init = True,
+                            use_complex_primal = True,
+                            residuals=False,
+                            g_normtype = "magmax",
+                            transform = "Fourier",
+                            return_abs = True)
 
         else:
             # TODO: other models
@@ -121,7 +131,7 @@ class ReconEngine(LightningModule):
         if self.hparams.croppad and self.hparams.ds_mode == 1:
             self.init_transforms += [
                 trans.CropOrPad(size=self.hparams.input_shape)]
-        self.init_transforms += [trans.IntensityNorm()]
+        self.init_transforms += [trans.IntensityNorm(return_meta=self.hparams.motion_return_meta)]
         # dataspace_transforms = self.dataspace.getTransforms() #TODO: dataspace transforms are not in use
         # self.init_transforms += dataspace_transforms
         if bool(self.hparams.random_crop) and self.hparams.ds_mode == 1:
@@ -139,10 +149,10 @@ class ReconEngine(LightningModule):
                     **motion_params), trans.IntensityNorm()]
             elif self.hparams.motion_mode == 1 and self.hparams.ds_mode == 1 and not self.hparams.is3D:
                 self.transforms += [pytMotion.Motion2Dv0(
-                    sigma_range=self.hparams.motion_sigma_range, n_threads=self.hparams.motion_n_threads, p=self.hparams.motion_p)]
+                    sigma_range=self.hparams.motion_sigma_range, n_threads=self.hparams.motion_n_threads, p=self.hparams.motion_p, return_meta=self.hparams.motion_return_meta)]
             elif self.hparams.motion_mode == 2 and self.hparams.ds_mode == 1 and not self.hparams.is3D:
                 self.transforms += [pytMotion.Motion2Dv1(sigma_range=self.hparams.motion_sigma_range, n_threads=self.hparams.motion_n_threads,
-                                                         restore_original=self.hparams.motion_restore_original, p=self.hparams.motion_p)]
+                                                         restore_original=self.hparams.motion_restore_original, p=self.hparams.motion_p, return_meta=self.hparams.motion_return_meta)]
             else:
                 sys.exit(
                     "Error: invalid motion_mode, ds_mode, is3D combo. Please double check!")
@@ -194,6 +204,7 @@ class ReconEngine(LightningModule):
     def training_step(self, batch, batch_idx):
         prediction, loss = self.shared_step(batch)
         self.log("running_loss", loss)
+        self.meta_logger("train", batch_idx, {key:val for (key,val) in batch['inp'].items() if "Meta" in key})
         self.img_logger("train", batch_idx, self.slice_squeeze(
             batch['inp']['data']), prediction, self.slice_squeeze(batch['gt']['data']))
         return loss
