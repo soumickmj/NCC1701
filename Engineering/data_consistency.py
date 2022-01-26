@@ -66,8 +66,12 @@ class DataConsistency():
         out_img = ifftNc(data=out_ksp, dim=(0, 1), norm="ortho").to("cuda")
         full_img = ifftNc(data=full_ksp, dim=(0, 1), norm="ortho").to("cuda")
 
-        out_img = torch.permute(out_img, dims=(2, 0, 1)).unsqueeze(1)
-        full_img = torch.permute(full_img, dims=(2, 0, 1)).unsqueeze(1)
+        if len(out_img.shape) == 3:
+            out_img = torch.permute(out_img, dims=(2, 0, 1)).unsqueeze(1)
+            full_img = torch.permute(full_img, dims=(2, 0, 1)).unsqueeze(1)
+        else:
+            out_img = out_img.unsqueeze(0).unsqueeze(0)
+            full_img = full_img.unsqueeze(0).unsqueeze(0)
 
         # out_img = torch.permute(out_ksp, dims=(2,0,1)).unsqueeze(1).to("cuda")
         # full_img = torch.permute(full_ksp, dims=(2,0,1)).unsqueeze(1).to("cuda")
@@ -107,7 +111,8 @@ class DataConsistency():
         out_corrected_img = (out_corrected_img - out_corrected_img.min()) / \
             (out_corrected_img.max() - out_corrected_img.min())
 
-        out_corrected_img = torch.permute(out_corrected_img, dims=(1, 2, 0))
+        if len(out_corrected_img.shape) == 3:
+            out_corrected_img = torch.permute(out_corrected_img, dims=(1, 2, 0))
 
         out_corrected_ksp = fftNc(
             data=out_corrected_img, dim=(0, 1), norm="ortho").cpu()

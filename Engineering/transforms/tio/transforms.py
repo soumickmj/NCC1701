@@ -8,6 +8,7 @@ class IntensityNorm(IntensityTransform):
     def __init__(
             self,
             type: str = "minmax",
+            return_meta: bool = False,
             **kwargs
     ):
         super().__init__(**kwargs)

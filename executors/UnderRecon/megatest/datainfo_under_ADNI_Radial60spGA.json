@@ -1,0 +1,23 @@
+{
+    "run_prefix": "ADNI",
+    "train_path_inp": "",
+    "train_path_gt": "",
+    "train_filename_filter": [],
+    "val_path_inp": "",
+    "val_path_gt": "",
+    "val_filename_filter": [],
+    "test_path_inp": "/data/project/SoumickPavan/ADNIDS/IXIOrientation_Undersampled/wPad256/Radial60spGA",
+    "test_path_gt": "/data/project/SoumickPavan/ADNIDS/IXIOrientation/wPad256",
+    "test_filename_filter": [],
+    "test_trainedmodel": "",
+    "file_type": "NIFTI",
+    "split_csv": "",
+    "inplane_dims": [0,1],
+    "dataspace_inp": 0,
+    "dataspace_gt": 0,
+    "static_metamat_file": "Cargo/Radial60spGA.mat",
+    "is_radial": true,
+    "isGTNonImg": false,
+    "forceNormAffine": true,
+    "cannonicalResample": false 
+}

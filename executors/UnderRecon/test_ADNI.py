@@ -41,17 +41,17 @@ def getARGSParser():
     parser.add_argument('--lossID', action="store", default=1, type=int, help="Loss ID."+str(LOSSID))
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)
     parser.add_argument('--ploss_type', action="store", default="L1")
-    parser.add_argument('--patch_size', action="store", default="", help="length, width, depth")
+    parser.add_argument('--patch_size', action="store", default="256,256,1", help="length, width, depth")
     parser.add_argument('--input_shape', action="store", default="256,256", help="length, width, depth (to be used if patch_size is not given)")
     parser.add_argument('--croppad', action=argparse.BooleanOptionalAction, default=False, help="If True, then it will crop or pad the volume/slice to the given input_shape")  
-    parser.add_argument('--patch_qlen', action="store", default=150, type=int)  ## 5000 - 50
-    parser.add_argument('--patch_per_vol', action="store", default=150, type=int)  # 1000 - 10
-    parser.add_argument('--patch_inference_strides', action="store", default="224,224,1", help="stride_length, stride_width, stride_depth")
+    parser.add_argument('--patch_qlen', action="store", default=176, type=int)  ## 5000 - 50
+    parser.add_argument('--patch_per_vol', action="store", default=176, type=int)  # 1000 - 10
+    parser.add_argument('--patch_inference_strides', action="store", default="256,256,1", help="stride_length, stride_width, stride_depth")
     parser.add_argument('--im_log_freq', action="store", default=250, type=int, help="For Tensorboard image logs, n_iteration. Set it to -1 if not desired")
     parser.add_argument('--log_freq', action="store", default=250, type=int, help="Log every n-th step. Lightning default is 50. Flush will be twice this.")
     parser.add_argument('--save_freq', action="store", default=1, type=int, help="For Checkpoint save, n_epochs")
     parser.add_argument('--save_inp', action="store", default=1, type=int, help="Whether to save the input during testing")
-    parser.add_argument('--do_savenorm', action="store", default=1, type=int, help="Whether to normalise before saving and calculating metrics during testing")
+    parser.add_argument('--do_savenorm', action="store", default=0, type=int, help="Whether to normalise before saving and calculating metrics during testing")
     
     #Augmentations
     parser.add_argument('--p_contrast_augment', action="store", default=0.75, type=float, help="Probability of using contrast augmentations. Set it to 0 or -1 to avoid using.")
@@ -92,7 +92,7 @@ def getARGSParser():
     parser.add_argument('--auto_bs', action="store", default=0, help="Automatically find the batch size to fit best")
     parser.add_argument('--auto_lr', action="store", default=0, help="Automatically find the LR")
 
-    parser.add_argument('--ds_mode', action="store", default=1, type=int, help='0: TorchIO, 1: in-house MRITorchDS (medfile)')
+    parser.add_argument('--ds_mode', action="store", default=0, type=int, help='0: TorchIO, 1: in-house MRITorchDS (medfile)')
     parser.add_argument('--ds2D_mid_n', action="store", default=-1, type=int, help='Number of mid slices to be used per volume. -1 for all. (Only for ds_mode=1 + is3D=False)')
     parser.add_argument('--ds2D_mid_per', action="store", default=-1, type=float, help='Percentage of mid slices to be used per volume, when mid_n is -1. -1 to ignore. (Only for ds_mode=1 + is3D=False)')
     parser.add_argument('--ds2D_random_n', action="store", default=-1, type=int, help='Number of random slices to be used per volume, when mid_n and mid_per are -1. -1 for all. (Only for ds_mode=1 + is3D=False)')

@@ -58,6 +58,13 @@ def createTIOSubDS(
         if bool(root_input):
             gt_id = [i for i, g in enumerate(root_gt) if g in file][0]
             file_in = file.replace(root_gt[gt_id], root_input[gt_id])
+            if not os.path.isfile(file_in):
+                if data_mode == "NIFTI" and ".gz" not in file_in:
+                    file_in += ".gz"
+                    if not os.path.isfile(file_in):
+                        continue
+                else:
+                    continue
             subjects.append(tio.Subject(
                 inp=tio.ScalarImage(file_in),
                 gt=tio.LabelMap(file) if isGTNonImg else tio.ScalarImage(file),

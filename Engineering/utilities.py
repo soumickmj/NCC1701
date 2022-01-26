@@ -19,6 +19,7 @@ from skimage.metrics import (normalized_root_mse, peak_signal_noise_ratio,
 
 from Engineering.data_consistency import DataConsistency
 from Engineering.math.freq_trans import fftNc, ifftNc
+from Engineering.math.misc import minmax
 from Engineering.transforms.tio.transforms import getDataSpaceTransforms
 
 def BoolArgs(v):
@@ -59,11 +60,14 @@ def getSSIM(gt, out, gt_flag=None, data_range=1):
     return median(vals)
 
 
-def calc_metircs(gt, out, tag):
+def calc_metircs(gt, out, tag, norm4diff=False):
     ssim, ssimMAP = structural_similarity(gt, out, data_range=1, full=True)
     nrmse = normalized_root_mse(gt, out)
     psnr = peak_signal_noise_ratio(gt, out, data_range=1)
     uqi = UQICalc(gt, out)
+    if norm4diff:
+        gt = minmax(gt)
+        out = minmax(out)
     diff = gt - out
     dif_std = np.std(diff)
     metrics = {
@@ -73,7 +77,7 @@ def calc_metircs(gt, out, tag):
         "UQI"+tag: uqi,
         "SDofDiff"+tag: dif_std
     }
-    return metrics, ssimMAP, diff
+    return metrics, ssimMAP, abs(diff)
 
 
 def log_images(writer, inputs, outputs, targets, step, section='', imID=0, chID=0):
@@ -121,28 +125,37 @@ class DataSpaceHandler:
 
 
 class DataHandler:
-    def __init__(self, dataspace_op: DataSpaceHandler, inp=None, gt=None, out=None, metadict=None):
+    def __init__(self, dataspace_op: DataSpaceHandler, inp=None, gt=None, out=None, metadict=None, storeAsTensor=True):
         self.dataspace_op = dataspace_op
-        self.inp = inp
-        self.gt = gt
-        self.out = out
+        self.storeAsTensor = storeAsTensor
+        self.inp = self.__convert_type(inp)
+        self.gt = self.__convert_type(gt)
+        self.out = self.__convert_type(out)
         self.metadict = metadict
         self.inpK = None
         self.gtK = None
         self.outK = None
         self.outCorrectedK = None
 
+    def __convert_type(self, x):
+        if x is None or self.storeAsTensor == torch.is_tensor(x):
+            return x
+        elif self.storeAsTensor and not torch.is_tensor(x):
+            return torch.from_numpy(x)
+        else:
+            return x.numpy()
+
     def setInpK(self, x):
-        self.inpK = x
+        self.inpK = self.__convert_type(x)
 
     def setGTK(self, x):
-        self.gtK = x
+        self.gtK = self.__convert_type(x)
 
     def setOutK(self, x):
-        self.outK = x
+        self.outK = self.__convert_type(x)
 
     def setOutCorrectedK(self, x):
-        self.outCorrectedK = x
+        self.outCorrectedK = self.__convert_type(x)
 
     # Get kspace
 
@@ -217,20 +230,20 @@ class ResSaver():
 
         gt = datumHandler.getImGT()
         if gt is not None:
-            gt = gt.float().numpy()
+            gt = gt.float().numpy()          
 
             if self.do_norm:
-                out = out/out.max()
-                inp = inp/inp.max()
-                gt = gt/gt.max()
+                out = minmax(out)
+                inp = minmax(inp)
+                gt = minmax(gt)
 
             out_metrics, out_ssimMAP, out_diff = calc_metircs(
-                gt, out, tag="Out")
+                gt, out, tag="Out", norm4diff=not self.do_norm)
             SaveNIFTI(out_ssimMAP, os.path.join(outpath, "ssimMAPOut.nii.gz"))
             SaveNIFTI(out_diff, os.path.join(outpath, "diffOut.nii.gz"))
 
             inp_metrics, inp_ssimMAP, inp_diff = calc_metircs(
-                gt, inp, tag="Inp")
+                gt, inp, tag="Inp", norm4diff=not self.do_norm)
             SaveNIFTI(inp_ssimMAP, os.path.join(outpath, "ssimMAPInp.nii.gz"))
             SaveNIFTI(inp_diff, os.path.join(outpath, "diffInp.nii.gz"))
 
@@ -247,9 +260,9 @@ class ResSaver():
             SaveNIFTI(out, os.path.join(outpath, "outCorrected.nii.gz"))
             if gt is not None:
                 # if self.do_norm:
-                #     outCorrected = outCorrected/outCorrected.max()
+                #     outCorrected = minmax(outCorrected)
                 outCorrected_metrics, outCorrected_ssimMAP, outCorrected_diff = calc_metircs(
-                    gt, outCorrected, tag="OutCorrected")
+                    gt, outCorrected, tag="OutCorrected", norm4diff=not self.do_norm)
                 SaveNIFTI(outCorrected_ssimMAP, os.path.join(
                     outpath, "ssimMAPOutCorrected.nii.gz"))
                 SaveNIFTI(outCorrected_diff, os.path.join(
