@@ -39,12 +39,12 @@ class DataConsistency():
         out_corrected_ksp = under_ksp + missing_ksp
         return out_corrected_ksp
 
-    def radial(self, out_ksp, full_ksp, under_ksp, metadict):
-        # om = torch.from_numpy(metadict['om'].transpose()).to(torch.float).to("cuda")
-        # invom = torch.from_numpy(metadict['invom'].transpose()).to(torch.float).to("cuda")
-        # fullom = torch.from_numpy(metadict['fullom'].transpose()).to(torch.float).to("cuda")
+    def radial(self, out_ksp, full_ksp, under_ksp, metadict, device="cpu"): #TODO: switch to cuda
+        # om = torch.from_numpy(metadict['om'].transpose()).to(torch.float).to(device)
+        # invom = torch.from_numpy(metadict['invom'].transpose()).to(torch.float).to(device)
+        # fullom = torch.from_numpy(metadict['fullom'].transpose()).to(torch.float).to(device)
         # # dcf = torch.from_numpy(metadict['dcf'].squeeze())
-        # dcfFullRes = torch.from_numpy(metadict['dcfFullRes'].squeeze()).to(torch.float).to("cuda")
+        # dcfFullRes = torch.from_numpy(metadict['dcfFullRes'].squeeze()).to(torch.float).to(device)
         baseresolution = out_ksp.shape[0]*2
         Nd = (baseresolution, baseresolution)
         imsize = out_ksp.shape[:2]
@@ -52,19 +52,19 @@ class DataConsistency():
         nufft_ob = tkbn.KbNufft(
             im_size=imsize,
             grid_size=Nd,
-        ).to(torch.complex64).to("cuda")
+        ).to(torch.complex64).to(device)
         adjnufft_ob = tkbn.KbNufftAdjoint(
             im_size=imsize,
             grid_size=Nd,
-        ).to(torch.complex64).to("cuda")
+        ).to(torch.complex64).to(device)
 
         # intrp_ob = tkbn.KbInterp(
         #     im_size=imsize,
         #     grid_size=Nd,
-        # ).to(torch.complex64).to("cuda")
+        # ).to(torch.complex64).to(device)
 
-        out_img = ifftNc(data=out_ksp, dim=(0, 1), norm="ortho").to("cuda")
-        full_img = ifftNc(data=full_ksp, dim=(0, 1), norm="ortho").to("cuda")
+        out_img = ifftNc(data=out_ksp, dim=(0, 1), norm="ortho").to(device)
+        full_img = ifftNc(data=full_ksp, dim=(0, 1), norm="ortho").to(device)
 
         if len(out_img.shape) == 3:
             out_img = torch.permute(out_img, dims=(2, 0, 1)).unsqueeze(1)
@@ -73,8 +73,8 @@ class DataConsistency():
             out_img = out_img.unsqueeze(0).unsqueeze(0)
             full_img = full_img.unsqueeze(0).unsqueeze(0)
 
-        # out_img = torch.permute(out_ksp, dims=(2,0,1)).unsqueeze(1).to("cuda")
-        # full_img = torch.permute(full_ksp, dims=(2,0,1)).unsqueeze(1).to("cuda")
+        # out_img = torch.permute(out_ksp, dims=(2,0,1)).unsqueeze(1).to(device)
+        # full_img = torch.permute(full_ksp, dims=(2,0,1)).unsqueeze(1).to(device)
 
         spokelength = full_img.shape[-1] * 2
         grid_size = (spokelength, spokelength)
@@ -92,11 +92,11 @@ class DataConsistency():
         kx = np.transpose(kx)
 
         fullom = torch.from_numpy(np.stack((ky.flatten(), kx.flatten()), axis=0)).to(
-            torch.float).to("cuda")
+            torch.float).to(device)
         om = fullom[:, :30720]
         invom = fullom[:, 30720:]
         dcfFullRes = tkbn.calc_density_compensation_function(
-            ktraj=fullom, im_size=imsize).to("cuda")
+            ktraj=fullom, im_size=imsize).to(device)
 
         yUnder = nufft_ob(full_img, om, norm="ortho")
         yMissing = nufft_ob(out_img, invom, norm="ortho")

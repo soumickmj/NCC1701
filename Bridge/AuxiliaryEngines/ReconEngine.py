@@ -5,6 +5,7 @@ from os.path import join as pjoin
 from statistics import median
 from typing import Any, List
 
+from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import scipy.io as sio
@@ -248,7 +249,7 @@ class ReconEngine(LightningModule):
         filenames = self.out_aggregators.keys()
         test_metrics = []
         test_ssim = []
-        for filename in filenames:
+        for filename in tqdm(filenames):
             if bool(self.hparams.patch_size):
                 out = self.out_aggregators[filename].get_output_tensor(
                 ).squeeze()

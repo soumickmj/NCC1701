@@ -15,7 +15,7 @@ seed_everything(1701)
 def getARGSParser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--taskID', action="store", type=int, default=0, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
-    parser.add_argument('--trainID', action="store", default="rough_h7_AllSlices_Varden1D30") ## "testing")  ## "ResNet14"
+    parser.add_argument('--trainID', action="store", default="rough") ## "testing")  ## "ResNet14"
     parser.add_argument('--resume', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_test_ckpt', action="store", default=1, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
@@ -25,9 +25,9 @@ def getARGSParser():
     parser.add_argument('--batch_size', action="store", default=1, type=int)  
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 1 as default  
     # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_under_dummy.json")
-    parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under_ADNI_1DVarden30Mask.json")
-    parser.add_argument('--tblog_path', action="store", default="/project/SoumickPavan/NCC1701Output/TBLogs")
-    parser.add_argument('--save_path', action="store", default="/project/SoumickPavan/NCC1701Output/Results")
+    parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/megatest/datainfo_under_DS6_Varden1D10.json")
+    parser.add_argument('--tblog_path', action="store", default="/data/project/SoumickPavan/NCC1701Output/TBLogs/DS6")
+    parser.add_argument('--save_path', action="store", default="/data/project/SoumickPavan/NCC1701Output/Results/DS6")
     parser.add_argument('--cuda', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--amp', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--run_mode', action="store", default=2, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
@@ -41,12 +41,12 @@ def getARGSParser():
     parser.add_argument('--lossID', action="store", default=1, type=int, help="Loss ID."+str(LOSSID))
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)
     parser.add_argument('--ploss_type', action="store", default="L1")
-    parser.add_argument('--patch_size', action="store", default="256,256,1", help="length, width, depth")
+    parser.add_argument('--patch_size', action="store", default="720,720,1", help="length, width, depth")
     parser.add_argument('--input_shape', action="store", default="256,256", help="length, width, depth (to be used if patch_size is not given)")
     parser.add_argument('--croppad', action=argparse.BooleanOptionalAction, default=False, help="If True, then it will crop or pad the volume/slice to the given input_shape")  
     parser.add_argument('--patch_qlen', action="store", default=176, type=int)  ## 5000 - 50
     parser.add_argument('--patch_per_vol', action="store", default=176, type=int)  # 1000 - 10
-    parser.add_argument('--patch_inference_strides', action="store", default="256,256,1", help="stride_length, stride_width, stride_depth")
+    parser.add_argument('--patch_inference_strides', action="store", default="720,720,1", help="stride_length, stride_width, stride_depth")
     parser.add_argument('--im_log_freq', action="store", default=250, type=int, help="For Tensorboard image logs, n_iteration. Set it to -1 if not desired")
     parser.add_argument('--log_freq', action="store", default=250, type=int, help="Log every n-th step. Lightning default is 50. Flush will be twice this.")
     parser.add_argument('--save_freq', action="store", default=1, type=int, help="For Checkpoint save, n_epochs")

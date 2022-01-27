@@ -87,8 +87,8 @@ class Engine(object):
                 path2chk = pjoin(hparams.save_path, hparams.run_name)
             if hparams.load_best:
                 checkpoint_dir = pjoin(path2chk, "Checkpoints")
-                self.chkpoint = pjoin(checkpoint_dir, sorted(
-                    [x for x in os.listdir(checkpoint_dir) if "epoch" in x])[-1])
+                available_checkpoints = {int(c.split("epoch=")[1].split("-")[0]): c for c in [x for x in os.listdir(checkpoint_dir) if "epoch" in x]}
+                self.chkpoint = pjoin(checkpoint_dir, available_checkpoints[sorted(list(available_checkpoints.keys()))[-1]])
             else:
                 self.chkpoint = pjoin(path2chk, "Checkpoints", "last.ckpt")
         else:
