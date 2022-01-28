@@ -257,7 +257,7 @@ class ResSaver():
             # outCorrected = abs(datumHandler.getImOutCorrected()).float().numpy()
             outCorrected = datumHandler.getImOutCorrected(
             ).real.float().numpy()  # TODO: param real v abs
-            SaveNIFTI(out, os.path.join(outpath, "outCorrected.nii.gz"))
+            SaveNIFTI(outCorrected, os.path.join(outpath, "outCorrected.nii.gz"))
             if gt is not None:
                 # if self.do_norm:
                 #     outCorrected = minmax(outCorrected)

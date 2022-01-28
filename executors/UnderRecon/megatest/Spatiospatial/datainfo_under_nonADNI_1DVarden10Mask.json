@@ -1,0 +1,23 @@
+{
+    "run_prefix": "Spatiospatial",
+    "train_path_inp": "",
+    "train_path_gt": "",
+    "train_filename_filter": [],
+    "val_path_inp": "",
+    "val_path_gt": "",
+    "val_filename_filter": [],
+    "test_path_inp": "/data/project/SoumickPavan/Spatiospatial/UnderDS_Test_Seed23_Seed19Split/1DVarden10Mask",
+    "test_path_gt": "/data/project/SoumickPavan/Spatiospatial/PaddedDS_Test_Seed23_Seed19Split",
+    "test_filename_filter": [],
+    "test_trainedmodel": "/data/project/SoumickPavan/NCC1701Weights/NewSet/NewIXIBET/IXIT1BET_HHGuys_Varden1D10",
+    "file_type": "NIFTI",
+    "split_csv": "",
+    "inplane_dims": [0,1],
+    "dataspace_inp": 0,
+    "dataspace_gt": 0,
+    "static_metamat_file": "Cargo/1DVarden10Mask.mat",
+    "is_radial": false,
+    "isGTNonImg": false,
+    "forceNormAffine": true,
+    "cannonicalResample": false 
+}
