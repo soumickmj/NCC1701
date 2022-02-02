@@ -3,6 +3,7 @@ import random
 import sys
 from glob import glob
 from typing import Callable, Literal, Optional, Sequence, Union
+from tqdm import tqdm
 
 import nibabel as nib
 import numpy as np
@@ -130,7 +131,8 @@ def createFileDS(
 
         data_dfs = []
         filenames = []
-        for file in files:
+        print("Preparing dataset .....")
+        for file in tqdm(files):
             if not os.path.isfile(file):
                 continue
             filenames.append(os.path.basename(file))

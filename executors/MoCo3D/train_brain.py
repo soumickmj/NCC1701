@@ -19,7 +19,7 @@ def getARGSParser():
     parser.add_argument('--trainID', action="store", default="ResNet14_fullVol2D_L1Loss_lowmotion") ## "testing")  ## "ResNet14"
     parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
-    parser.add_argument('--load_test_ckpt', action="store", default=1, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
+    parser.add_argument('--load_test_ckpt', action="store", default=0, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
     parser.add_argument('--seed', action="store", default=1701, type=int)
     parser.add_argument('--num_workers', action="store", default=0, type=int)
@@ -118,7 +118,7 @@ def getARGSParser():
     parser.add_argument('--motion_sigma_range', action="store", default="1.0,2.0", help="Range of randomly-chosen sigma values. Tuple of Float, passed as CSV")
     parser.add_argument('--motion_n_threads', action="store", type=int, default=10, help="Number of threads to use")
     parser.add_argument('--motion_restore_original', action="store", type=float, default=0, help="Amount of original image to restore (Only for Motion2Dv1), set 0 to avoid")
-    parser.add_argument('--motion_return_meta', action="store", type=argparse.BooleanOptionalAction, default=True, help="Return the meta of the motion coruption")
+    parser.add_argument('--motion_return_meta', action="store", type=argparse.BooleanOptionalAction, default=False, help="Return the meta of the motion coruption")
 
     
     #TODO currently not in use, params are hardcoded 

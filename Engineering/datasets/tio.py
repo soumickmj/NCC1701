@@ -2,6 +2,7 @@ import os
 import sys
 from glob import glob
 from typing import Callable, Literal, Optional, Sequence, Union
+from tqdm import tqdm
 
 import numpy as np
 import pandas as pd
@@ -53,7 +54,9 @@ def createTIOSubDS(
 
     subjects = []
     filenames = []
-    for file in files:
+    
+    print("Preparing dataset .....")
+    for file in tqdm(files):
         filenames.append(os.path.basename(file))
         if bool(root_input):
             gt_id = [i for i, g in enumerate(root_gt) if g in file][0]
