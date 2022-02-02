@@ -156,7 +156,7 @@ utils/Eval/organise_gpmodels.py
 utils/Eval/organise_spatiospatial.py
 utils/Eval/organise_strega.py
 executors/UnderRecon/testPC.py
-executors/UnderRecon/megatest/a.json
+executors/UnderRecon/megatest/*
 Engineering/kronecker.py
 all.sh
 a.py

@@ -19,6 +19,7 @@ def getARGSParser():
     parser.add_argument('--trainID', action="store", default="ResNet14_fullVol2D_L1Loss_lowmotion") ## "testing")  ## "ResNet14"
     parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
+    parser.add_argument('--load_test_ckpt', action="store", default=1, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
     parser.add_argument('--seed', action="store", default=1701, type=int)
     parser.add_argument('--num_workers', action="store", default=0, type=int)
@@ -93,9 +94,11 @@ def getARGSParser():
     parser.add_argument('--auto_lr', action="store", default=0, help="Automatically find the LR")
 
     parser.add_argument('--ds_mode', action="store", default=1, type=int, help='0: TorchIO, 1: in-house MRITorchDS (medfile)')
+    parser.add_argument('--processed_csv', action="store", default="", help='(Only for ds_mode 1) [Attenzione! Be Careful!] This param overpowers all the other dataset related parameters, inlcuding the paths. For the first run, all params will be used to create this file. From second run, all will be ignored and the this file will be used to create dataframe. This is to achive speed-up. Should only be used when all the DS related params are identical. Blank string to ignore')
     parser.add_argument('--ds2D_mid_n', action="store", default=-1, type=int, help='Number of mid slices to be used per volume. -1 for all. (Only for ds_mode=1 + is3D=False)')
     parser.add_argument('--ds2D_mid_per', action="store", default=-1, type=float, help='Percentage of mid slices to be used per volume, when mid_n is -1. -1 to ignore. (Only for ds_mode=1 + is3D=False)')
     parser.add_argument('--ds2D_random_n', action="store", default=50, type=int, help='Number of random slices to be used per volume, when mid_n and mid_per are -1. -1 for all. (Only for ds_mode=1 + is3D=False)')
+    parser.add_argument('--norm_type', action="store", default="divbymaxvol", help='Currently 2 modes and their volumetric versions are supported. minmax, divbymax. Volumetric versions: minmaxvol, divbymaxvol')
     parser.add_argument('--motion_mode', action="store", default=1, type=int, help='0: RandomMotionGhostingFast using TorchIO, 1: Motion2Dv0, 2: Motion2Dv1')
 
     #Motion parameters, for TorchIO RandomMotionGhosting or RandomMotionGhostingFast
@@ -115,6 +118,7 @@ def getARGSParser():
     parser.add_argument('--motion_sigma_range', action="store", default="1.0,2.0", help="Range of randomly-chosen sigma values. Tuple of Float, passed as CSV")
     parser.add_argument('--motion_n_threads', action="store", type=int, default=10, help="Number of threads to use")
     parser.add_argument('--motion_restore_original', action="store", type=float, default=0, help="Amount of original image to restore (Only for Motion2Dv1), set 0 to avoid")
+    parser.add_argument('--motion_return_meta', action="store", type=argparse.BooleanOptionalAction, default=True, help="Return the meta of the motion coruption")
 
     
     #TODO currently not in use, params are hardcoded 
@@ -142,6 +146,9 @@ def getARGSParser():
 if __name__ == '__main__':
     torch.set_num_threads(2)
     parser = getARGSParser()
+    gpuID = parser.parse_args().gpu
+    if gpuID != -1:
+        os.environ["CUDA_VISIBLE_DEVICES"]=gpuID
     engine = Engine(parser)
     if engine.hparams.auto_bs or engine.hparams.auto_lr:
         print("Engine alignment initiating..")

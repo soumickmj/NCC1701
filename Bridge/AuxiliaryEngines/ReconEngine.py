@@ -28,7 +28,7 @@ from Engineering.transforms.tio import motion as tioMotion
 from Engineering.transforms.tio import transforms as tioTransforms
 from Engineering.utilities import (CustomInitialiseWeights, DataHandler,
                                    DataSpaceHandler, ResSaver, fetch_vol_subds, getSSIM,
-                                   log_images, process_slicedict)
+                                   log_images, process_slicedict, process_testbatch)
 from pytorch_lightning.core.lightning import LightningModule
 from pytorch_msssim import MS_SSIM, SSIM
 from torch import nn
@@ -228,7 +228,8 @@ class ReconEngine(LightningModule):
                 prediction.detach().cpu(), args[0][tio.LOCATION])
         else:
             if not self.hparams.is3D and 'sliceID' in args[0]:    
-                self.out_aggregators[args[0]['filename'][0]][args[0]['sliceID'][0].item()] = prediction.detach().cpu()
+                # self.out_aggregators[args[0]['filename'][0]][args[0]['sliceID'][0].item()] = prediction.detach().cpu()
+                process_testbatch(self.out_aggregators, args[0], prediction)
             else:
                 self.out_aggregators[args[0]['filename'][0]] = prediction.detach().cpu()
         return {'test_loss': loss}

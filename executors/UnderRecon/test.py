@@ -96,7 +96,7 @@ def getARGSParser():
     parser.add_argument('--processed_csv', action="store", default="", help='(Only for ds_mode 1) [Attenzione! Be Careful!] This param overpowers all the other dataset related parameters, inlcuding the paths. For the first run, all params will be used to create this file. From second run, all will be ignored and the this file will be used to create dataframe. This is to achive speed-up. Should only be used when all the DS related params are identical. Blank string to ignore')
     parser.add_argument('--ds2D_mid_n', action="store", default=-1, type=int, help='Number of mid slices to be used per volume. -1 for all. (Only for ds_mode=1 + is3D=False)')
     parser.add_argument('--ds2D_mid_per', action="store", default=-1, type=float, help='Percentage of mid slices to be used per volume, when mid_n is -1. -1 to ignore. (Only for ds_mode=1 + is3D=False)')
-    parser.add_argument('--ds2D_random_n', action="store", default=10, type=int, help='Number of random slices to be used per volume, when mid_n and mid_per are -1. -1 for all. (Only for ds_mode=1 + is3D=False)')
+    parser.add_argument('--ds2D_random_n', action="store", default=-1, type=int, help='Number of random slices to be used per volume, when mid_n and mid_per are -1. -1 for all. (Only for ds_mode=1 + is3D=False)')
     parser.add_argument('--norm_type', action="store", default="divbymaxvol", help='Currently 2 modes and their volumetric versions are supported. minmax, divbymax. Volumetric versions: minmaxvol, divbymaxvol')
     parser.add_argument('--motion_mode', action="store", default=1, type=int, help='0: RandomMotionGhostingFast using TorchIO, 1: Motion2Dv0, 2: Motion2Dv1')
 
@@ -145,6 +145,9 @@ def getARGSParser():
 if __name__ == '__main__':
     torch.set_num_threads(2)
     parser = getARGSParser()
+    gpuID = parser.parse_args().gpu
+    if gpuID != -1:
+        os.environ["CUDA_VISIBLE_DEVICES"]=gpuID
     engine = Engine(parser)
     if engine.hparams.auto_bs or engine.hparams.auto_lr:
         print("Engine alignment initiating..")

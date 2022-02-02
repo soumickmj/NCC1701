@@ -306,6 +306,10 @@ def ConvertCheckpoint(checkpoint_path, new_checkpoint_path, newModel):
     checkpoint['state_dict'] = new_state_dict
     torch.save(checkpoint, new_checkpoint_path)
 
+def process_testbatch(out_aggregators, datum, prediction):
+    for i in range(len(datum['filename'])):
+        out_aggregators[datum['filename'][i]][datum['sliceID'][i].item()] = prediction[i].detach().cpu()
+
 def process_slicedict(dict_sliceout, axis=-1):
     sliceIDs = sorted(list(dict_sliceout.keys()))
     out = []
