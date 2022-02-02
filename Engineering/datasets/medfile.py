@@ -167,7 +167,7 @@ def createFileDS(
                     datum_dict["inmin"] = [v.min()] * len(datum_dict["sliceID"])
                     datum_dict["inmax"] = [v.max()] * len(datum_dict["sliceID"])
             data_dfs.append(pd.DataFrame.from_dict(datum_dict))
-        data_df = pd.concat(data_dfs)
+        data_df = pd.concat(data_dfs).reset_index(drop=True)
 
         if bool(processed_csv):
             data_df.to_csv(processed_csv)
