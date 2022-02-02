@@ -139,7 +139,10 @@ class Engine(object):
         )
 
         if not hparams.non_deter:
-            torch.use_deterministic_algorithms(True, warn_only=True)
+            try: #As warn_only works with torch 1.11, this is for backward compatibility
+                torch.use_deterministic_algorithms(True, warn_only=True) 
+            except:
+                torch.use_deterministic_algorithms(True)#, warn_only=True) 
 
         self.hparams = hparams
         self.train_done = False

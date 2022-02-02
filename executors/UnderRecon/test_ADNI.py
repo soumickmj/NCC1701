@@ -26,8 +26,8 @@ def getARGSParser():
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 1 as default  
     # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_under_dummy.json")
     parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under_ADNI_1DVarden30Mask.json")
-    parser.add_argument('--tblog_path', action="store", default="/project/SoumickPavan/NCC1701Output/TBLogs/ADNI")
-    parser.add_argument('--save_path', action="store", default="/project/SoumickPavan/NCC1701Output/Results/ADNI")
+    parser.add_argument('--tblog_path', action="store", default="/data/project/SoumickPavan/NCC1701Output/TBLogs/Set1/ADNI")
+    parser.add_argument('--save_path', action="store", default="/data/project/SoumickPavan/NCC1701Output/Results/Set1/ADNI")
     parser.add_argument('--cuda', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--amp', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--run_mode', action="store", default=2, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')

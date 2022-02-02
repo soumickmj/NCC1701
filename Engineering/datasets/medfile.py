@@ -11,6 +11,7 @@ import torch
 import torchio as tio
 import torchvision
 from torch.utils.data import Dataset
+from Engineering.transforms.transforms import IntensityNorm
 
 
 def __count_volslice(vol_path, mid_n=-1, mid_per=-1, random_n=-1):
@@ -50,8 +51,12 @@ class MRITorchDS(Dataset):
                 "data": gt.astype(np.float32),
                 "path": datum['gtpath']
             },
-            "filename": datum["filename"]
+            "filename": datum["filename"],
+            "sliceID": datum["sliceID"]
         }
+        if "gtmax" in datum:
+            sample["gt"]["volmax"] = datum["gtmax"]
+            sample["gt"]["volmin"] = datum["gtmin"]
         if "inpath" in datum:
             inp = np.array(nib.load(datum['inpath']).dataobj[..., datum['sliceID']]) if not self.is3D else np.array(
                 nib.load(datum['inpath']).get_fdata())
@@ -59,6 +64,9 @@ class MRITorchDS(Dataset):
                 "data": inp.astype(np.float32),
                 "path": datum['inpath']
             }
+            if "inmax" in datum:
+                sample["inp"]["volmax"] = datum["inmax"]
+                sample["inp"]["volmin"] = datum["inmin"]
         if bool(self.transform):
             sample = self.transform(sample)
         if self.expand_ch:
@@ -73,6 +81,7 @@ def createFileDS(
     root_gt: Union[str, Sequence[str]],
     root_input: Optional[Union[str, Sequence[str]]] = None,
     filename_filter: Optional[Union[str, Sequence[str]]] = None,
+    processed_csv: str = "",
     split_csv: str = "",
     split: str = "",
     data_mode: Literal['NIFTI', 'DICOM'] = "NIFTI",
@@ -87,64 +96,83 @@ def createFileDS(
     random_n: int = -1,  # Only if is3D=False
 ) -> MRITorchDS:
 
-    if type(root_gt) is not list:
-        root_gt = [root_gt]
+    if not bool(processed_csv) or not os.path.isfile(processed_csv):
+        if type(root_gt) is not list:
+            root_gt = [root_gt]
 
-    if bool(root_input) and type(root_input) is not list:
-        root_input = [root_input]
+        if bool(root_input) and type(root_input) is not list:
+            root_input = [root_input]
 
-    files = []
-    for gt in root_gt:
-        if data_mode == "NIFTI":
-            files += glob(gt+"/**/*.nii", recursive=True) + glob(gt+"/**/*.nii.gz", recursive=True) +\
-                glob(gt+"/**/*.img", recursive=True) + \
-                glob(gt+"/**/*.img.gz", recursive=True)
-        else:
-            # TODO: DICOM read
-            sys.exit("DICOM read not implemented inside createFileDS")
-
-    if bool(filename_filter):
-        if type(filename_filter) is str:
-            filename_filter = [filename_filter]
-        files = [f for f in files if any(
-            filt in f for filt in filename_filter)]
-
-    if bool(split_csv):
-        df = pd.read_csv(split_csv)[split]
-        df.dropna(inplace=True)
-        df = list(df)
-        files = [f for f in files if any(d in f for d in df)]
-
-    data_dfs = []
-    filenames = []
-    for file in files:
-        if not os.path.isfile(file):
-            continue
-        filenames.append(os.path.basename(file))
         if not is3D:
-            datum_dict = __count_volslice(
-                file, mid_n=mid_n, mid_per=mid_per, random_n=random_n)
-            datum_dict["gtpath"] = datum_dict.pop("path")
-        else:
-            datum_dict = {
-                "gtpath": [file],
-                "sliceID": [-1]
-            }
-        datum_dict["filename"] = [filenames[-1]] * len(datum_dict["sliceID"])
-        if bool(root_input):
-            gt_id = [i for i, g in enumerate(root_gt) if g in file][0]
-            file_in = file.replace(root_gt[gt_id], root_input[gt_id])
-            if not os.path.isfile(file_in):
-                if data_mode == "NIFTI" and ".gz" not in file_in:
-                    file_in += ".gz"
-                    if not os.path.isfile(file_in):
-                        continue
-                else:
-                    continue
-            datum_dict["inpath"] = [file_in] * len(datum_dict["sliceID"])
-        data_dfs.append(pd.DataFrame.from_dict(datum_dict))
-    data_df = pd.concat(data_dfs)
+            normtype = next((x.type for x in init_transforms if isinstance(x, IntensityNorm)), "")
 
+        files = []
+        for gt in root_gt:
+            if data_mode == "NIFTI":
+                files += glob(gt+"/**/*.nii", recursive=True) + glob(gt+"/**/*.nii.gz", recursive=True) +\
+                    glob(gt+"/**/*.img", recursive=True) + \
+                    glob(gt+"/**/*.img.gz", recursive=True)
+            else:
+                # TODO: DICOM read
+                sys.exit("DICOM read not implemented inside createFileDS")
+
+        if bool(filename_filter):
+            if type(filename_filter) is str:
+                filename_filter = [filename_filter]
+            files = [f for f in files if any(
+                filt in f for filt in filename_filter)]
+
+        if bool(split_csv):
+            df = pd.read_csv(split_csv)[split]
+            df.dropna(inplace=True)
+            df = list(df)
+            files = [f for f in files if any(d in f for d in df)]
+
+        data_dfs = []
+        filenames = []
+        for file in files:
+            if not os.path.isfile(file):
+                continue
+            filenames.append(os.path.basename(file))
+            if not is3D:
+                datum_dict = __count_volslice(
+                    file, mid_n=mid_n, mid_per=mid_per, random_n=random_n)
+                datum_dict["gtpath"] = datum_dict.pop("path")
+                if "vol" in normtype:
+                    v = nib.load(file).get_fdata()
+                    datum_dict["gtmin"] = [v.min()] * len(datum_dict["sliceID"])
+                    datum_dict["gtmax"] = [v.max()] * len(datum_dict["sliceID"])
+            else:
+                datum_dict = {
+                    "gtpath": [file],
+                    "sliceID": [-1]
+                }
+            datum_dict["filename"] = [filenames[-1]] * len(datum_dict["sliceID"])
+            if bool(root_input):
+                gt_id = [i for i, g in enumerate(root_gt) if g in file][0]
+                file_in = file.replace(root_gt[gt_id], root_input[gt_id])
+                if not os.path.isfile(file_in):
+                    if data_mode == "NIFTI" and ".gz" not in file_in:
+                        file_in += ".gz"
+                        if not os.path.isfile(file_in):
+                            continue
+                    else:
+                        continue
+                
+                datum_dict["inpath"] = [file_in] * len(datum_dict["sliceID"])
+                if "vol" in normtype:
+                    v = nib.load(file_in).get_fdata()
+                    datum_dict["inmin"] = [v.min()] * len(datum_dict["sliceID"])
+                    datum_dict["inmax"] = [v.max()] * len(datum_dict["sliceID"])
+            data_dfs.append(pd.DataFrame.from_dict(datum_dict))
+        data_df = pd.concat(data_dfs)
+
+        if bool(processed_csv):
+            data_df.to_csv(processed_csv)
+    else:
+        data_df = pd.read_csv(processed_csv)
+        filenames = data_df.filename.unique().tolist()
+        
     if isKSpace:
         # TODO: Image to kSpace transform
         sys.exit("Image to kSpace transform not implemented inside createTIOSubDS")

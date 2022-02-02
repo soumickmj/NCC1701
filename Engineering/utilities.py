@@ -99,6 +99,12 @@ def log_images(writer, inputs, outputs, targets, step, section='', imID=0, chID=
                                           scale_each=True),
                          step)
 
+def ReadNIFTI(file_path):
+    """Read a NIFTI file using given file path to an array
+    Using: NiBabel"""
+    nii = nib.load(file_path)
+    return np.array(nii.get_fdata())
+
 
 def SaveNIFTI(data, file_path):
     """Save a NIFTI file using given file path from an array
@@ -299,6 +305,39 @@ def ConvertCheckpoint(checkpoint_path, new_checkpoint_path, newModel):
         [(new_keys[i], v) for i, (k, v) in enumerate(old_state_dict.items())])
     checkpoint['state_dict'] = new_state_dict
     torch.save(checkpoint, new_checkpoint_path)
+
+def process_slicedict(dict_sliceout, axis=-1):
+    sliceIDs = sorted(list(dict_sliceout.keys()))
+    out = []
+    for s in sliceIDs:
+        out.append(dict_sliceout[s].squeeze())
+    if torch.is_tensor(out[0]):
+        return torch.stack(out, axis=axis)
+    else:
+        return np.stack(out, axis=axis)
+
+def fetch_vol_subds(subjectds, filename, slcaxis=-1):
+    df = subjectds.df
+    ids = np.array(df.index[df['filename']==filename].tolist()) 
+    sliceIDs = df[df['filename']==filename].sliceID.tolist()
+    ids = ids[np.argsort(sliceIDs)]
+    inp = []
+    gt = []
+    for i in ids:
+        inp.append(subjectds[i]['inp']['data'].squeeze())
+        gt.append(subjectds[i]['gt']['data'].squeeze())
+    sub = {
+        "inp": {
+            "data": np.stack(inp, axis=slcaxis)
+        },
+        "gt": {
+            "data": np.stack(gt, axis=slcaxis)
+        },
+        "filename": filename
+    }
+    return sub
+    # else:
+    #     return torch.stack(inp, axis=slcaxis), torch.stack(gt, axis=slcaxis)
 
 # class MetaLogger():
 #     def __init__(self, active=True) -> None:

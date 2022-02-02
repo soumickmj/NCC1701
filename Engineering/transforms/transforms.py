@@ -56,7 +56,10 @@ class SuperTransformer():
             for k in sample.keys():
                 if (type(sample[k]) is not dict) or ("data" not in sample[k]) or (bool(self.include) and k not in self.include) or (not bool(self.include) and bool(self.exclude) and k in self.exclude):
                     continue
-                out = self.apply(sample[k]['data'])
+                if isinstance(self, IntensityNorm) and "volmax" in sample[k]:
+                    out = self.apply(sample[k]['data'], volminmax=(sample[k]["volmin"], sample[k]["volmax"]))
+                else:
+                    out = self.apply(sample[k]['data'])
                 if self.return_meta:
                     sample[k] = {'data': out[0]}
                     sample[k] = sample[k] | out[1]
@@ -145,17 +148,22 @@ class IntensityNorm(SuperTransformer):
         self.type = type
         self.return_meta = return_meta
 
-    def apply(self, inp):
-        if self.type == "minmax":
+    def apply(self, inp, volminmax=None):
+        if volminmax is None:
+            vmin = inp.min()
+            vmax = inp.max()
+        else:
+            vmin, vmax = volminmax
+        if "minmax" in self.type:
             if self.return_meta:
-                return (inp - inp.min()) / (inp.max() - inp.min() + np.finfo(np.float32).eps), {"NormMeta": {"min": inp.min(), "max": inp.max()}}
+                return (inp - vmin) / (vmax - vmin + np.finfo(np.float32).eps), {"NormMeta": {"min": vmin, "max": vmax}}
             else:
-                return (inp - inp.min()) / (inp.max() - inp.min() + np.finfo(np.float32).eps)
-        elif self.type == "divbymax":
+                return (inp - vmin) / (vmax - vmin + np.finfo(np.float32).eps)
+        elif "divbymax" in self.type:
             if self.return_meta:
-                return inp / (inp.max() + np.finfo(np.float32).eps), {"NormMeta": {"max": inp.max()}}
+                return inp / (vmax + np.finfo(np.float32).eps), {"NormMeta": {"max": vmax}}
             else:
-                return inp / (inp.max() + np.finfo(np.float32).eps)
+                return inp / (vmax + np.finfo(np.float32).eps)
 
 
 class CutNoise(SuperTransformer):

@@ -24,10 +24,10 @@ def getARGSParser():
     parser.add_argument('--num_workers', action="store", default=0, type=int)
     parser.add_argument('--batch_size', action="store", default=1, type=int)  
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 1 as default  
-    # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_under_dummy.json")
+    # parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under_dummy.json")
     parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/megatest/datainfo_under_nonADNI_1DUniformMask4step28per.json")
-    parser.add_argument('--tblog_path', action="store", default="/data/project/SoumickPavan/NCC1701Output/TBLogs/GPModels")
-    parser.add_argument('--save_path', action="store", default="/data/project/SoumickPavan/NCC1701Output/Results/GPModels")
+    parser.add_argument('--tblog_path', action="store", default="/data/project/SoumickPavan/NCC1701Output/TBLogs/Set1/ImgReg")
+    parser.add_argument('--save_path', action="store", default="/data/project/SoumickPavan/NCC1701Output/Results/Set1/ImgReg")
     parser.add_argument('--cuda', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--amp', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--run_mode', action="store", default=2, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
@@ -41,7 +41,7 @@ def getARGSParser():
     parser.add_argument('--lossID', action="store", default=1, type=int, help="Loss ID."+str(LOSSID))
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)
     parser.add_argument('--ploss_type', action="store", default="L1")
-    parser.add_argument('--patch_size', action="store", default="256,256,1", help="length, width, depth")
+    parser.add_argument('--patch_size', action="store", default="", help="length, width, depth")
     parser.add_argument('--input_shape', action="store", default="256,256", help="length, width, depth (to be used if patch_size is not given)")
     parser.add_argument('--croppad', action=argparse.BooleanOptionalAction, default=False, help="If True, then it will crop or pad the volume/slice to the given input_shape")  
     parser.add_argument('--patch_qlen', action="store", default=176, type=int)  ## 5000 - 50
@@ -92,10 +92,12 @@ def getARGSParser():
     parser.add_argument('--auto_bs', action="store", default=0, help="Automatically find the batch size to fit best")
     parser.add_argument('--auto_lr', action="store", default=0, help="Automatically find the LR")
 
-    parser.add_argument('--ds_mode', action="store", default=0, type=int, help='0: TorchIO, 1: in-house MRITorchDS (medfile)')
+    parser.add_argument('--ds_mode', action="store", default=1, type=int, help='0: TorchIO, 1: in-house MRITorchDS (medfile)')
+    parser.add_argument('--processed_csv', action="store", default="", help='(Only for ds_mode 1) [Attenzione! Be Careful!] This param overpowers all the other dataset related parameters, inlcuding the paths. For the first run, all params will be used to create this file. From second run, all will be ignored and the this file will be used to create dataframe. This is to achive speed-up. Should only be used when all the DS related params are identical. Blank string to ignore')
     parser.add_argument('--ds2D_mid_n', action="store", default=-1, type=int, help='Number of mid slices to be used per volume. -1 for all. (Only for ds_mode=1 + is3D=False)')
     parser.add_argument('--ds2D_mid_per', action="store", default=-1, type=float, help='Percentage of mid slices to be used per volume, when mid_n is -1. -1 to ignore. (Only for ds_mode=1 + is3D=False)')
-    parser.add_argument('--ds2D_random_n', action="store", default=-1, type=int, help='Number of random slices to be used per volume, when mid_n and mid_per are -1. -1 for all. (Only for ds_mode=1 + is3D=False)')
+    parser.add_argument('--ds2D_random_n', action="store", default=10, type=int, help='Number of random slices to be used per volume, when mid_n and mid_per are -1. -1 for all. (Only for ds_mode=1 + is3D=False)')
+    parser.add_argument('--norm_type', action="store", default="divbymaxvol", help='Currently 2 modes and their volumetric versions are supported. minmax, divbymax. Volumetric versions: minmaxvol, divbymaxvol')
     parser.add_argument('--motion_mode', action="store", default=1, type=int, help='0: RandomMotionGhostingFast using TorchIO, 1: Motion2Dv0, 2: Motion2Dv1')
 
     #Motion parameters, for TorchIO RandomMotionGhosting or RandomMotionGhostingFast
@@ -115,7 +117,7 @@ def getARGSParser():
     parser.add_argument('--motion_sigma_range', action="store", default="1.0,3.0", help="Range of randomly-chosen sigma values. Tuple of Float, passed as CSV")
     parser.add_argument('--motion_n_threads', action="store", type=int, default=10, help="Number of threads to use")
     parser.add_argument('--motion_restore_original', action="store", type=float, default=0, help="Amount of original image to restore (Only for Motion2Dv1), set 0 to avoid")
-    parser.add_argument('--motion_return_meta', action="store", type=argparse.BooleanOptionalAction, default=True, help="Return the meta of the motion coruption")
+    parser.add_argument('--motion_return_meta', action="store", type=argparse.BooleanOptionalAction, default=False, help="(Not yet ready) Return the meta of the motion coruption")
 
     
     #TODO currently not in use, params are hardcoded 
@@ -133,7 +135,7 @@ def getARGSParser():
     parser.add_argument("-wnba", "--wnbactive", type=int, default=1, help="Use WandB")
     parser.add_argument("-wnbp", "--wnbproject", default='NCC1701MegaTest', help="WandB: Name of the project")
     parser.add_argument("-wnbe", "--wnbentity", default='ovgufindke', help="WandB: Name of the entity")
-    parser.add_argument("-wnbg", "--wnbgroup", default='NCC1701Set0', help="WandB: Name of the group")
+    parser.add_argument("-wnbg", "--wnbgroup", default='NCC1701Set1', help="WandB: Name of the group")
     parser.add_argument("-wnbpf", "--wnbprefix", default='', help="WandB: Prefix for TrainID")
     parser.add_argument("-wnbml", "--wnbmodellog", default='all', help="WandB: While watching the model, what to save: gradients, parameters, all, None")
     parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=100, help="WandB: The number of steps between logging gradients")

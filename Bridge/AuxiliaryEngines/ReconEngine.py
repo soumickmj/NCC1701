@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from os.path import join as pjoin
 from statistics import median
 from typing import Any, List
+import collections
 
 from tqdm import tqdm
 import numpy as np
@@ -26,8 +27,8 @@ from Engineering.transforms.tio import augmentations as tioAugmentations
 from Engineering.transforms.tio import motion as tioMotion
 from Engineering.transforms.tio import transforms as tioTransforms
 from Engineering.utilities import (CustomInitialiseWeights, DataHandler,
-                                   DataSpaceHandler, ResSaver, getSSIM,
-                                   log_images)
+                                   DataSpaceHandler, ResSaver, fetch_vol_subds, getSSIM,
+                                   log_images, process_slicedict)
 from pytorch_lightning.core.lightning import LightningModule
 from pytorch_msssim import MS_SSIM, SSIM
 from torch import nn
@@ -132,7 +133,7 @@ class ReconEngine(LightningModule):
         if self.hparams.croppad and self.hparams.ds_mode == 1:
             self.init_transforms += [
                 trans.CropOrPad(size=self.hparams.input_shape)]
-        self.init_transforms += [trans.IntensityNorm(return_meta=self.hparams.motion_return_meta)]
+        self.init_transforms += [trans.IntensityNorm(type=self.hparams.norm_type, return_meta=self.hparams.motion_return_meta)]
         # dataspace_transforms = self.dataspace.getTransforms() #TODO: dataspace transforms are not in use
         # self.init_transforms += dataspace_transforms
         if bool(self.hparams.random_crop) and self.hparams.ds_mode == 1:
@@ -226,8 +227,10 @@ class ReconEngine(LightningModule):
             self.out_aggregators[args[0]['filename'][0]].add_batch(
                 prediction.detach().cpu(), args[0][tio.LOCATION])
         else:
-            self.out_aggregators[args[0]['filename']
-                                 [0]] = prediction.detach().cpu()
+            if not self.hparams.is3D and 'sliceID' in args[0]:    
+                self.out_aggregators[args[0]['filename'][0]][args[0]['sliceID'][0].item()] = prediction.detach().cpu()
+            else:
+                self.out_aggregators[args[0]['filename'][0]] = prediction.detach().cpu()
         return {'test_loss': loss}
 
     def training_epoch_end(self, outputs: List[Any]) -> None:
@@ -255,8 +258,12 @@ class ReconEngine(LightningModule):
                 ).squeeze()
                 sub = self.grid_samplers[filename].subject
             else:
-                out = self.out_aggregators[filename].squeeze()
-                sub = self.test_subjectds[self.test_filenames.index(filename)]
+                if not self.hparams.is3D and type(self.out_aggregators[filename]) is dict:
+                    out = process_slicedict(self.out_aggregators[filename])
+                    sub = fetch_vol_subds(self.test_subjectds, filename)
+                else:
+                    out = self.out_aggregators[filename].squeeze()
+                    sub = self.test_subjectds[self.test_filenames.index(filename)]
                 assert sub[
                     'filename'] == filename, "The filename of the test subject doesn't match with the fetched test subject (Index issue!)"
             inp = sub['inp']['data'].squeeze()
@@ -306,6 +313,8 @@ class ReconEngine(LightningModule):
             params["mid_n"] = self.hparams.ds2D_mid_n
             params["mid_per"] = self.hparams.ds2D_mid_per
             params["random_n"] = self.hparams.ds2D_random_n
+            if "processed_csv" in self.hparams and bool(self.hparams.processed_csv):
+                params["processed_csv"] = self.hparams.processed_csv
             dataset, filenames = createFileDS(**params)
         if bool(self.hparams.patch_size):
             if self.hparams.ds_mode == 0:
@@ -352,7 +361,7 @@ class ReconEngine(LightningModule):
             self.test_subjectds = ds
             ds = [ds]
         test_loaders = []
-        self.out_aggregators = {}
+        self.out_aggregators = collections.defaultdict(dict)
         self.test_filenames = filenames
         for grid_sampler in ds:
             test_loaders.append(DataLoader(grid_sampler,
