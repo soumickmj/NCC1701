@@ -21,3 +21,5 @@ for chkpath in tqdm(chkpaths):
         ConvertCheckpoint(checkpoint_path=chkpath, new_checkpoint_path=out_chkpath, newModel=net)
     except:
         pass
+
+print("done!")     
