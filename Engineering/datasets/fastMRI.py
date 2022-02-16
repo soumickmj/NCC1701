@@ -4,6 +4,7 @@ import random
 import sys
 from glob import glob
 from typing import Callable, Dict, Literal, Optional, Sequence, Tuple, Union
+import ast
 
 import nibabel as nib
 import numpy as np
@@ -102,20 +103,20 @@ class fastMRIDataPrep:
             crop_size = None
 
         # check for max value and padding info
-        # max_value = attrs["max"] if "max" in attrs.keys() else 0.0
-        # acq_start = attrs["padding_left"] if "padding_left" in attrs.keys() else -1
-        # acq_end = attrs["padding_right"] if "padding_right" in attrs.keys() else -1
-        # if acq_start==-1 or acq_end==-1:
-        #     padding = None
-        # else:
-        #     padding = (acq_start, acq_end)
+        max_value = attrs["max"] if "max" in attrs.keys() else 0.0
+        acq_start = attrs["padding_left"] if "padding_left" in attrs.keys() else -1
+        acq_end = attrs["padding_right"] if "padding_right" in attrs.keys() else -1
+        if acq_start==-1 or acq_end==-1:
+            padding = None
+        else:
+            padding = (acq_start, acq_end)
 
         # apply mask
         if self.mask_func:
             seed = None if not self.use_seed else tuple(map(ord, fname))
             # we only need first element, which is k-space after masking
             under_kspace, mask, num_low_frequencies = fastMRItransforms.apply_mask(
-                kspace, self.mask_func, seed=seed,  # padding=padding #TODO unsure about padding
+                kspace, self.mask_func, seed=seed,  padding=padding 
             )
             attrs['num_low_frequencies'] = num_low_frequencies
         else:
@@ -165,7 +166,7 @@ class fastMRIDS(SliceDataset):
                  num_cols: Optional[Tuple[int]] = None,
                  transform: Optional[Callable] = None,
                  expand_ch: bool = True,
-                 combile_coils: Optional[Dict] = None,
+                 combine_coils: Optional[Dict] = None,
                  complex_image_modes: Optional[Dict] = None):
         super().__init__(root=root, challenge=challenge,
                          transform=dataprep, use_dataset_cache=use_dataset_cache,
@@ -173,7 +174,7 @@ class fastMRIDS(SliceDataset):
                          dataset_cache_file=dataset_cache_file, num_cols=num_cols)
         self.custom_transform = transform
         self.expand_ch = expand_ch
-        self.combile_coils = combile_coils
+        self.combine_coils = combine_coils
         self.complex_image_modes = complex_image_modes
 
     def __getitem__(self, idx):
@@ -201,23 +202,23 @@ class fastMRIDS(SliceDataset):
                 "path": datum["fname"]
             }
 
-        if bool(self.combile_coils) and type(self.combile_coils) is dict:
+        if bool(self.combine_coils) and type(self.combine_coils) is dict:
             sample['gt']['data'], sample['gt']['ksp'] = coilCombiner(
-                sample['gt']['data'], sample['gt']['ksp'], self.combile_coils['fullyI'], self.combile_coils['fullyK'])
+                sample['gt']['data'], sample['gt']['ksp'], self.combine_coils['fullyI'], self.combine_coils['fullyK'])
             if 'inp' in sample:
                 sample['inp']['data'], sample['inp']['ksp'] = coilCombiner(
-                    sample['inp']['data'], sample['inp']['ksp'], self.combile_coils['underI'], self.combile_coils['underK'])
+                    sample['inp']['data'], sample['inp']['ksp'], self.combine_coils['underI'], self.combine_coils['underK'])
 
         if bool(self.complex_image_modes) and type(self.complex_image_modes) is dict:
             sample['gt']['data'] = complex_modeconverter(
-                sample['gt']['data'], mode=self.complex_image_modes["fullyI"], channel_dim=not self.combile_coils['fullyI'])
+                sample['gt']['data'], mode=self.complex_image_modes["fullyI"], channel_dim=not self.combine_coils['fullyI'])
             sample['gt']['ksp'] = complex_modeconverter(
-                sample['gt']['ksp'], mode=self.complex_image_modes["fullyK"], channel_dim=not self.combile_coils['fullyK'])
+                sample['gt']['ksp'], mode=self.complex_image_modes["fullyK"], channel_dim=not self.combine_coils['fullyK'])
             if 'inp' in sample:
                 sample['inp']['data'] = complex_modeconverter(
-                    sample['inp']['data'], mode=self.complex_image_modes["underI"], channel_dim=not self.combile_coils['underI'])
+                    sample['inp']['data'], mode=self.complex_image_modes["underI"], channel_dim=not self.combine_coils['underI'])
                 sample['inp']['ksp'] = complex_modeconverter(
-                    sample['inp']['ksp'], mode=self.complex_image_modes["underK"], channel_dim=not self.combile_coils['underK'])
+                    sample['inp']['ksp'], mode=self.complex_image_modes["underK"], channel_dim=not self.combine_coils['underK'])
 
         if bool(self.custom_transform):
             sample = self.custom_transform(sample)
@@ -225,14 +226,14 @@ class fastMRIDS(SliceDataset):
         # TODO: currently it doesn't take into account the change of complex modes.
         if self.expand_ch:
             sample['gt']['data'] = sample['gt']['data'].unsqueeze(
-                0) if not self.combile_coils['fullyI'] else sample['gt']['data']
+                0) if self.combine_coils['fullyI'] else sample['gt']['data']
             sample['gt']['ksp'] = sample['gt']['ksp'].unsqueeze(
-                0) if not self.combile_coils['fullyK'] else sample['gt']['ksp']
+                0) if self.combine_coils['fullyK'] else sample['gt']['ksp']
             if 'inp' in sample:
                 sample['inp']['data'] = sample['inp']['data'].unsqueeze(
-                    0) if not self.combile_coils['underI'] else sample['inp']['data']
+                    0) if self.combine_coils['underI'] else sample['inp']['data']
                 sample['inp']['ksp'] = sample['inp']['ksp'].unsqueeze(
-                    0) if not self.combile_coils['underK'] else sample['inp']['ksp']
+                    0) if self.combine_coils['underK'] else sample['inp']['ksp']
 
         return sample
 
@@ -241,16 +242,15 @@ def createFastMRIDS(root_gt: Union[str, Sequence[str]] = "/mnt/BMMR/data/Soumick
                     root_input: Optional[Union[str, Sequence[str]]] = None,
                     filename_filter: Optional[Union[str,
                                                     Sequence[str]]] = None,
+                    processed_csv: str = "",
                     split_csv: str = "",
                     split: str = "",
                     init_transforms: Optional[Callable] = None,
                     aug_transforms: Optional[Callable] = None,
                     transforms: Optional[Callable] = None,
-                    is3D: bool = False,
-                    mid_n: int = -1,  # Only if is3D=False
-                    mid_per: float = -1,  # Only if is3D=False
-                    random_n: int = -1,  # Only if is3D=False
                     expand_ch=True,
+                    combine_coils = {"underK": False, "fullyK": False, "underI": False, "fullyI": False},
+                    complex_image_modes = {"underI": 1, "fullyI": 1, "underK": 0, "fullyK": 0}, # 0: complex image, 1: magnitude image, 2: real image, 3: channel-wise mag+phase [-3 to invert], 4: channel-wise real+imag [-4 to invert]. # for ksp, only 0, 3, 4 are valid - along with the iverses
                     fastMRI_challenge="multicoil",
                     use_dataset_cache=True,
                     sample_rate=None,
@@ -260,32 +260,48 @@ def createFastMRIDS(root_gt: Union[str, Sequence[str]] = "/mnt/BMMR/data/Soumick
                     center_fractions=[0.08],
                     accelerations=[4]):
 
-    assert not bool(
-        root_input), "root_input should be None, as for now, fastMRI only uses on-the-fly operations to create input"
+    assert not bool(root_input), "root_input should be None, as for now, fastMRI only uses on-the-fly operations to create input"
+    assert not bool(init_transforms) and not bool(aug_transforms) and not bool(transforms), "all three types of transforms should be None, as for now, fastMRI DS doesn't support them"
 
     mask_func = create_mask_for_mask_type(
         mask_type_str=mask_type, center_fractions=center_fractions, accelerations=accelerations)
     dataprep = fastMRIDataPrep(
         fastMRI_challenge, mask_func=mask_func, use_seed=True)
-    combile_coils = {
-        "underK": False,
-        "fullyK": False,
-        "underI": False,
-        "fullyI": False,
-    }
-    complex_image_modes = {
-        # 0: complex image, 1: magnitude image, 2: real image, 3: channel-wise mag+phase [-3 to invert], 4: channel-wise real+imag [-4 to invert]
-        "underI": 1,
-        "fullyI": 0,
-        "underK": 0,  # for ksp, only 0, 3, 4 are valid - along with the iverses
-        "fullyK": 0
-    }
+    
     dataset = fastMRIDS(root=root_gt, challenge=fastMRI_challenge,
                         dataprep=dataprep, use_dataset_cache=use_dataset_cache,
                         sample_rate=sample_rate, volume_sample_rate=volume_sample_rate,
                         dataset_cache_file=f"{os.path.dirname(root_gt)}/dataset_cache_{os.path.basename(root_gt)}.pkl", num_cols=num_cols,
-                        transform=None, expand_ch=expand_ch, combile_coils=combile_coils, complex_image_modes=complex_image_modes)
-    # dataset.examples = dataset.examples[:100]
+                        transform=None, expand_ch=expand_ch, combine_coils=combine_coils, complex_image_modes=complex_image_modes)
 
-    
-    return dataset
+    if not bool(processed_csv) or not os.path.isfile(processed_csv):
+        if bool(filename_filter):
+            if type(filename_filter) is str:
+                filename_filter = [filename_filter]
+            dataset.examples = [ex for ex in dataset.examples if any(
+                filt in str(ex[0]) for filt in filename_filter)]
+
+        if bool(split_csv):
+            df = pd.read_csv(split_csv)[split]
+            df.dropna(inplace=True)
+            df = list(df)
+            dataset.examples = [ex for ex in dataset.examples if any(d in str(ex[0]) for d in df)]
+
+        data_df = pd.DataFrame(dataset.examples, columns=["fname", "dataslice", "metadata"])
+
+        if bool(processed_csv):
+            data_df.to_csv(processed_csv)
+    else:
+        data_df = pd.read_csv(processed_csv)
+        data_df = data_df[["fname", "dataslice", "metadata"]]
+        ex = [tuple(x) for x in data_df.to_numpy()]
+        ex = [(Path(x[0]), x[1], ast.literal_eval(x[2])) for x in ex]
+        dataset.examples = ex
+
+    filenames = data_df.fname.unique()
+    if type(filenames[0]) is str:
+        filenames = [os.path.basename(f) for f in filenames]
+    else:
+        filenames = [f.name for f in filenames]
+
+    return dataset, filenames
