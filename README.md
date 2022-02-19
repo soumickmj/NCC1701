@@ -49,10 +49,13 @@ BibTeX entry:
 
 ```bibtex
 @article{chatterjee2021reconresnet,
-  title={ReconResNet: Regularised Residual Learning for MR Image Reconstruction of Undersampled Cartesian and Radial Data},
+  title={ReconResNet: Regularised residual learning for MR image reconstruction of Undersampled Cartesian and Radial data},
   author={Chatterjee, Soumick and Breitkopf, Mario and Sarasaen, Chompunuch and Yassin, Hadya and Rose, Georg and N{\"u}rnberger, Andreas and Speck, Oliver},
-  journal={arXiv preprint arXiv:2103.09203},
-  year={2021}
+  journal={Computers in Biology and Medicine},
+  pages={105321},
+  year={2022},
+  publisher={Elsevier},
+  doi={10.1016/j.compbiomed.2022.105321}
 }
 ```
 
