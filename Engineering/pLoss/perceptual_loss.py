@@ -1,4 +1,5 @@
 import math
+import sys
 
 import torch
 import torch.nn as nn
@@ -20,14 +21,14 @@ class PerceptualLoss(torch.nn.Module):
         if loss_model == "resnet2D":  # TODO: not finished
             model = ResNet(in_channels=1, out_channels=1).to(device)
             chk = torch.load(
-                r"./utils/pLoss/ResNet14_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
+                r"./Engineering/pLoss/ResNet14_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
             model.load_state_dict(chk['state_dict'])
         elif loss_model == "unet2D":
             model = UNet(in_channels=1, out_channels=1, depth=5, wf=6, padding=True,
                          batch_norm=False, up_mode='upsample', droprate=0.0, is3D=False,
                          returnBlocks=False, downPath=True, upPath=True).to(device)
             chk = torch.load(
-                r"./utils/pLoss/SimpleU_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
+                r"./Engineering/pLoss/SimpleU_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
             model.load_state_dict(chk['state_dict'])
             blocks.append(model.down_path[0].block.eval())
             if n_level >= 2:
@@ -92,11 +93,8 @@ class PerceptualLoss(torch.nn.Module):
             model.fc = nn.Linear(in_features=model.fc.in_features,
                                  out_features=33, bias=False if model.fc.bias is None else True)
             model.to(device)
-            # chk = torch.load(r"./utils/pLoss/ResNet14_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
-            # model.load_state_dict(chk['state_dict'])
-            chk = torch.load(
-                r"./utils/pLoss/ResNeXt-3-class-best-latest.pth", map_location=device)
-            # model.load_state_dict(chk['state_dict'])
+            chk = torch.load(r"./Engineering/pLoss/ResNeXt-3-class-best-latest.pth", map_location=device)
+            model.load_state_dict(chk)
             blocks.append(
                 nn.Sequential(
                     model.conv1.eval(),
@@ -118,6 +116,7 @@ class PerceptualLoss(torch.nn.Module):
             if n_level >= 5:
                 blocks.append(model.layer4.eval())
         elif loss_model == "densenet161":
+            sys.exit("Weights for DenseNet151 as PLN not available")
             model = torchvision.models.densenet161()
             model.features.conv0 = nn.Conv2d(1, model.features.conv0.out_channels, kernel_size=model.features.conv0.kernel_size,
                                              stride=model.features.conv0.stride, padding=model.features.conv0.padding,
@@ -125,7 +124,7 @@ class PerceptualLoss(torch.nn.Module):
             model.classifier = nn.Linear(in_features=model.classifier.in_features,
                                          out_features=33, bias=False if model.classifier.bias is None else True)
             model.to(device)
-            # chk = torch.load(r"./utils/pLoss/ResNet14_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
+            # chk = torch.load(r"./Engineering/pLoss/ResNet14_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
             # model.load_state_dict(chk['state_dict'])
             model = model.features
             blocks.append(

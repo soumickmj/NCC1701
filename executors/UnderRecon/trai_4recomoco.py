@@ -3,8 +3,6 @@ import math
 import os
 import sys
 
-#python executors/MoCo3D/train.py --trainID PDOrigNoResCmplxPrim-Mot0p01t5-rnd50-run2 --modelID 6
-#python executors/MoCo3D/train.py --trainID PDUNetNoResRealPrim-Mot0p01t5-rnd50 --modelID 7
 sys.path.insert(0, os.getcwd()) #to handle the sub-foldered structure of the executors
 
 import torch
@@ -16,30 +14,30 @@ seed_everything(1701)
 
 def getARGSParser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--taskID', action="store", type=int, default=1, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
-    parser.add_argument('--trainID', action="store", default="roughrun2PDOrigCmplxPrim-Mot1t2-rnd50") ## "testing")  ## "ResNet14"
-    parser.add_argument('--resume', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
+    parser.add_argument('--taskID', action="store", type=int, default=0, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
+    parser.add_argument('--trainID', action="store", default="ReconResNet14_Reco4MoCo_SSIMLoss_Rand100") ## "testing")  ## "ResNet14"
+    parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
-    parser.add_argument('--load_test_ckpt', action="store", default=0, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
+    parser.add_argument('--load_test_ckpt', action="store", default=1, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
     parser.add_argument('--seed', action="store", default=1701, type=int)
-    parser.add_argument('--num_workers', action="store", default=0, type=int)
+    parser.add_argument('--num_workers', action="store", default=4, type=int)
     parser.add_argument('--batch_size', action="store", default=1, type=int)  
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 1 as default  
-    parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_moco_T1IXI.json")
-    # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_moco_dummy_v100.json")
-    parser.add_argument('--tblog_path', action="store", default="/run/media/soumick/Voyager/Output/NCC1701New_MoCoSet1/TBLogs")
-    parser.add_argument('--save_path', action="store", default="/run/media/soumick/Voyager/Output/NCC1701New_MoCoSet1/Output")
+    # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_under_dummy.json")
+    parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under_4recomoco.json")
+    parser.add_argument('--tblog_path', action="store", default="/run/media/soumick/Enterprise/OutputNewPipe/RecoMoCo/TBLogs")
+    parser.add_argument('--save_path', action="store", default="/run/media/soumick/Enterprise/OutputNewPipe/RecoMoCo/Results")
     parser.add_argument('--cuda', action=argparse.BooleanOptionalAction, default=True)
-    parser.add_argument('--amp', action=argparse.BooleanOptionalAction, default=False)
-    parser.add_argument('--run_mode', action="store", default=2, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
+    parser.add_argument('--amp', action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument('--run_mode', action="store", default=4, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
     parser.add_argument('--do_profile', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--non_deter', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--fftnorm', action="store", default="ortho")
 
     #Training params
-    parser.add_argument('--num_epochs', action="store", default=250, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
-    parser.add_argument('--lr', action="store", default=1e-3, type=float)
+    parser.add_argument('--num_epochs', action="store", default=50, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
+    parser.add_argument('--lr', action="store", default=0.0001, type=float)
     parser.add_argument('--lossID', action="store", default=3, type=int, help="Loss ID."+str(LOSSID))
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)
     parser.add_argument('--ploss_type', action="store", default="L1")
@@ -50,18 +48,18 @@ def getARGSParser():
     parser.add_argument('--patch_per_vol', action="store", default=150, type=int)  # 1000 - 10
     parser.add_argument('--patch_inference_strides', action="store", default="224,224,1", help="stride_length, stride_width, stride_depth")
     parser.add_argument('--im_log_freq', action="store", default=250, type=int, help="For Tensorboard image logs, n_iteration. Set it to -1 if not desired")
-    parser.add_argument('--log_freq', action="store", default=100, type=int, help="Log every n-th step. Lightning default is 50. Flush will be twice this.")
+    parser.add_argument('--log_freq', action="store", default=250, type=int, help="Log every n-th step. Lightning default is 50. Flush will be twice this.")
     parser.add_argument('--save_freq', action="store", default=1, type=int, help="For Checkpoint save, n_epochs")
     parser.add_argument('--save_inp', action="store", default=1, type=int, help="Whether to save the input during testing")
-    parser.add_argument('--do_savenorm', action="store", default=1, type=int, help="Whether to normalise before saving and calculating metrics during testing")
+    parser.add_argument('--do_savenorm', action="store", default=0, type=int, help="Whether to normalise before saving and calculating metrics during testing")
     
     #Augmentations
-    parser.add_argument('--p_contrast_augment', action="store", default=0.75, type=float, help="Probability of using contrast augmentations. Set it to 0 or -1 to avoid using.")
+    parser.add_argument('--p_contrast_augment', action="store", default=0.0, type=float, help="Probability of using contrast augmentations. Set it to 0 or -1 to avoid using.")
     parser.add_argument('--random_crop', action="store", default="", help="Randomly crop the given image, only ds_mode=1. Set it to None or blank if not to be used.")
-    parser.add_argument('--p_random_crop', action="store", default=0.75, type=float, help="Probability of Randomcrop, only if is3D=False. This should be 1 if batch size is more than 1.")
+    parser.add_argument('--p_random_crop', action="store", default=0.0, type=float, help="Probability of Randomcrop, only if is3D=False. This should be 1 if batch size is more than 1.")
 
     #Network Params
-    parser.add_argument('--modelID', action="store", default=3, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet, 3: PDNet, complex primal, 4: PDNet, 5: PDUNet")
+    parser.add_argument('--modelID', action="store", default=0, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet")
     parser.add_argument('--preweights_path', action="store", default="", help="checkpoint path for pre-loading")
     parser.add_argument('--is3D', action="store", default=0, type=int, help="Is it a 3D model?")
     parser.add_argument('--model_dataspace_inp', action="store", default=0, type=int, help="Dataspace of the model's input. 0: ImageSapce, 1: kSpace")
@@ -73,14 +71,14 @@ def getARGSParser():
     parser.add_argument('--model_res_blocks', action="store", default=14, type=int, help="For ReconResNet")
     parser.add_argument('--model_starting_nfeatures', action="store", default=64, type=int, help="For ReconResNet, ShuffleUNet")
     parser.add_argument('--model_updown_blocks', action="store", default=2, type=int, help="For ReconResNet")
-    parser.add_argument('--model_do_batchnorm', action=argparse.BooleanOptionalAction, default=True, help="For ReconResNet")
+    parser.add_argument('--model_do_batchnorm', action=argparse.BooleanOptionalAction, default=False, help="For ReconResNet")
     parser.add_argument('--model_relu_leaky', action=argparse.BooleanOptionalAction, default=True, help="For ReconResNet")
     parser.add_argument('--model_is_replicatepad', action=argparse.BooleanOptionalAction, default=False, help="For ReconResNet. Whether to use ReplacationPad instead of ReflectionPad, the later being the default")
     parser.add_argument('--model_forwardV', action="store", default=0, type=int, help="For ReconResNet")
     parser.add_argument('--model_drop_prob', action="store", default=0.2, type=float, help="For ReconResNet")
     parser.add_argument('--model_upinterp_algo', action="store", default="convtrans", help='"convtrans", or interpolation technique: "sinc", "nearest", "linear", "bilinear", "bicubic", "trilinear", "area"')
     parser.add_argument('--model_out_act', action="store", default="sigmoid", help='For ReconResNet')
-    parser.add_argument('--model_post_interp_convtrans', action=argparse.BooleanOptionalAction, default=True, help="For ReconResNet")
+    parser.add_argument('--model_post_interp_convtrans', action=argparse.BooleanOptionalAction, default=False, help="For ReconResNet")
     parser.add_argument('--model_dspace_connect_mode', action="store", default="serial", help='w_parallel, parallel, serial. For DualSpaceReconResNet')
     parser.add_argument('--model_inner_norm_ksp', action=argparse.BooleanOptionalAction, default=True, help="For KSPReconResNet. DualSpaceReconResNet")
     
@@ -96,9 +94,9 @@ def getARGSParser():
 
     parser.add_argument('--ds_mode', action="store", default=1, type=int, help='0: TorchIO, 1: in-house MRITorchDS (medfile)')
     parser.add_argument('--processed_csv', action="store", default="", help='(Only for ds_mode 1) [Attenzione! Be Careful!] This param overpowers all the other dataset related parameters, inlcuding the paths. For the first run, all params will be used to create this file. From second run, all will be ignored and the this file will be used to create dataframe. This is to achive speed-up. Should only be used when all the DS related params are identical. Blank string to ignore')
-    parser.add_argument('--ds2D_mid_n', action="store", default=100, type=int, help='Number of mid slices to be used per volume. -1 for all. (Only for ds_mode=1 + is3D=False)')
+    parser.add_argument('--ds2D_mid_n', action="store", default=-1, type=int, help='Number of mid slices to be used per volume. -1 for all. (Only for ds_mode=1 + is3D=False)')
     parser.add_argument('--ds2D_mid_per', action="store", default=-1, type=float, help='Percentage of mid slices to be used per volume, when mid_n is -1. -1 to ignore. (Only for ds_mode=1 + is3D=False)')
-    parser.add_argument('--ds2D_random_n', action="store", default=-1, type=int, help='Number of random slices to be used per volume, when mid_n and mid_per are -1. -1 for all. (Only for ds_mode=1 + is3D=False)')
+    parser.add_argument('--ds2D_random_n', action="store", default=100, type=int, help='Number of random slices to be used per volume, when mid_n and mid_per are -1. -1 for all. (Only for ds_mode=1 + is3D=False)')
     parser.add_argument('--norm_type', action="store", default="divbymaxvol", help='Currently 2 modes and their volumetric versions are supported. minmax, divbymax. Volumetric versions: minmaxvol, divbymaxvol')
     parser.add_argument('--motion_mode', action="store", default=1, type=int, help='0: RandomMotionGhostingFast using TorchIO, 1: Motion2Dv0, 2: Motion2Dv1')
 
@@ -115,13 +113,13 @@ def getARGSParser():
     parser.add_argument('--motionmg_p_ghosting', action="store", default=0.75, type=float)
 
     #Motion parameters, custom non-Torchio Motion corrupters
-    parser.add_argument('--motion_p', action="store", type=float, default=1, help="Probability of the motion corrption being applied")
-    parser.add_argument('--motion_sigma_range', action="store", default="1.0,2.0", help="Range of randomly-chosen sigma values. Tuple of Float, passed as CSV")
+    parser.add_argument('--motion_p', action="store", type=float, default=0.8, help="Probability of the motion corrption being applied")
+    parser.add_argument('--motion_sigma_range', action="store", default="1.0,3.0", help="Range of randomly-chosen sigma values. Tuple of Float, passed as CSV")
     parser.add_argument('--motion_n_threads', action="store", type=int, default=10, help="Number of threads to use")
     parser.add_argument('--motion_restore_original', action="store", type=float, default=0, help="Amount of original image to restore (Only for Motion2Dv1), set 0 to avoid")
-    parser.add_argument('--motion_return_meta', action="store", type=argparse.BooleanOptionalAction, default=False, help="Return the meta of the motion coruption")
+    parser.add_argument('--motion_return_meta', action="store", type=argparse.BooleanOptionalAction, default=False, help="(Not yet ready) Return the meta of the motion coruption")
 
-     
+    
     #TODO currently not in use, params are hardcoded 
     #Controlling motion corruption, whether to run on the fly or use the pre-created ones. If live_corrupt is True, only then the following params will be used
     # parser.add_argument('--corrupt_prob', action="store", default=0.75, type=float, help="Probability of the corruption to be applied or corrupted volume to be used")
@@ -131,7 +129,7 @@ def getARGSParser():
     # parser.add_argument('--motion_random_sigma', action=argparse.BooleanOptionalAction, default=False, help="Only for motion_mode 2 - to randomise the sigma value, treating the provided sigma as upper limit and 0 as lower")
     # parser.add_argument('--motion_n_threads', action="store", default=8, type=int, help="Only for motion_mode 2 - to apply motion for each thread encoding line parallel, max thread controlled by this. Set to 0 to perform serially.")
 
-    parser.add_argument("-tba", "--tbactive", type=int, default=1, help="User Tensorboard")
+    parser.add_argument("-tba", "--tbactive", type=int, default=0, help="User Tensorboard")
 
     #WnB related params
     parser.add_argument("-wnba", "--wnbactive", type=int, default=1, help="Use WandB")
@@ -139,8 +137,8 @@ def getARGSParser():
     parser.add_argument("-wnbe", "--wnbentity", default='mickmeddigit', help="WandB: Name of the entity")
     parser.add_argument("-wnbg", "--wnbgroup", default='NCC1701Set1', help="WandB: Name of the group")
     parser.add_argument("-wnbpf", "--wnbprefix", default='', help="WandB: Prefix for TrainID")
-    parser.add_argument("-wnbml", "--wnbmodellog", default="None", help="WandB: While watching the model, what to save: gradients, parameters, all, None")
-    parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=10, help="WandB: The number of steps between logging gradients")
+    parser.add_argument("-wnbml", "--wnbmodellog", default='all', help="WandB: While watching the model, what to save: gradients, parameters, all, None")
+    parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=100, help="WandB: The number of steps between logging gradients")
     
     return parser
 

@@ -51,10 +51,10 @@ def getARGSParser():
     parser.add_argument('--log_freq', action="store", default=250, type=int, help="Log every n-th step. Lightning default is 50. Flush will be twice this.")
     parser.add_argument('--save_freq', action="store", default=1, type=int, help="For Checkpoint save, n_epochs")
     parser.add_argument('--save_inp', action="store", default=1, type=int, help="Whether to save the input during testing")
-    parser.add_argument('--do_savenorm', action="store", default=1, type=int, help="Whether to normalise before saving and calculating metrics during testing")
+    parser.add_argument('--do_savenorm', action="store", default=0, type=int, help="Whether to normalise before saving and calculating metrics during testing")
     
     #Augmentations
-    parser.add_argument('--p_contrast_augment', action="store", default=0.75, type=float, help="Probability of using contrast augmentations. Set it to 0 or -1 to avoid using.")
+    parser.add_argument('--p_contrast_augment', action="store", default=0.0, type=float, help="Probability of using contrast augmentations. Set it to 0 or -1 to avoid using.")
     parser.add_argument('--random_crop', action="store", default="", help="Randomly crop the given image, only ds_mode=1. Set it to None or blank if not to be used.")
     parser.add_argument('--p_random_crop', action="store", default=0.75, type=float, help="Probability of Randomcrop, only if is3D=False. This should be 1 if batch size is more than 1.")
 
@@ -92,7 +92,7 @@ def getARGSParser():
     parser.add_argument('--auto_bs', action="store", default=0, help="Automatically find the batch size to fit best")
     parser.add_argument('--auto_lr', action="store", default=0, help="Automatically find the LR")
 
-    parser.add_argument('--ds_mode', action="store", default=1, type=int, help='0: TorchIO, 1: in-house MRITorchDS (medfile)')
+    parser.add_argument('--ds_mode', action="store", default=1, type=int, help='0: TorchIO, 1: in-house MRITorchDS (medfile). 2: fastMRI')
     parser.add_argument('--processed_csv', action="store", default="", help='(Only for ds_mode 1) [Attenzione! Be Careful!] This param overpowers all the other dataset related parameters, inlcuding the paths. For the first run, all params will be used to create this file. From second run, all will be ignored and the this file will be used to create dataframe. This is to achive speed-up. Should only be used when all the DS related params are identical. Blank string to ignore')
     parser.add_argument('--ds2D_mid_n', action="store", default=-1, type=int, help='Number of mid slices to be used per volume. -1 for all. (Only for ds_mode=1 + is3D=False)')
     parser.add_argument('--ds2D_mid_per', action="store", default=-1, type=float, help='Percentage of mid slices to be used per volume, when mid_n is -1. -1 to ignore. (Only for ds_mode=1 + is3D=False)')

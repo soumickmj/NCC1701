@@ -18,13 +18,13 @@ def getARGSParser():
     parser.add_argument('--trainID', action="store", default="run2PDOrigCmplxPrim-Mot1t2-rnd50") ## "testing")  ## "ResNet14"
     parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
-    parser.add_argument('--load_test_ckpt', action="store", default=1, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
+    parser.add_argument('--load_test_ckpt', action="store", default=0, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
     parser.add_argument('--seed', action="store", default=1701, type=int)
-    parser.add_argument('--num_workers', action="store", default=0, type=int)
+    parser.add_argument('--num_workers', action="store", default=4, type=int)
     parser.add_argument('--batch_size', action="store", default=1, type=int)  
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 1 as default  
-    parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_moco_T1IXI.json")
+    parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_moco_T1IXI_bilin256.json")
     # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_moco_dummy_v100.json")
     parser.add_argument('--tblog_path', action="store", default="/run/media/soumick/Voyager/Output/NCC1701New_MoCoSet1/TBLogs")
     parser.add_argument('--save_path', action="store", default="/run/media/soumick/Voyager/Output/NCC1701New_MoCoSet1/Output")
@@ -37,8 +37,9 @@ def getARGSParser():
 
     #Training params
     parser.add_argument('--num_epochs', action="store", default=250, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
-    parser.add_argument('--lr', action="store", default=1e-3, type=float)
-    parser.add_argument('--lossID', action="store", default=3, type=int, help="Loss ID."+str(LOSSID))
+    parser.add_argument('--lr', action="store", default=0.0001, type=float)
+    parser.add_argument('--lossID', action="store", default=0, type=int, help="Loss ID."+str(LOSSID))
+    parser.add_argument('--ploss_model', action="store", default="resnext1012D")
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)
     parser.add_argument('--ploss_type', action="store", default="L1")
     parser.add_argument('--patch_size', action="store", default="", help="length, width, depth")
@@ -59,7 +60,7 @@ def getARGSParser():
     parser.add_argument('--p_random_crop', action="store", default=0.75, type=float, help="Probability of Randomcrop, only if is3D=False. This should be 1 if batch size is more than 1.")
 
     #Network Params
-    parser.add_argument('--modelID', action="store", default=3, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet, 3: PDNet, complex primal, 4: PDNet, 5: PDUNet")
+    parser.add_argument('--modelID', action="store", default=10, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet, 3: PDNet, complex primal, 4: PDNet, 5: PDUNet")
     parser.add_argument('--preweights_path', action="store", default="", help="checkpoint path for pre-loading")
     parser.add_argument('--is3D', action="store", default=0, type=int, help="Is it a 3D model?")
     parser.add_argument('--model_dataspace_inp', action="store", default=0, type=int, help="Dataspace of the model's input. 0: ImageSapce, 1: kSpace")

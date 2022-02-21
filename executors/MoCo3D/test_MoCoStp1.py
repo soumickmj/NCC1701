@@ -3,8 +3,6 @@ import math
 import os
 import sys
 
-#python executors/MoCo3D/train.py --trainID PDOrigNoResCmplxPrim-Mot0p01t5-rnd50-run2 --modelID 6
-#python executors/MoCo3D/train.py --trainID PDUNetNoResRealPrim-Mot0p01t5-rnd50 --modelID 7
 sys.path.insert(0, os.getcwd()) #to handle the sub-foldered structure of the executors
 
 import torch
@@ -23,7 +21,7 @@ def getARGSParser():
     parser.add_argument('--load_test_ckpt', action="store", default=0, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
     parser.add_argument('--seed', action="store", default=1701, type=int)
-    parser.add_argument('--num_workers', action="store", default=0, type=int)
+    parser.add_argument('--num_workers', action="store", default=4, type=int)
     parser.add_argument('--batch_size', action="store", default=1, type=int)  
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 1 as default  
     parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_moco_T1IXI.json")
@@ -116,7 +114,7 @@ def getARGSParser():
 
     #Motion parameters, custom non-Torchio Motion corrupters
     parser.add_argument('--motion_p', action="store", type=float, default=1, help="Probability of the motion corrption being applied")
-    parser.add_argument('--motion_sigma_range', action="store", default="1.0,2.0", help="Range of randomly-chosen sigma values. Tuple of Float, passed as CSV")
+    parser.add_argument('--motion_sigma_range', action="store", default="0.01,5.0", help="Range of randomly-chosen sigma values. Tuple of Float, passed as CSV")
     parser.add_argument('--motion_n_threads', action="store", type=int, default=10, help="Number of threads to use")
     parser.add_argument('--motion_restore_original', action="store", type=float, default=0, help="Amount of original image to restore (Only for Motion2Dv1), set 0 to avoid")
     parser.add_argument('--motion_return_meta', action="store", type=argparse.BooleanOptionalAction, default=False, help="Return the meta of the motion coruption")

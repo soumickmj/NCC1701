@@ -16,7 +16,10 @@ from Bridge.WarpDrives.PDUNet.pd import PrimalDualNetwork
 from Bridge.WarpDrives.PDUNet.pd2 import PrimalDualNetwork as PrimalDualNetworkNoResidue
 from Bridge.WarpDrives.ReconResNet.ReconResNet import ResNet
 from Bridge.WarpDrives.ReconResNet.DualSpaceReconResNet import DualSpaceResNet
+from Bridge.WarpDrives.ReconResNet.CentreKSPMoCoNet import CentreKSPMoCoNet
+from Bridge.WarpDrives.ReconResNet.MoCoReCo import MoCoReCoNet
 from Engineering.data_consistency import DataConsistency
+from Engineering.datasets.fastMRI import createFastMRIDS
 from Engineering.datasets.medfile import createFileDS
 from Engineering.datasets.tio import create_patchQs, createTIOSubDS
 from Engineering.pLoss.perceptual_loss import PerceptualLoss
@@ -52,46 +55,84 @@ class ReconEngine(LightningModule):
             # self.net = nn.Conv3d(in_channels=1, out_channels=1, kernel_size=3, stride=1, padding=1)
         elif self.hparams.modelID == 2:
             self.net = DualSpaceResNet(in_channels=self.hparams.in_channels, out_channels=self.hparams.out_channels, res_blocks=self.hparams.model_res_blocks,
-                                        starting_nfeatures=self.hparams.model_starting_nfeatures, updown_blocks=self.hparams.model_updown_blocks,
-                                        is_relu_leaky=self.hparams.model_relu_leaky, do_batchnorm=self.hparams.model_do_batchnorm,
-                                        res_drop_prob=self.hparams.model_drop_prob, is_replicatepad=self.hparams.model_is_replicatepad, out_act=self.hparams.model_out_act, forwardV=self.hparams.model_forwardV,
-                                        upinterp_algo=self.hparams.model_upinterp_algo, post_interp_convtrans=self.hparams.model_post_interp_convtrans, is3D=self.hparams.is3D,
-                                        connect_mode=self.hparams.model_dspace_connect_mode, inner_norm_ksp=self.hparams.model_inner_norm_ksp)
-        elif self.hparams.modelID == 3: #Primal-Dual Network, complex Primal
+                                       starting_nfeatures=self.hparams.model_starting_nfeatures, updown_blocks=self.hparams.model_updown_blocks,
+                                       is_relu_leaky=self.hparams.model_relu_leaky, do_batchnorm=self.hparams.model_do_batchnorm,
+                                       res_drop_prob=self.hparams.model_drop_prob, is_replicatepad=self.hparams.model_is_replicatepad, out_act=self.hparams.model_out_act, forwardV=self.hparams.model_forwardV,
+                                       upinterp_algo=self.hparams.model_upinterp_algo, post_interp_convtrans=self.hparams.model_post_interp_convtrans, is3D=self.hparams.is3D,
+                                       connect_mode=self.hparams.model_dspace_connect_mode, inner_norm_ksp=self.hparams.model_inner_norm_ksp)
+        elif self.hparams.modelID == 3:  # Primal-Dual Network, complex Primal
             self.net = PrimalDualNetwork(n_primary=5, n_dual=5, n_iterations=10,
-                            use_original_block = True,
-                            use_original_init = True,
-                            use_complex_primal = True,
-                            g_normtype = "magmax",
-                            transform = "Fourier",
-                            return_abs = True)
-        elif self.hparams.modelID == 4: #Primal-Dual Network, absolute Primal
+                                         use_original_block=True,
+                                         use_original_init=True,
+                                         use_complex_primal=True,
+                                         g_normtype="magmax",
+                                         transform="Fourier",
+                                         return_abs=True)
+        elif self.hparams.modelID == 4:  # Primal-Dual Network, absolute Primal
             self.net = PrimalDualNetwork(n_primary=5, n_dual=5, n_iterations=10,
-                            use_original_block = True,
-                            use_original_init = True,
-                            use_complex_primal = False,
-                            g_normtype = "magmax",
-                            transform = "Fourier")
-        elif self.hparams.modelID == 5: #Primal-Dual UNet Network, absolute Primal
+                                         use_original_block=True,
+                                         use_original_init=True,
+                                         use_complex_primal=False,
+                                         g_normtype="magmax",
+                                         transform="Fourier")
+        elif self.hparams.modelID == 5:  # Primal-Dual UNet Network, absolute Primal
             self.net = PrimalDualNetwork(n_primary=4, n_dual=5, n_iterations=2,
-                            use_original_block = False,
-                            use_original_init = False,
-                            use_complex_primal = False,
-                            g_normtype = "magmax",
-                            transform = "Fourier")
-        elif self.hparams.modelID == 6: #Primal-Dual Network v2 (no residual), complex Primal
+                                         use_original_block=False,
+                                         use_original_init=False,
+                                         use_complex_primal=False,
+                                         g_normtype="magmax",
+                                         transform="Fourier")
+        # Primal-Dual Network v2 (no residual), complex Primal - just there for backward compatibility, will be removed.
+        elif self.hparams.modelID == 6:
             self.net = PrimalDualNetworkNoResidue(n_primary=5, n_dual=5, n_iterations=10,
-                            use_original_block = True,
-                            use_original_init = True,
-                            use_complex_primal = True,
-                            residuals=False,
-                            g_normtype = "magmax",
-                            transform = "Fourier",
-                            return_abs = True)
+                                                  use_original_block=True,
+                                                  use_original_init=True,
+                                                  use_complex_primal=True,
+                                                  residuals=False,
+                                                  g_normtype="magmax",
+                                                  transform="Fourier",
+                                                  return_abs=True)
+        # Primal-Dual UNet Network v2 (no residual), absolute Primal - just there for backward compatibility, will be removed.
+        elif self.hparams.modelID == 7:
+            self.net = PrimalDualNetworkNoResidue(n_primary=4, n_dual=5, n_iterations=2,
+                                                  use_original_block=False,
+                                                  use_original_init=False,
+                                                  use_complex_primal=False,
+                                                  residuals=False,
+                                                  g_normtype="magmax",
+                                                  transform="Fourier",
+                                                  return_abs=True)
+        elif self.hparams.modelID == 8:  # CentreKSPMoCoNet - Default param as Ale used. Parametereise It!! TODO
+            self.net = CentreKSPMoCoNet(updown_blocks=self.hparams.model_updown_blocks,
+                                        upinterp_algo=self.hparams.model_upinterp_algo, complex_moconet=False)
+        elif self.hparams.modelID == 9:  # CentreKSPMoCoNet - Default param as Ale used. Parametereise It!! TODO
+            self.net = CentreKSPMoCoNet(updown_blocks=self.hparams.model_updown_blocks,
+                                        upinterp_algo=self.hparams.model_upinterp_algo, complex_moconet=True)
+        elif self.hparams.modelID == 10:  # CentreKSPMoCoNet - Default param as Ale used. Parametereise It!! TODO
+            self.net = MoCoReCoNet(
+                upinterp_algo=self.hparams.model_upinterp_algo, complex_moconet=False)
+        elif self.hparams.modelID == 11:  # Primal-Dual UNet Network, complex Primal
+            self.net = PrimalDualNetwork(n_primary=4, n_dual=5, n_iterations=2,
+                                         use_original_block=False,
+                                         use_original_init=False,
+                                         use_complex_primal=True,
+                                         g_normtype="magmax",
+                                         transform="Fourier",
+                                         return_abs=True)
 
         else:
             # TODO: other models
-            sys.exit("Only ReconResNet and DualSpaceResNet have been implemented so far in ReconEngine")
+            sys.exit(
+                "Only ReconResNet and DualSpaceResNet have been implemented so far in ReconEngine")
+
+        if "custom_step" in dir(self.net): #only this if is to stay, rest are just temporary
+            if self.hparams.ds_mode == 2: #fastMRI DS
+                if (self.hparams.modelID >= 3 and self.hparams.modelID <= 7) or self.hparams.modelID == 11:
+                    self.shared_step = self.custom_shared_step
+            elif self.hparams.taskID == 1: #MoCo task
+                if self.hparams.modelID >= 8 and self.hparams.modelID <= 10:
+                    self.shared_step = self.custom_shared_step
+            # self.shared_step = self.custom_shared_step
 
         if bool(self.hparams.preweights_path):
             print("Pre-weights found, loding...")
@@ -102,14 +143,16 @@ class ReconEngine(LightningModule):
             if self.hparams.in_channels != 1 or self.hparams.out_channels != 1:
                 sys.exit(
                     "Perceptual Loss used here only works for 1 channel input and output")
-            self.loss = PerceptualLoss(device=device, loss_model="unet3Dds", resize=None,
-                                       loss_type=self.hparams.ploss_type, n_level=self.hparams.ploss_level)  # TODO thinkof 2D
+            self.loss = PerceptualLoss(device=device, loss_model=self.hparams.ploss_model, resize=None,
+                                       loss_type=self.hparams.ploss_type, n_level=self.hparams.ploss_level)
         elif self.hparams.lossID == 1:
             self.loss = nn.L1Loss(reduction='mean')
         elif self.hparams.lossID == 2:
-            self.loss = MS_SSIM(channel=self.hparams.out_channels, data_range=1, spatial_dims=3 if self.hparams.is3D else 2, nonnegative_ssim=False).to(device)
+            self.loss = MS_SSIM(channel=self.hparams.out_channels, data_range=1,
+                                spatial_dims=3 if self.hparams.is3D else 2, nonnegative_ssim=False).to(device)
         elif self.hparams.lossID == 3:
-            self.loss = SSIM(channel=self.hparams.out_channels, data_range=1, spatial_dims=3 if self.hparams.is3D else 2, nonnegative_ssim=False).to(device)
+            self.loss = SSIM(channel=self.hparams.out_channels, data_range=1,
+                             spatial_dims=3 if self.hparams.is3D else 2, nonnegative_ssim=False).to(device)
         else:
             sys.exit("Invalid Loss ID")
 
@@ -133,7 +176,9 @@ class ReconEngine(LightningModule):
         if self.hparams.croppad and self.hparams.ds_mode == 1:
             self.init_transforms += [
                 trans.CropOrPad(size=self.hparams.input_shape)]
-        self.init_transforms += [trans.IntensityNorm(type=self.hparams.norm_type, return_meta=self.hparams.motion_return_meta)]
+        if self.hparams.ds_mode != 2:  # IntensityNorm is not applied for fastMRI DS
+            self.init_transforms += [trans.IntensityNorm(
+                type=self.hparams.norm_type, return_meta=self.hparams.motion_return_meta)]
         # dataspace_transforms = self.dataspace.getTransforms() #TODO: dataspace transforms are not in use
         # self.init_transforms += dataspace_transforms
         if bool(self.hparams.random_crop) and self.hparams.ds_mode == 1:
@@ -198,7 +243,14 @@ class ReconEngine(LightningModule):
 
     def shared_step(self, batch):
         prediction = self(self.slice_squeeze(batch['inp']['data']))
-        loss = self.loss(prediction, self.slice_squeeze(batch['gt']['data']))
+        loss = self.loss(prediction, self.slice_squeeze(
+            batch['gt']['data']).to(prediction.dtype))
+        if self.hparams.IsNegLoss:
+            loss = -loss
+        return prediction, loss
+
+    def custom_shared_step(self, batch):
+        prediction, loss = self.net.custom_step(batch, self.slice_squeeze, self.loss)
         if self.hparams.IsNegLoss:
             loss = -loss
         return prediction, loss
@@ -206,7 +258,7 @@ class ReconEngine(LightningModule):
     def training_step(self, batch, batch_idx):
         prediction, loss = self.shared_step(batch)
         self.log("running_loss", loss)
-        self.meta_logger("train", batch_idx, {key:val for (key,val) in batch['inp'].items() if "Meta" in key})
+        # self.meta_logger("train", batch_idx, {key:val for (key,val) in batch['inp'].items() if "Meta" in key})
         self.img_logger("train", batch_idx, self.slice_squeeze(
             batch['inp']['data']), prediction, self.slice_squeeze(batch['gt']['data']))
         return loss
@@ -227,11 +279,12 @@ class ReconEngine(LightningModule):
             self.out_aggregators[args[0]['filename'][0]].add_batch(
                 prediction.detach().cpu(), args[0][tio.LOCATION])
         else:
-            if not self.hparams.is3D and 'sliceID' in args[0]:    
+            if not self.hparams.is3D and 'sliceID' in args[0]:
                 # self.out_aggregators[args[0]['filename'][0]][args[0]['sliceID'][0].item()] = prediction.detach().cpu()
                 process_testbatch(self.out_aggregators, args[0], prediction)
             else:
-                self.out_aggregators[args[0]['filename'][0]] = prediction.detach().cpu()
+                self.out_aggregators[args[0]['filename']
+                                     [0]] = prediction.detach().cpu()
         return {'test_loss': loss}
 
     def training_epoch_end(self, outputs: List[Any]) -> None:
@@ -264,7 +317,8 @@ class ReconEngine(LightningModule):
                     sub = fetch_vol_subds(self.test_subjectds, filename)
                 else:
                     out = self.out_aggregators[filename].squeeze()
-                    sub = self.test_subjectds[self.test_filenames.index(filename)]
+                    sub = self.test_subjectds[self.test_filenames.index(
+                        filename)]
                 assert sub[
                     'filename'] == filename, "The filename of the test subject doesn't match with the fetched test subject (Index issue!)"
             inp = sub['inp']['data'].squeeze()
@@ -317,6 +371,22 @@ class ReconEngine(LightningModule):
             if "processed_csv" in self.hparams and bool(self.hparams.processed_csv):
                 params["processed_csv"] = self.hparams.processed_csv
             dataset, filenames = createFileDS(**params)
+        elif self.hparams.ds_mode == 2:
+            del params["data_mode"], params["isKSpace"], params["isGTNonImg"]
+            params["combine_coils"] = self.hparams.combine_coils
+            params["complex_image_modes"] = self.hparams.complex_image_modes
+            params["fastMRI_challenge"] = self.hparams.fastMRI_challenge
+            params["use_dataset_cache"] = self.hparams.use_dataset_cache
+            params["sample_rate"] = self.hparams.sample_rate
+            params["volume_sample_rate"] = self.hparams.volume_sample_rate
+            params["num_cols"] = self.hparams.num_cols
+            params["mask_type"] = self.hparams.mask_type
+            params["center_fractions"] = self.hparams.center_fractions
+            params["accelerations"] = self.hparams.accelerations
+            if "processed_csv" in self.hparams and bool(self.hparams.processed_csv):
+                params["processed_csv"] = self.hparams.processed_csv
+            dataset, filenames = createFastMRIDS(**params)
+
         if bool(self.hparams.patch_size):
             if self.hparams.ds_mode == 0:
                 if split == "train":
@@ -382,8 +452,9 @@ class ReconEngine(LightningModule):
                 inp = inp[:, :, central_slice]
                 pred = pred[:, :, central_slice]
                 gt = gt[:, :, central_slice]
-            log_images(self.logger[-1].experiment, inp,
-                       pred.detach(), gt, batch_idx, tag)
+            pred = pred.detach()
+            log_images(self.logger[-1].experiment, inp if not torch.is_complex(inp) else torch.abs(inp),
+                       pred if not torch.is_complex(pred) else torch.abs(pred), gt if not torch.is_complex(gt) else torch.abs(gt), batch_idx, tag)
 
     @staticmethod
     def add_model_specific_args(parent_parser):

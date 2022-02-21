@@ -14,6 +14,11 @@ import torchvision
 from torch.utils.data import Dataset
 from Engineering.transforms.transforms import IntensityNorm
 
+def __read_vol(vol_path, data_mode):
+    if data_mode.lower() == "nifti":
+        return nib.load(vol_path).get_fdata()
+    elif data_mode.lower() == "npy":
+        return np.load(vol_path)
 
 def __count_volslice(vol_path, mid_n=-1, mid_per=-1, random_n=-1):
     n_slices = nib.load(vol_path).shape[-1]
@@ -85,7 +90,7 @@ def createFileDS(
     processed_csv: str = "",
     split_csv: str = "",
     split: str = "",
-    data_mode: Literal['NIFTI', 'DICOM'] = "NIFTI",
+    data_mode: Literal['NIFTI', 'NPY', 'DICOM'] = "NIFTI",
     isKSpace: bool = False,
     isGTNonImg: bool = False,
     init_transforms: Optional[Callable] = None,
@@ -109,10 +114,12 @@ def createFileDS(
 
         files = []
         for gt in root_gt:
-            if data_mode == "NIFTI":
+            if data_mode.lower() == "nifti":
                 files += glob(gt+"/**/*.nii", recursive=True) + glob(gt+"/**/*.nii.gz", recursive=True) +\
                     glob(gt+"/**/*.img", recursive=True) + \
                     glob(gt+"/**/*.img.gz", recursive=True)
+            elif data_mode.lower() == "npy":
+                files += glob(gt+"/**/*.npy", recursive=True)
             else:
                 # TODO: DICOM read
                 sys.exit("DICOM read not implemented inside createFileDS")

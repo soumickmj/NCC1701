@@ -12,6 +12,7 @@ from torch import nn
 from torchcomplex import nn as cnn
 
 from .unet import UNet
+from .cunet import CUNet
 
 
 class PrePadDualConv2D(nn.Module):
@@ -119,10 +120,13 @@ class PrimalBlock(nn.Module):
 
 class PrimalUnetBlock(nn.Module):
     def __init__(self, features: int, complex=False, complex_weights=False):
-        super().__init__()
-        assert not complex, "Complex Primal is not supported for PD-UNet"
-        self.layers = UNet(features+1, features, wf=5)
-        self.diff_weight = nn.Parameter(torch.zeros(1, features, 1, 1))
+        super().__init__()        
+        if complex:
+            self.layers = CUNet(features+1, features, wf=5, complex_weights=complex_weights)
+            self.diff_weight = nn.Parameter(torch.zeros(1, features, 1, 1, dtype=torch.cfloat) + torch.finfo(torch.cfloat).eps)
+        else:
+            self.layers = UNet(features+1, features, wf=5)
+            self.diff_weight = nn.Parameter(torch.zeros(1, features, 1, 1))
 
     def forward(self, h, f):
         B, _, H, W = f.shape
@@ -217,6 +221,12 @@ class PrimalDualNetwork(nn.Module):
         else:
             return out
 
+    def custom_step(self, batch, slice_squeeze, loss_func):
+        inpI, gtI = slice_squeeze(batch['inp']['data']), slice_squeeze(batch['gt']['data']) 
+        inpK = slice_squeeze(batch['inp']['ksp'])
+        outI = self(f0=inpI, g=inpK)
+        loss = loss_func(outI, gtI.to(outI.dtype))
+        return outI, loss
 
 def test_timing_orig_vs_unet():
     import time

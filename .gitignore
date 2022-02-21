@@ -162,3 +162,4 @@ all.sh
 a.py
 rough.csv
 utils/Eval/sort_imgregfiles.py
+*.pth
