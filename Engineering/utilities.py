@@ -2,6 +2,7 @@ import argparse
 import os
 from collections import OrderedDict
 from statistics import median
+import pandas as pd
 
 import nibabel as nib
 import numpy as np
@@ -22,6 +23,7 @@ from Engineering.math.freq_trans import fftNc, ifftNc
 from Engineering.math.misc import minmax
 from Engineering.transforms.tio.transforms import getDataSpaceTransforms
 
+
 def BoolArgs(v):
     if isinstance(v, bool):
         return v
@@ -32,7 +34,9 @@ def BoolArgs(v):
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
     else:
-        raise argparse.ArgumentTypeError("Boolean value expected. Can be supplied as: ['yes', 'true', 't', 'y', '1'] or ['no', 'false', 'f', 'n', '0']")
+        raise argparse.ArgumentTypeError(
+            "Boolean value expected. Can be supplied as: ['yes', 'true', 't', 'y', '1'] or ['no', 'false', 'f', 'n', '0']")
+
 
 def sitkShow(data, slice_last=True):
     if issubclass(type(data), tio.Image):
@@ -98,6 +102,7 @@ def log_images(writer, inputs, outputs, targets, step, section='', imID=0, chID=
                                           normalize=True,
                                           scale_each=True),
                          step)
+
 
 def ReadNIFTI(file_path):
     """Read a NIFTI file using given file path to an array
@@ -218,17 +223,26 @@ class DataHandler:
 
 
 class ResSaver():
-    def __init__(self, out_path, save_inp=False, do_norm=False):
+    def __init__(self, out_path, save_inp=False, save_gt=False, do_norm=False):
         self.out_path = out_path
         self.save_inp = save_inp
+        self.save_gt = save_gt
         self.do_norm = do_norm
 
     def CalcNSave(self, datumHandler: DataHandler, outfolder, datacon_operator: DataConsistency = None):
         outpath = os.path.join(self.out_path, outfolder)
         os.makedirs(outpath, exist_ok=True)
 
-        inp = datumHandler.getImInp().float().numpy()
-        out = datumHandler.getImOut().float().numpy()
+        inp = datumHandler.getImInp()
+        if torch.is_complex(inp):
+            inp = abs(inp)
+        inp = inp.float().numpy()
+
+        out = datumHandler.getImOut()
+        if torch.is_complex(out):
+            out = abs(out)
+        out = out.float().numpy()
+
         SaveNIFTI(out, os.path.join(outpath, "out.nii.gz"))
 
         if self.save_inp:
@@ -236,7 +250,12 @@ class ResSaver():
 
         gt = datumHandler.getImGT()
         if gt is not None:
-            gt = gt.float().numpy()          
+            if torch.is_complex(gt):
+                gt = abs(gt)
+            gt = gt.float().numpy()
+
+            if self.save_gt:
+                SaveNIFTI(gt, os.path.join(outpath, "gt.nii.gz"))
 
             if self.do_norm:
                 out = minmax(out)
@@ -259,11 +278,12 @@ class ResSaver():
 
         if datacon_operator is not None:
             datumHandler.setOutCorrectedK(datacon_operator.apply(out_ksp=datumHandler.getKOut(
-                imnorm=True), full_ksp=datumHandler.getKGT(imnorm=True), under_ksp=datumHandler.inpK))  # TODO: param for imnorm
+                imnorm=True), full_ksp=datumHandler.getKGT(imnorm=True), under_ksp=datumHandler.inpK, metadict=datumHandler.metadict))  # TODO: param for imnorm
             # outCorrected = abs(datumHandler.getImOutCorrected()).float().numpy()
             outCorrected = datumHandler.getImOutCorrected(
             ).real.float().numpy()  # TODO: param real v abs
-            SaveNIFTI(outCorrected, os.path.join(outpath, "outCorrected.nii.gz"))
+            SaveNIFTI(outCorrected, os.path.join(
+                outpath, "outCorrected.nii.gz"))
             if gt is not None:
                 # if self.do_norm:
                 #     outCorrected = minmax(outCorrected)
@@ -297,7 +317,8 @@ def CustomInitialiseWeights(m):
 
 def ConvertCheckpoint(checkpoint_path, new_checkpoint_path, newModel):
     checkpoint = torch.load(checkpoint_path, map_location='cpu')
-    assert len(checkpoint['model'].state_dict().keys()) == len(newModel.state_dict().keys()), "Number of Params in New and Old models do not match"
+    assert len(checkpoint['model'].state_dict().keys()) == len(
+        newModel.state_dict().keys()), "Number of Params in New and Old models do not match"
     del checkpoint['model']
     old_state_dict = checkpoint['state_dict']
     new_keys = list(newModel.state_dict().keys())
@@ -306,9 +327,12 @@ def ConvertCheckpoint(checkpoint_path, new_checkpoint_path, newModel):
     checkpoint['state_dict'] = new_state_dict
     torch.save(checkpoint, new_checkpoint_path)
 
+
 def process_testbatch(out_aggregators, datum, prediction):
     for i in range(len(datum['filename'])):
-        out_aggregators[datum['filename'][i]][datum['sliceID'][i].item()] = prediction[i].detach().cpu()
+        out_aggregators[datum['filename'][i]][datum['sliceID']
+                                              [i].item()] = prediction[i].detach().cpu()
+
 
 def process_slicedict(dict_sliceout, axis=-1):
     sliceIDs = sorted(list(dict_sliceout.keys()))
@@ -320,10 +344,11 @@ def process_slicedict(dict_sliceout, axis=-1):
     else:
         return np.stack(out, axis=axis)
 
+
 def fetch_vol_subds(subjectds, filename, slcaxis=-1):
     df = subjectds.df
-    ids = np.array(df.index[df['filename']==filename].tolist()) 
-    sliceIDs = df[df['filename']==filename].sliceID.tolist()
+    ids = np.array(df.index[df['filename'] == filename].tolist())
+    sliceIDs = df[df['filename'] == filename].sliceID.tolist()
     ids = ids[np.argsort(sliceIDs)]
     inp = []
     gt = []
@@ -343,13 +368,61 @@ def fetch_vol_subds(subjectds, filename, slcaxis=-1):
     # else:
     #     return torch.stack(inp, axis=slcaxis), torch.stack(gt, axis=slcaxis)
 
+
+def fetch_vol_subds_fastMRI(subjectds, filename, slcaxis=-1):
+    df = pd.DataFrame(subjectds.examples, columns=[
+                      "fname", "dataslice", "metadata"])
+    df["fname"] = df["fname"].apply(lambda x: os.path.basename(x))
+    ids = np.array(df.index[df['fname'] == filename].tolist())
+    sliceIDs = df[df['fname'] == filename].dataslice.tolist()
+    ids = ids[np.argsort(sliceIDs)]
+    inp = []
+    inpK = []
+    gt = []
+    gtK = []
+    mask = []
+    fastMRIAttrs = []
+    for i in ids:
+        ds = subjectds[i]
+        inp.append(ds['inp']['data'].squeeze())
+        inpK.append(ds['inp']['ksp'].squeeze())
+        gt.append(ds['gt']['data'].squeeze())
+        gtK.append(ds['gt']['ksp'].squeeze())
+        if "mask" in ds['metadict']:
+            mask.append(ds['metadict']['mask'].squeeze(0))
+        if "fastMRIAttrs" in ds['metadict']:
+            fastMRIAttrs.append(ds['metadict']['fastMRIAttrs'])
+    sub = {
+        "inp": {
+            "data": np.stack(inp, axis=slcaxis),
+            "ksp": np.stack(inpK, axis=slcaxis)
+        },
+        "gt": {
+            "data": np.stack(gt, axis=slcaxis),
+            "ksp": np.stack(gtK, axis=slcaxis)
+        },
+        "filename": filename
+    }
+    if len(mask) > 0 and len(fastMRIAttrs) > 0:
+        sub["metadict"] = {
+            "mask": np.stack(mask, axis=slcaxis),
+            "fastMRIAttrs": fastMRIAttrs
+        }
+    else:
+        if len(mask) > 0:
+            sub["metadict"] = {"mask": np.stack(mask, axis=slcaxis)}
+        elif len(fastMRIAttrs) > 0:
+            sub["metadict"] = {"fastMRIAttrs": fastMRIAttrs}
+    return sub
+    # else:
+    #     return torch.stack(inp, axis=slcaxis), torch.stack(gt, axis=slcaxis)
+
 # class MetaLogger():
 #     def __init__(self, active=True) -> None:
 #         self.activate = active
 
 #     def __call__(self, tag, batch_idx, metas):
 #         if self.active:
-            
 
 
 #     metas = {key:val for (key,val) in batch['inp'].items() if "Meta" in key}

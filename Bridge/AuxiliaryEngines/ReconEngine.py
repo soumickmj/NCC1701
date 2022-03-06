@@ -30,7 +30,7 @@ from Engineering.transforms.tio import augmentations as tioAugmentations
 from Engineering.transforms.tio import motion as tioMotion
 from Engineering.transforms.tio import transforms as tioTransforms
 from Engineering.utilities import (CustomInitialiseWeights, DataHandler,
-                                   DataSpaceHandler, ResSaver, fetch_vol_subds, getSSIM,
+                                   DataSpaceHandler, ResSaver, fetch_vol_subds, fetch_vol_subds_fastMRI, getSSIM,
                                    log_images, process_slicedict, process_testbatch)
 from pytorch_lightning.core.lightning import LightningModule
 from pytorch_msssim import MS_SSIM, SSIM
@@ -217,7 +217,7 @@ class ReconEngine(LightningModule):
         self.example_input_array = torch.empty(
             self.hparams.batch_size, self.hparams.in_channels, *input_shape).float()
         self.saver = ResSaver(
-            self.hparams.res_path, save_inp=self.hparams.save_inp, do_norm=self.hparams.do_savenorm)
+            self.hparams.res_path, save_inp=self.hparams.save_inp, save_gt=self.hparams.save_gt if "save_gt" in self.hparams else False, do_norm=self.hparams.do_savenorm)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(
@@ -314,8 +314,8 @@ class ReconEngine(LightningModule):
                 sub = self.grid_samplers[filename].subject
             else:
                 if not self.hparams.is3D and type(self.out_aggregators[filename]) is dict:
-                    out = process_slicedict(self.out_aggregators[filename])
-                    sub = fetch_vol_subds(self.test_subjectds, filename)
+                    out = process_slicedict(self.out_aggregators[filename]) #TODO: If the model is predicting anything other than Images, this step has to be modified.
+                    sub = fetch_vol_subds_fastMRI(self.test_subjectds, filename) if self.hparams.ds_mode==2 else fetch_vol_subds(self.test_subjectds, filename)
                 else:
                     out = self.out_aggregators[filename].squeeze()
                     sub = self.test_subjectds[self.test_filenames.index(
@@ -327,7 +327,8 @@ class ReconEngine(LightningModule):
             if isinstance(out, torch.HalfTensor):
                 out = out.float()  # TODO: find a better way to do this. This might not be a good way
             dHandler = DataHandler(dataspace_op=self.dataspace, inp=inp, gt=gt,
-                                   out=out, metadict=sub['metadict'] if 'metadict' in sub else None)
+                                #    out=out, metadict=sub['metadict'] if 'metadict' in sub else None) #Should be actually this. But as metadict is not handled for non-fastMRI DSs for now, the following line is used:
+                                   out=out, metadict=sub['metadict'] if ('metadict' in sub) and (self.hparams.ds_mode==2) else None) #TODO: handle meta dict for non-fastMRI DSs
             dHandler.setInpK(sub['inp']['ksp'].squeeze()
                              if "ksp" in sub['inp'] else None)
             dHandler.setGTK(sub['gt']['ksp'].squeeze()

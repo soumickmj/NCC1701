@@ -30,7 +30,7 @@ def getARGSParser():
     parser.add_argument('--save_path', action="store", default="/project/schatter/Output/NCC1701/ReCo/Results")
     parser.add_argument('--cuda', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--amp', action=argparse.BooleanOptionalAction, default=False)
-    parser.add_argument('--run_mode', action="store", default=1, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
+    parser.add_argument('--run_mode', action="store", default=2, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
     parser.add_argument('--do_profile', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--non_deter', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--fftnorm', action="store", default="ortho")
@@ -51,6 +51,7 @@ def getARGSParser():
     parser.add_argument('--log_freq', action="store", default=250, type=int, help="Log every n-th step. Lightning default is 50. Flush will be twice this.")
     parser.add_argument('--save_freq', action="store", default=1, type=int, help="For Checkpoint save, n_epochs")
     parser.add_argument('--save_inp', action="store", default=1, type=int, help="Whether to save the input during testing")
+    parser.add_argument('--save_gt', action="store", default=1, type=int, help="Whether to save the gt during testing")
     parser.add_argument('--do_savenorm', action="store", default=0, type=int, help="Whether to normalise before saving and calculating metrics during testing")
     
     #Augmentations

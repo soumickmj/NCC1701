@@ -30,7 +30,7 @@ class DataConsistency():
         if not isinstance(mask, torch.Tensor):
             mask = torch.from_numpy(mask)
         mask = mask.to(out_ksp.device)
-        if len(full_ksp.shape) == 3:  # TODO: do it nicely, its too strict now
+        if len(full_ksp.shape) == 3 and len(mask.shape) == 2:  # TODO: do it nicely, its too strict now
             mask = mask.unsqueeze(-1)
         missing_mask = 1-mask
         missing_ksp = out_ksp * missing_mask

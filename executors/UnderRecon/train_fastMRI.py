@@ -17,8 +17,8 @@ def getARGSParser():
     parser.add_argument('--taskID', action="store", type=int, default=0, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
     parser.add_argument('--trainID', action="store", default="rough_ResNet14_fullVol2D_L1Loss") ## "testing")  ## "ResNet14"
     parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
-    parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
-    parser.add_argument('--load_test_ckpt', action="store", default=1, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
+    parser.add_argument('--load_best', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
+    parser.add_argument('--load_test_ckpt', action="store", default=0, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
     parser.add_argument('--seed', action="store", default=1701, type=int)
     parser.add_argument('--num_workers', action="store", default=4, type=int)
@@ -30,7 +30,7 @@ def getARGSParser():
     parser.add_argument('--save_path', action="store", default="/project/schatter/Output/NCC1701/ReCo/Results")
     parser.add_argument('--cuda', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--amp', action=argparse.BooleanOptionalAction, default=False)
-    parser.add_argument('--run_mode', action="store", default=1, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
+    parser.add_argument('--run_mode', action="store", default=4, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
     parser.add_argument('--do_profile', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--non_deter', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--fftnorm', action="store", default="ortho")
@@ -51,6 +51,7 @@ def getARGSParser():
     parser.add_argument('--log_freq', action="store", default=250, type=int, help="Log every n-th step. Lightning default is 50. Flush will be twice this.")
     parser.add_argument('--save_freq', action="store", default=1, type=int, help="For Checkpoint save, n_epochs")
     parser.add_argument('--save_inp', action="store", default=1, type=int, help="Whether to save the input during testing")
+    parser.add_argument('--save_gt', action="store", default=1, type=int, help="Whether to save the gt during testing")
     parser.add_argument('--do_savenorm', action="store", default=0, type=int, help="Whether to normalise before saving and calculating metrics during testing")
     
     #Augmentations
@@ -137,7 +138,7 @@ def getARGSParser():
     parser.add_argument("-wnbe", "--wnbentity", default='soumick', help="WandB: Name of the entity")
     parser.add_argument("-wnbg", "--wnbgroup", default='NCC1701Set2', help="WandB: Name of the group")
     parser.add_argument("-wnbpf", "--wnbprefix", default='', help="WandB: Prefix for TrainID")
-    parser.add_argument("-wnbml", "--wnbmodellog", default='all', help="WandB: While watching the model, what to save: gradients, parameters, all, None")
+    parser.add_argument("-wnbml", "--wnbmodellog", default=None, help="WandB: While watching the model, what to save: gradients, parameters, all, None")
     parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=100, help="WandB: The number of steps between logging gradients")
     
     return parser
