@@ -307,6 +307,7 @@ class ReconEngine(LightningModule):
         filenames = self.out_aggregators.keys()
         test_metrics = []
         test_ssim = []
+        test_ssim_corrected = []
         for filename in tqdm(filenames):
             if bool(self.hparams.patch_size):
                 out = self.out_aggregators[filename].get_output_tensor(
@@ -340,8 +341,13 @@ class ReconEngine(LightningModule):
                 test_metrics.append(metrics)
                 test_ssim.append(round(metrics['SSIMOut'], 4))
                 self.log("running_test_ssim", test_ssim[-1])
+                if "SSIMOutCorrected" in metrics:
+                    test_ssim_corrected.append(round(metrics['SSIMOutCorrected'], 4))
+                    self.log("running_test_ssim_corrected", test_ssim_corrected[-1])
         if len(test_metrics) > 0:
             self.log("test_ssim", median(test_ssim))
+            if len(test_ssim_corrected) > 0:
+                self.log("test_ssim_corrected", median(test_ssim_corrected))
             df = pd.DataFrame.from_dict(test_metrics)
             df.to_csv(pjoin(self.hparams.save_path, self.hparams.run_name,
                       'Results.csv'), index=False)
