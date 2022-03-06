@@ -260,15 +260,16 @@ class ReconEngine(LightningModule):
         self.log("running_loss", loss)
         # self.meta_logger("train", batch_idx, {key:val for (key,val) in batch['inp'].items() if "Meta" in key})
         self.img_logger("train", batch_idx, self.slice_squeeze(
-            batch['inp']['data']), prediction, self.slice_squeeze(batch['gt']['data']))
+            batch['inp']['data']).cpu(), prediction.detach().cpu(), self.slice_squeeze(batch['gt']['data']).cpu())
         return loss
 
     def validation_step(self, batch, batch_idx):
         prediction, loss = self.shared_step(batch)
-        ssim = getSSIM(self.slice_squeeze(batch['gt']['data']).cpu().numpy(),
-                       prediction.detach().cpu().numpy(), data_range=1)
-        self.img_logger("val", batch_idx, self.slice_squeeze(
-            batch['inp']['data']), prediction, self.slice_squeeze(batch['gt']['data']))
+        gt = self.slice_squeeze(batch['gt']['data']).cpu()
+        inp = self.slice_squeeze(batch['inp']['data']).cpu()
+        prediction = prediction.detach().cpu()
+        ssim = getSSIM(gt.numpy(), prediction.numpy(), data_range=1)
+        self.img_logger("val", batch_idx, inp, prediction, gt)
         return {'val_loss': loss, 'val_ssim': ssim}
 
     def test_step(self, *args):
@@ -452,7 +453,6 @@ class ReconEngine(LightningModule):
                 inp = inp[:, :, central_slice]
                 pred = pred[:, :, central_slice]
                 gt = gt[:, :, central_slice]
-            pred = pred.detach()
             log_images(self.logger[-1].experiment, inp if not torch.is_complex(inp) else torch.abs(inp),
                        pred if not torch.is_complex(pred) else torch.abs(pred), gt if not torch.is_complex(gt) else torch.abs(gt), batch_idx, tag)
 

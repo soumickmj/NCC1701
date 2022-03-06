@@ -208,6 +208,8 @@ class PrimalDualNetwork(nn.Module):
             _tmp_h = self.iT(g_norm.unnormalise(h))
             if not self.use_complex_primal and self.transform == "Fourier":
                 _tmp_h = torch.abs(_tmp_h)
+                if torch.is_complex(f):
+                    f = torch.abs(f)
             f = primary_block(f_norm.normalise(_tmp_h), f)
             if self.output_stages:
                 stages.append(torch.mean(f, dim=1, keepdim=True))

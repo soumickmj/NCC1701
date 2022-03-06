@@ -202,6 +202,8 @@ class fastMRIDS(SliceDataset):
                 "path": datum["fname"]
             }
 
+        del datum
+        
         if bool(self.combine_coils) and type(self.combine_coils) is dict:
             sample['gt']['data'], sample['gt']['ksp'] = coilCombiner(
                 sample['gt']['data'], sample['gt']['ksp'], self.combine_coils['fullyI'], self.combine_coils['fullyK'])

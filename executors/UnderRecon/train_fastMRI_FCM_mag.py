@@ -16,16 +16,16 @@ def getARGSParser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--taskID', action="store", type=int, default=0, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
     parser.add_argument('--trainID', action="store", default="rough_ResNet14_fullVol2D_L1Loss") ## "testing")  ## "ResNet14"
-    parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
-    parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
-    parser.add_argument('--load_test_ckpt', action="store", default=1, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
+    parser.add_argument('--resume', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
+    parser.add_argument('--load_best', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
+    parser.add_argument('--load_test_ckpt', action="store", default=0, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
     parser.add_argument('--seed', action="store", default=1701, type=int)
     parser.add_argument('--num_workers', action="store", default=4, type=int)
     parser.add_argument('--batch_size', action="store", default=1, type=int)  
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 1 as default  
-    # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_under_dummy.json")
-    parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under_fastMRI_FCM.json")
+    # parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under_dummy.json")
+    parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under_fastMRI_FCM_mag.json")
     parser.add_argument('--tblog_path', action="store", default="/project/schatter/Output/NCC1701/ReCo/TBLogs")
     parser.add_argument('--save_path', action="store", default="/project/schatter/Output/NCC1701/ReCo/Results")
     parser.add_argument('--cuda', action=argparse.BooleanOptionalAction, default=True)
@@ -36,9 +36,9 @@ def getARGSParser():
     parser.add_argument('--fftnorm', action="store", default="ortho")
 
     #Training params
-    parser.add_argument('--num_epochs', action="store", default=50, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
+    parser.add_argument('--num_epochs', action="store", default=100, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
     parser.add_argument('--lr', action="store", default=0.001, type=float)
-    parser.add_argument('--lossID', action="store", default=3, type=int, help="Loss ID."+str(LOSSID))
+    parser.add_argument('--lossID', action="store", default=1, type=int, help="Loss ID."+str(LOSSID))
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)
     parser.add_argument('--ploss_type', action="store", default="L1")
     parser.add_argument('--patch_size', action="store", default="", help="length, width, depth")
@@ -59,7 +59,7 @@ def getARGSParser():
     parser.add_argument('--p_random_crop', action="store", default=0.75, type=float, help="Probability of Randomcrop, only if is3D=False. This should be 1 if batch size is more than 1.")
 
     #Network Params
-    parser.add_argument('--modelID', action="store", default=11, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet")
+    parser.add_argument('--modelID', action="store", default=5, type=int, help="0: ReconResNet, 1: KSPReconResNet, 2: DualSpaceReconResNet")
     parser.add_argument('--preweights_path', action="store", default="", help="checkpoint path for pre-loading")
     parser.add_argument('--is3D', action="store", default=0, type=int, help="Is it a 3D model?")
     parser.add_argument('--model_dataspace_inp', action="store", default=0, type=int, help="Dataspace of the model's input. 0: ImageSapce, 1: kSpace")
@@ -137,7 +137,7 @@ def getARGSParser():
     parser.add_argument("-wnbe", "--wnbentity", default='soumick', help="WandB: Name of the entity")
     parser.add_argument("-wnbg", "--wnbgroup", default='NCC1701Set2', help="WandB: Name of the group")
     parser.add_argument("-wnbpf", "--wnbprefix", default='', help="WandB: Prefix for TrainID")
-    parser.add_argument("-wnbml", "--wnbmodellog", default='all', help="WandB: While watching the model, what to save: gradients, parameters, all, None")
+    parser.add_argument("-wnbml", "--wnbmodellog", default=None, help="WandB: While watching the model, what to save: gradients, parameters, all, None")
     parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=100, help="WandB: The number of steps between logging gradients")
     
     return parser
