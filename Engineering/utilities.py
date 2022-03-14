@@ -278,10 +278,12 @@ class ResSaver():
 
         if datacon_operator is not None:
             datumHandler.setOutCorrectedK(datacon_operator.apply(out_ksp=datumHandler.getKOut(
-                imnorm=True), full_ksp=datumHandler.getKGT(imnorm=True), under_ksp=datumHandler.inpK, metadict=datumHandler.metadict))  # TODO: param for imnorm
+                imnorm=False), full_ksp=datumHandler.getKGT(imnorm=False), under_ksp=datumHandler.inpK, metadict=datumHandler.metadict))  # TODO: param for imnorm
             # outCorrected = abs(datumHandler.getImOutCorrected()).float().numpy()
-            outCorrected = datumHandler.getImOutCorrected(
-            ).real.float().numpy()  # TODO: param real v abs
+
+            #TODO: fix the things below, only one should be there
+            outCorrected = abs(datumHandler.getImOutCorrected(
+            )).float().numpy()  # TODO: param real v abs
             SaveNIFTI(outCorrected, os.path.join(
                 outpath, "outCorrected.nii.gz"))
             if gt is not None:
@@ -293,6 +295,22 @@ class ResSaver():
                     outpath, "ssimMAPOutCorrected.nii.gz"))
                 SaveNIFTI(outCorrected_diff, os.path.join(
                     outpath, "diffOutCorrected.nii.gz"))
+                metrics = {**metrics, **outCorrected_metrics}
+
+            #TODO: fix the things below, only one should be there
+            outCorrected = datumHandler.getImOutCorrected(
+            ).real.float().numpy()  # TODO: param real v abs
+            SaveNIFTI(outCorrected, os.path.join(
+                outpath, "outCorrectedReal.nii.gz"))
+            if gt is not None:
+                # if self.do_norm:
+                #     outCorrected = minmax(outCorrected)
+                outCorrected_metrics, outCorrected_ssimMAP, outCorrected_diff = calc_metircs(
+                    gt, outCorrected, tag="OutCorrectedReal", norm4diff=not self.do_norm)
+                SaveNIFTI(outCorrected_ssimMAP, os.path.join(
+                    outpath, "ssimMAPOutCorrectedReal.nii.gz"))
+                SaveNIFTI(outCorrected_diff, os.path.join(
+                    outpath, "diffOutCorrectedReal.nii.gz"))
                 metrics = {**metrics, **outCorrected_metrics}
 
         return metrics
@@ -395,11 +413,11 @@ def fetch_vol_subds_fastMRI(subjectds, filename, slcaxis=-1):
     sub = {
         "inp": {
             "data": np.stack(inp, axis=slcaxis),
-            "ksp": np.stack(inpK, axis=slcaxis)
+            # "ksp": np.stack(inpK, axis=slcaxis)
         },
         "gt": {
             "data": np.stack(gt, axis=slcaxis),
-            "ksp": np.stack(gtK, axis=slcaxis)
+            # "ksp": np.stack(gtK, axis=slcaxis)
         },
         "filename": filename
     }

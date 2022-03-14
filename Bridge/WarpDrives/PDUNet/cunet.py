@@ -9,7 +9,7 @@ import torchcomplex.nn.functional as cF
 
 class CUNet(nn.Module):
     def __init__(self, in_channels=1, n_classes=1, depth=4, wf=6, padding=True,
-                 batch_norm=True, up_mode='upsample', complex_weights=True):
+                 batch_norm=True, up_mode='upsample', complex_weights=True, kernel_size=3):
         """
         Implementation of
         U-Net: Convolutional Networks for Biomedical Image Segmentation
@@ -42,13 +42,13 @@ class CUNet(nn.Module):
         self.down_path = nn.ModuleList()
         for i in range(depth):
             self.down_path.append(UNetConvBlock(prev_channels, 2**(wf+i),
-                                                padding, batch_norm, complex_weights=complex_weights))
+                                                padding, batch_norm, complex_weights=complex_weights, kernel_size=kernel_size))
             prev_channels = 2**(wf+i)
 
         self.up_path = nn.ModuleList()
         for i in reversed(range(depth - 1)):
             self.up_path.append(UNetUpBlock(prev_channels, 2**(wf+i), up_mode,
-                                            padding, batch_norm, complex_weights=complex_weights))
+                                            padding, batch_norm, complex_weights=complex_weights, kernel_size=kernel_size))
             prev_channels = 2**(wf+i)
 
         self.avg_pool2d = cnn.AvgPool2d(2)
@@ -69,17 +69,17 @@ class CUNet(nn.Module):
 
 
 class UNetConvBlock(nn.Module):
-    def __init__(self, in_size, out_size, padding, batch_norm, complex_weights):
+    def __init__(self, in_size, out_size, padding, batch_norm, complex_weights, kernel_size=3):
         super(UNetConvBlock, self).__init__()
         block = []
 
-        block.append(cnn.Conv2d(in_size, out_size, kernel_size=3,
+        block.append(cnn.Conv2d(in_size, out_size, kernel_size=kernel_size,
                                padding=int(padding), complex_weights=complex_weights))
         block.append(cnn.CReLU())
         if batch_norm:
             block.append(cnn.BatchNorm2d(out_size, complex_weights=complex_weights))
 
-        block.append(cnn.Conv2d(out_size, out_size, kernel_size=3,
+        block.append(cnn.Conv2d(out_size, out_size, kernel_size=kernel_size,
                                padding=int(padding), complex_weights=complex_weights))
         block.append(cnn.CReLU())
         if batch_norm:
@@ -93,7 +93,7 @@ class UNetConvBlock(nn.Module):
 
 
 class UNetUpBlock(nn.Module):
-    def __init__(self, in_size, out_size, up_mode, padding, batch_norm, complex_weights):
+    def __init__(self, in_size, out_size, up_mode, padding, batch_norm, complex_weights, kernel_size=3):
         super(UNetUpBlock, self).__init__()
         if up_mode == 'upconv':
             self.up = cnn.ConvTranspose2d(in_size, out_size, kernel_size=2,
@@ -102,7 +102,7 @@ class UNetUpBlock(nn.Module):
             self.up = nn.Sequential(cnn.Upsample(mode='bilinear', scale_factor=2, align_corners=False),
                                     cnn.Conv2d(in_size, out_size, kernel_size=1, complex_weights=complex_weights))
 
-        self.conv_block = UNetConvBlock(in_size, out_size, padding, batch_norm, complex_weights=complex_weights)
+        self.conv_block = UNetConvBlock(in_size, out_size, padding, batch_norm, complex_weights=complex_weights, kernel_size=kernel_size)
 
     @staticmethod
     def embed_layer(layer, target_size):

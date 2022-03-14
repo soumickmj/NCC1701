@@ -17,7 +17,7 @@ def getARGSParser():
     parser.add_argument('--taskID', action="store", type=int, default=0, help="0: Undersampled Recon, 1: MoCo, 2: Classification") ## "testing")  ## "ResNet14"
     parser.add_argument('--trainID', action="store", default="rough_ResNet14_fullVol2D_L1Loss") ## "testing")  ## "ResNet14"
     parser.add_argument('--resume', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
-    parser.add_argument('--load_best', action="store", default=0, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
+    parser.add_argument('--load_best', action="store", default=1, type=int, help="To resume training from the last checkpoint") ## "testing")  ## "ResNet14"
     parser.add_argument('--load_test_ckpt', action="store", default=0, type=int, help="To load checkpoint for testing") ## "testing")  ## "ResNet14"
     parser.add_argument('--gpu', action="store", default="0")
     parser.add_argument('--seed', action="store", default=1701, type=int)
@@ -25,9 +25,9 @@ def getARGSParser():
     parser.add_argument('--batch_size', action="store", default=1, type=int)  
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 1 as default  
     # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_under_dummy.json")
-    parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under_fastMRI_FCM.json")
-    parser.add_argument('--tblog_path', action="store", default="/project/schatter/Output/NCC1701/ReCo/TBLogs")
-    parser.add_argument('--save_path', action="store", default="/project/schatter/Output/NCC1701/ReCo/Results")
+    parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under_fastMRI_FCMMEM.json")
+    parser.add_argument('--tblog_path', action="store", default="/run/media/soumick/Enterprise/OutputNewPipe/Mar22/TBLogs")
+    parser.add_argument('--save_path', action="store", default="/run/media/soumick/Enterprise/OutputNewPipe/Mar22/Results")
     parser.add_argument('--cuda', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--amp', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--run_mode', action="store", default=4, type=int, help='0: Train, 1: Train and Validate, 2:Test, 3: Train followed by Test, 4: Train and Validate followed by Test')
@@ -36,7 +36,7 @@ def getARGSParser():
     parser.add_argument('--fftnorm', action="store", default="ortho")
 
     #Training params
-    parser.add_argument('--num_epochs', action="store", default=50, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
+    parser.add_argument('--num_epochs', action="store", default=100, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
     parser.add_argument('--lr', action="store", default=0.001, type=float)
     parser.add_argument('--lossID', action="store", default=1, type=int, help="Loss ID."+str(LOSSID))
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)

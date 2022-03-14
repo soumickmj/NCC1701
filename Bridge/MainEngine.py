@@ -98,6 +98,7 @@ class Engine(object):
             self.model = ReconEngine(**vars(hparams))
             if hparams.run_mode == 2 and bool(self.chkpoint):
                 # TODO ckpt_path is not working during testing if not trained in the same run. So loading explicitly. check why
+                print("Loading existing checkpoint...")
                 self.model.load_state_dict(
                     torch.load(self.chkpoint)['state_dict'])
         loggers = []

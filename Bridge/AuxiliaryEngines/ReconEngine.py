@@ -14,6 +14,8 @@ import torch
 import torchio as tio
 from Bridge.WarpDrives.PDUNet.pd import PrimalDualNetwork
 from Bridge.WarpDrives.PDUNet.pd2 import PrimalDualNetwork as PrimalDualNetworkNoResidue
+from Bridge.WarpDrives.PDUNet.pd_crelu import PrimalDualNetwork as PrimalDualNetworkCReLU
+from Bridge.WarpDrives.PDUNet.pd_crelu_largekern import PrimalDualNetwork as PrimalDualNetworkCReLUMegaKern
 from Bridge.WarpDrives.ReconResNet.ReconResNet import ResNet
 from Bridge.WarpDrives.ReconResNet.DualSpaceReconResNet import DualSpaceResNet
 from Bridge.WarpDrives.ReconResNet.CentreKSPMoCoNet import CentreKSPMoCoNet
@@ -119,6 +121,64 @@ class ReconEngine(LightningModule):
                                          g_normtype="magmax",
                                          transform="Fourier",
                                          return_abs=True)
+
+        ###new CReLU complex models
+        elif self.hparams.modelID == 33:  # Primal-Dual Network, complex Primal
+            self.net = PrimalDualNetworkCReLU(n_primary=5, n_dual=5, n_iterations=10,
+                                         use_original_block=True,
+                                         use_original_init=True,
+                                         use_complex_primal=True,
+                                         g_normtype="magmax",
+                                         transform="Fourier",
+                                         return_abs=True)
+        elif self.hparams.modelID == 44:  # Primal-Dual Network, absolute Primal
+            self.net = PrimalDualNetworkCReLU(n_primary=5, n_dual=5, n_iterations=10,
+                                         use_original_block=True,
+                                         use_original_init=True,
+                                         use_complex_primal=False,
+                                         g_normtype="magmax",
+                                         transform="Fourier")
+        elif self.hparams.modelID == 55:  # Primal-Dual UNet Network, absolute Primal
+            self.net = PrimalDualNetworkCReLU(n_primary=4, n_dual=5, n_iterations=2,
+                                         use_original_block=False,
+                                         use_original_init=False,
+                                         use_complex_primal=False,
+                                         g_normtype="magmax",
+                                         transform="Fourier")
+        elif self.hparams.modelID == 111:  # Primal-Dual UNet Network, complex Primal
+            self.net = PrimalDualNetworkCReLU(n_primary=4, n_dual=5, n_iterations=2,
+                                         use_original_block=False,
+                                         use_original_init=False,
+                                         use_complex_primal=True,
+                                         g_normtype="magmax",
+                                         transform="Fourier",
+                                         return_abs=True)
+
+        ###new CReLU complex models + 10 Iterations and 5 primaries
+        elif self.hparams.modelID == 555:  # Primal-Dual UNet Network, absolute Primal
+            self.net = PrimalDualNetworkCReLU(n_primary=5, n_dual=5, n_iterations=10,
+                                         use_original_block=False,
+                                         use_original_init=False,
+                                         use_complex_primal=False,
+                                         g_normtype="magmax",
+                                         transform="Fourier")
+        elif self.hparams.modelID == 1111:  # Primal-Dual UNet Network, complex Primal
+            self.net = PrimalDualNetworkCReLU(n_primary=5, n_dual=5, n_iterations=10,
+                                         use_original_block=False,
+                                         use_original_init=False,
+                                         use_complex_primal=True,
+                                         g_normtype="magmax",
+                                         transform="Fourier",
+                                         return_abs=True)
+
+        elif self.hparams.modelID == 556:  # Primal-Dual UNet Network, absolute Primal
+            self.net = PrimalDualNetworkCReLUMegaKern(n_primary=5, n_dual=5, n_iterations=5,
+                                         use_original_block=False,
+                                         use_original_init=False,
+                                         use_complex_primal=False,
+                                         kernel_size=21,
+                                         g_normtype="magmax",
+                                         transform="Fourier")
 
         else:
             # TODO: other models
