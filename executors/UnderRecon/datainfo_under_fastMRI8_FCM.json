@@ -1,0 +1,37 @@
+{
+    "run_prefix": "fastMRI_AXT2_16Coil_768x396_acc8_cen0p08",
+    "train_path_inp": "",
+    "train_path_gt": "/data/project/fastMRI/Brain/multicoil_train",
+    "train_filename_filter": [],
+    "val_path_inp": "",
+    "val_path_gt": "/data/project/fastMRI/Brain/multicoil_train",
+    "val_filename_filter": [],
+    "test_path_inp": "",
+    "test_path_gt": "/data/project/fastMRI/Brain/multicoil_train",
+    "test_filename_filter": [],
+    "test_trainedmodel": "",
+    "file_type": "H5",
+    "split_csv": "/data/project/fastMRI/Brain/TrainSplits/filenameCSVs/AXT2_16Coil_768x396_Split503020.csv",
+    "inplane_dims": [0,1],
+    "dataspace_inp": 0,
+    "dataspace_gt": 0,
+    "static_metamat_file": "",
+    "is_radial": false,
+    "isGTNonImg": false,
+    "forceNormAffine": false,
+    "cannonicalResample": false,
+    "combine_coils": {
+        "underK": true, "fullyK": true, "underI": true, "fullyI": true
+    },
+    "complex_image_modes": {
+        "underI": 0, "fullyI": 1, "underK": 0, "fullyK": 0
+    },
+    "fastMRI_challenge": "multicoil",
+    "use_dataset_cache": true,
+    "sample_rate": null,
+    "volume_sample_rate": null,
+    "num_cols": null,
+    "mask_type":"random",
+    "center_fractions": [0.08],
+    "accelerations": [8]
+}

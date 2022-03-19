@@ -369,41 +369,44 @@ class ReconEngine(LightningModule):
         test_ssim = []
         test_ssim_corrected = []
         for filename in tqdm(filenames):
-            if bool(self.hparams.patch_size):
-                out = self.out_aggregators[filename].get_output_tensor(
-                ).squeeze()
-                sub = self.grid_samplers[filename].subject
-            else:
-                if not self.hparams.is3D and type(self.out_aggregators[filename]) is dict:
-                    out = process_slicedict(self.out_aggregators[filename]) #TODO: If the model is predicting anything other than Images, this step has to be modified.
-                    sub = fetch_vol_subds_fastMRI(self.test_subjectds, filename) if self.hparams.ds_mode==2 else fetch_vol_subds(self.test_subjectds, filename)
+            try:
+                if bool(self.hparams.patch_size):
+                    out = self.out_aggregators[filename].get_output_tensor(
+                    ).squeeze()
+                    sub = self.grid_samplers[filename].subject
                 else:
-                    out = self.out_aggregators[filename].squeeze()
-                    sub = self.test_subjectds[self.test_filenames.index(
-                        filename)]
-                assert sub[
-                    'filename'] == filename, "The filename of the test subject doesn't match with the fetched test subject (Index issue!)"
-            inp = sub['inp']['data'].squeeze()
-            gt = sub['gt']['data'].squeeze()
-            if isinstance(out, torch.HalfTensor):
-                out = out.float()  # TODO: find a better way to do this. This might not be a good way
-            dHandler = DataHandler(dataspace_op=self.dataspace, inp=inp, gt=gt,
-                                #    out=out, metadict=sub['metadict'] if 'metadict' in sub else None) #Should be actually this. But as metadict is not handled for non-fastMRI DSs for now, the following line is used:
-                                   out=out, metadict=sub['metadict'] if ('metadict' in sub) and (self.hparams.ds_mode==2) else None) #TODO: handle meta dict for non-fastMRI DSs
-            dHandler.setInpK(sub['inp']['ksp'].squeeze()
-                             if "ksp" in sub['inp'] else None)
-            dHandler.setGTK(sub['gt']['ksp'].squeeze()
-                            if "ksp" in sub['gt'] else None)
-            metrics = self.saver.CalcNSave(dHandler, filename.split(".")[
-                                           0], datacon_operator=self.datacon)
-            if metrics is not None:
-                metrics['file'] = filename
-                test_metrics.append(metrics)
-                test_ssim.append(round(metrics['SSIMOut'], 4))
-                self.log("running_test_ssim", test_ssim[-1])
-                if "SSIMOutCorrected" in metrics:
-                    test_ssim_corrected.append(round(metrics['SSIMOutCorrected'], 4))
-                    self.log("running_test_ssim_corrected", test_ssim_corrected[-1])
+                    if not self.hparams.is3D and type(self.out_aggregators[filename]) is dict:
+                        out = process_slicedict(self.out_aggregators[filename]) #TODO: If the model is predicting anything other than Images, this step has to be modified.
+                        sub = fetch_vol_subds_fastMRI(self.test_subjectds, filename) if self.hparams.ds_mode==2 else fetch_vol_subds(self.test_subjectds, filename)
+                    else:
+                        out = self.out_aggregators[filename].squeeze()
+                        sub = self.test_subjectds[self.test_filenames.index(
+                            filename)]
+                    assert sub[
+                        'filename'] == filename, "The filename of the test subject doesn't match with the fetched test subject (Index issue!)"
+                inp = sub['inp']['data'].squeeze()
+                gt = sub['gt']['data'].squeeze()
+                if isinstance(out, torch.HalfTensor):
+                    out = out.float()  # TODO: find a better way to do this. This might not be a good way
+                dHandler = DataHandler(dataspace_op=self.dataspace, inp=inp, gt=gt,
+                                    #    out=out, metadict=sub['metadict'] if 'metadict' in sub else None) #Should be actually this. But as metadict is not handled for non-fastMRI DSs for now, the following line is used:
+                                    out=out, metadict=sub['metadict'] if ('metadict' in sub) and (self.hparams.ds_mode==2) else None) #TODO: handle meta dict for non-fastMRI DSs
+                dHandler.setInpK(sub['inp']['ksp'].squeeze()
+                                if "ksp" in sub['inp'] else None)
+                dHandler.setGTK(sub['gt']['ksp'].squeeze()
+                                if "ksp" in sub['gt'] else None)
+                metrics = self.saver.CalcNSave(dHandler, filename.split(".")[
+                                            0], datacon_operator=self.datacon)
+                if metrics is not None:
+                    metrics['file'] = filename
+                    test_metrics.append(metrics)
+                    test_ssim.append(round(metrics['SSIMOut'], 4))
+                    self.log("running_test_ssim", test_ssim[-1])
+                    if "SSIMOutCorrected" in metrics:
+                        test_ssim_corrected.append(round(metrics['SSIMOutCorrected'], 4))
+                        self.log("running_test_ssim_corrected", test_ssim_corrected[-1])
+            except Exception as ex:
+                print(f"For filename: {filename}, encountered error: {str(ex)}")
         if len(test_metrics) > 0:
             self.log("test_ssim", median(test_ssim))
             if len(test_ssim_corrected) > 0:
