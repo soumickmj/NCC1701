@@ -37,6 +37,14 @@ Main -> MRITorchDS (dsClass)
      -> undersampling mask
         ->     
 
+## Contacts
+
+Please feel free to contact me for any questions or feedback:
+
+[soumick.chatterjee@ovgu.de](mailto:soumick.chatterjee@ovgu.de)
+
+[contact@soumick.com](mailto:contact@soumick.com)
+
 ## Credits
 
 If you like this repository, please click on Star!
