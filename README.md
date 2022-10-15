@@ -51,7 +51,7 @@ If you like this repository, please click on Star!
 
 If you use this approach in your research or use codes from this repository, please cite the following in your publications:
 
-> [Soumick Chatterjee, Mario Breitkopf, Chompunuch Sarasaen, Hadya Yassin, Georg Rose, Andreas Nürnberger, Oliver Speck: ReconResNet: Regularised Residual Learning for MR Image Reconstruction of Undersampled Cartesian and Radial Data (arXiv:2103.09203, Mar 2021)](https://arxiv.org/abs/2103.09203)
+> [Soumick Chatterjee, Mario Breitkopf, Chompunuch Sarasaen, Hadya Yassin, Georg Rose, Andreas Nürnberger, Oliver Speck: ReconResNet: Regularised Residual Learning for MR Image Reconstruction of Undersampled Cartesian and Radial Data (Computers in Biology and Medicine, Apr 2022)](https://doi.org/10.1016/j.compbiomed.2022.105321)
 
 BibTeX entry:
 
@@ -66,6 +66,8 @@ BibTeX entry:
   doi={10.1016/j.compbiomed.2022.105321}
 }
 ```
+The complete manuscript is also on ArXiv:-
+> [Soumick Chatterjee, Mario Breitkopf, Chompunuch Sarasaen, Hadya Yassin, Georg Rose, Andreas Nürnberger, Oliver Speck: ReconResNet: Regularised Residual Learning for MR Image Reconstruction of Undersampled Cartesian and Radial Data (arXiv:2103.09203, Mar 2021)](https://arxiv.org/abs/2103.09203)
 
 For the Complex (AKA K-Space) version of the ReconResNet, please (additionally) cite the following:
 
