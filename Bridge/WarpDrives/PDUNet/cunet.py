@@ -71,10 +71,17 @@ class CUNet(nn.Module):
 class UNetConvBlock(nn.Module):
     def __init__(self, in_size, out_size, padding, batch_norm, complex_weights, kernel_size=3):
         super(UNetConvBlock, self).__init__()
-        block = []
+        block = [
+            cnn.Conv2d(
+                in_size,
+                out_size,
+                kernel_size=kernel_size,
+                padding=int(padding),
+                complex_weights=complex_weights,
+            )
+        ]
 
-        block.append(cnn.Conv2d(in_size, out_size, kernel_size=kernel_size,
-                               padding=int(padding), complex_weights=complex_weights))
+
         block.append(cnn.CReLU())
         if batch_norm:
             block.append(cnn.BatchNorm2d(out_size, complex_weights=complex_weights))
@@ -88,8 +95,7 @@ class UNetConvBlock(nn.Module):
         self.block = nn.Sequential(*block)
 
     def forward(self, x):
-        out = self.block(x)
-        return out
+        return self.block(x)
 
 
 class UNetUpBlock(nn.Module):

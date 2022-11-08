@@ -11,12 +11,12 @@ import numpy as np
 def gen2DRes(root):
     res_folders = glob(f"{root}/**/Results.csv", recursive=True)
 
+    test_metrics_filt1 = []
+    test_metrics_filt2 = []
     for rf in res_folders:
         folder = rf.replace(".csv", "")
         vols = glob(f"{folder}/**")
         test_metrics = []
-        test_metrics_filt1 = []
-        test_metrics_filt2 = []
         try:
             for vol in tqdm(vols):
                 inp = np.array(nib.load(f"{vol}/inp.nii.gz").get_fdata())
@@ -35,7 +35,7 @@ def gen2DRes(root):
                     if outCorrected is not None:
                         outCorrected_metrics, outCorrected_ssimMAP, outCorrected_diff = calc_metircs(gt[...,i], outCorrected[...,i], tag="OutCorrected", norm4diff=True)
                         metrics = {**metrics, **outCorrected_metrics}
-                    
+
                     metrics['file'] = os.path.basename(vol)
                     metrics['sliceID'] = i
                     test_metrics.append(metrics)
@@ -48,10 +48,10 @@ def gen2DRes(root):
 
             df = pd.DataFrame.from_dict(test_metrics)
             df.to_csv(rf.replace(".csv", "2D.csv"), index=False)
-                        
+
             # df1 = pd.DataFrame.from_dict(test_metrics_filt1)
             # df1.to_csv(rf.replace(".csv", "2DSkip1.csv"), index=False)
-                        
+
             # df2 = pd.DataFrame.from_dict(test_metrics_filt2)
             # df2.to_csv(rf.replace(".csv", "2DSkip2.csv"), index=False)
         except:

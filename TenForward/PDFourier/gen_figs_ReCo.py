@@ -15,7 +15,7 @@ task = "ReCo" #MoCo or ReCo
 dataset = "fastMRI_AXT2_16Coil_768x396_acc16_cen0p08"
 # dataset = "T1IXI-ax-1mm-iso"
 
-result_root += "/" + task
+result_root += f"/{task}"
 df = pd.read_csv(f"{result_root}/00ResAnalysis/{dataset}.csv")
 
 models = {
@@ -37,9 +37,6 @@ med_pdorig = df[df.modelTrainID==model_keys[-2]].median()['SSIMOutCorrected']
 sortlisted_files_pdunet = list(df[(df.modelTrainID==model_keys[-1]) & (df["SSIMOutCorrected"].round(3)==round(med_pdu,3))].sort_values("SSIMOutCorrected", ascending=False).file)
 sortlisted_files_pdorig = list(df[(df.modelTrainID==model_keys[-2]) & (df["SSIMOutCorrected"].round(3)==round(med_pdorig,3))].sort_values("SSIMOutCorrected", ascending=False).file)
 sortlisted_files_common = list(set(sortlisted_files_pdunet).intersection(sortlisted_files_pdorig))
-
-for f in sortlisted_files_common:
-    pass
 
 for f in sortlisted_files_pdunet:
     dfFile = df[df.file == f]

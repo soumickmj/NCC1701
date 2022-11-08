@@ -29,10 +29,7 @@ class SuperTransformer():
     def __call__(self, sample):
         if self.applyonly:
             out = self.apply(sample)
-            if self.return_meta:
-                return out[0]
-            else:
-                return out
+            return out[0] if self.return_meta else out
         if self.gt2inp:
             if torch.rand(1).item() > self.p:
                 sample['inp'] = deepcopy(sample['gt'])
@@ -49,7 +46,7 @@ class SuperTransformer():
                     'data': out,
                     'path': ""
                     }
-                
+
         else:
             if torch.rand(1).item() > self.p:
                 return sample
@@ -96,10 +93,7 @@ def padIfNeeded(inp, size=None):
             diff = size[i]-inp_shape[i]
             pad[i] = (diff//2, diff-(diff//2))
             pad_requried = True
-    if not pad_requried:
-        return inp
-    else:
-        return np.pad(inp, pad)
+    return np.pad(inp, pad) if pad_requried else inp
 
 
 def cropcentreIfNeeded(inp, size=None):
@@ -130,7 +124,7 @@ class CropOrPad(SuperTransformer):
     ):
         super().__init__(**kwargs)
         if type(size) == str:
-            size = tuple([int(tmp) for tmp in size.split(",")])
+            size = tuple(int(tmp) for tmp in size.split(","))
         self.size = size
 
     def apply(self, inp):
@@ -203,14 +197,13 @@ class ChangeDataSpace(SuperTransformer):
 def getDataSpaceTransforms(dataspace_inp, model_dataspace_inp, dataspace_gt, model_dataspace_gt):
     if dataspace_inp == dataspace_gt and model_dataspace_inp == model_dataspace_gt and dataspace_inp != model_dataspace_inp:
         return [ChangeDataSpace(dataspace_inp, model_dataspace_inp)]
-    else:
-        trans = []
-        if dataspace_inp != model_dataspace_inp and dataspace_inp != -1 and model_dataspace_inp != -1:
-            trans.append(ChangeDataSpace(
-                dataspace_inp, model_dataspace_inp, include="inp"))
-        elif dataspace_gt != model_dataspace_gt and dataspace_gt != -1 and model_dataspace_gt != -1:
-            trans.append(ChangeDataSpace(
-                dataspace_gt, model_dataspace_gt, include="gt"))
-        return trans
+    trans = []
+    if dataspace_inp != model_dataspace_inp and dataspace_inp != -1 and model_dataspace_inp != -1:
+        trans.append(ChangeDataSpace(
+            dataspace_inp, model_dataspace_inp, include="inp"))
+    elif dataspace_gt != model_dataspace_gt and dataspace_gt != -1 and model_dataspace_gt != -1:
+        trans.append(ChangeDataSpace(
+            dataspace_gt, model_dataspace_gt, include="gt"))
+    return trans
 
 ###########################################################

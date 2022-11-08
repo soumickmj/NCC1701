@@ -44,15 +44,8 @@ class ResNet(nn.Module):
     def __init__(self, in_channels=1, out_channels=1, res_blocks=14, starting_n_features=64, updown_blocks=2, is_relu_leaky=True, final_out_sigmoid=True, do_batchnorm=True):
         super(ResNet, self).__init__()
 
-        if is_relu_leaky:
-            relu = nn.PReLU
-        else:
-            relu = nn.ReLU
-        if do_batchnorm:
-            norm = nn.BatchNorm2d
-        else:
-            norm = nn.InstanceNorm2d
-
+        relu = nn.PReLU if is_relu_leaky else nn.ReLU
+        norm = nn.BatchNorm2d if do_batchnorm else nn.InstanceNorm2d
         # Initial convolution block
         model = [nn.ReflectionPad2d(3),
                  nn.Conv2d(in_channels, starting_n_features, 7),
@@ -87,11 +80,7 @@ class ResNet(nn.Module):
                   nn.Conv2d(starting_n_features, out_channels, 7)]
 
         # final activation
-        if final_out_sigmoid:
-            model += [nn.Sigmoid(), ]
-        else:
-            model += [relu(), ]
-
+        model += [nn.Sigmoid(), ] if final_out_sigmoid else [relu(), ]
         self.model = nn.Sequential(*model)
 
     def forward(self, input):

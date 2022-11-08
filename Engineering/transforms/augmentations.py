@@ -106,7 +106,7 @@ class RandomCrop(SuperTransformer):
     ):
         super().__init__(**kwargs)
         if type(size) == str:
-            size = tuple([int(tmp) for tmp in size.split(",")])
+            size = tuple(int(tmp) for tmp in size.split(","))
         self.size = size
 
     def __crop2D(self, inp):
@@ -129,7 +129,4 @@ class RandomCrop(SuperTransformer):
         return padIfNeeded(inp, self.size)[i:i+th, j:j+tw, k:k+td]
 
     def apply(self, inp):
-        if len(inp.shape) == 2:
-            return self.__crop2D(inp)
-        else:
-            return self.__crop3D(inp)
+        return self.__crop2D(inp) if len(inp.shape) == 2 else self.__crop3D(inp)

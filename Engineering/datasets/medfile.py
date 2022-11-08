@@ -22,7 +22,7 @@ def __read_vol(vol_path, data_mode):
 
 def __count_volslice(vol_path, mid_n=-1, mid_per=-1, random_n=-1):
     n_slices = nib.load(vol_path).shape[-1]
-    slices = list(range(0, n_slices))
+    slices = list(range(n_slices))
     if mid_n == -1 and abs(mid_per) != 1:
         mid_n = round(n_slices * mid_per)
     if mid_n != -1:
@@ -31,11 +31,7 @@ def __count_volslice(vol_path, mid_n=-1, mid_per=-1, random_n=-1):
         slices = slices[strt_idx: end_idx + 1]
     elif random_n != -1:
         slices = random.choices(slices, k=random_n)
-    datum_dict = {
-        "path": [vol_path] * len(slices),
-        "sliceID": slices
-    }
-    return datum_dict
+    return {"path": [vol_path] * len(slices), "sliceID": slices}
 
 
 class MRITorchDS(Dataset):
@@ -50,8 +46,12 @@ class MRITorchDS(Dataset):
 
     def __getitem__(self, idx):
         datum = self.df.iloc[idx]
-        gt = np.array(nib.load(datum['gtpath']).dataobj[..., datum['sliceID']]
-                      ) if not self.is3D else np.array(nib.load(datum['gtpath']).get_fdata())
+        gt = (
+            np.array(nib.load(datum['gtpath']).get_fdata())
+            if self.is3D
+            else np.array(nib.load(datum['gtpath']).dataobj[..., datum['sliceID']])
+        )
+
         sample = {
             "gt": {
                 "data": gt.astype(np.float32),
@@ -64,8 +64,14 @@ class MRITorchDS(Dataset):
             sample["gt"]["volmax"] = datum["gtmax"]
             sample["gt"]["volmin"] = datum["gtmin"]
         if "inpath" in datum:
-            inp = np.array(nib.load(datum['inpath']).dataobj[..., datum['sliceID']]) if not self.is3D else np.array(
-                nib.load(datum['inpath']).get_fdata())
+            inp = (
+                np.array(nib.load(datum['inpath']).get_fdata())
+                if self.is3D
+                else np.array(
+                    nib.load(datum['inpath']).dataobj[..., datum['sliceID']]
+                )
+            )
+
             sample["inp"] = {
                 "data": inp.astype(np.float32),
                 "path": datum['inpath']
@@ -161,13 +167,12 @@ def createFileDS(
                 gt_id = [i for i, g in enumerate(root_gt) if g in file][0]
                 file_in = file.replace(root_gt[gt_id], root_input[gt_id])
                 if not os.path.isfile(file_in):
-                    if data_mode == "NIFTI" and ".gz" not in file_in:
-                        file_in += ".gz"
-                        if not os.path.isfile(file_in):
-                            continue
-                    else:
+                    if data_mode != "NIFTI" or ".gz" in file_in:
                         continue
-                
+
+                    file_in += ".gz"
+                    if not os.path.isfile(file_in):
+                        continue
                 datum_dict["inpath"] = [file_in] * len(datum_dict["sliceID"])
                 if "vol" in normtype:
                     v = nib.load(file_in).get_fdata()
@@ -181,7 +186,7 @@ def createFileDS(
     else:
         data_df = pd.read_csv(processed_csv)
         filenames = data_df.filename.unique().tolist()
-        
+
     if isKSpace:
         # TODO: Image to kSpace transform
         sys.exit("Image to kSpace transform not implemented inside createTIOSubDS")

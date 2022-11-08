@@ -88,10 +88,21 @@ class PerceptualLoss(torch.nn.Module):
                 )
         elif loss_model == "resnext1012D":
             model = torchvision.models.resnext101_32x8d()
-            model.conv1 = nn.Conv2d(1, model.conv1.out_channels, kernel_size=model.conv1.kernel_size,
-                                    stride=model.conv1.stride, padding=model.conv1.padding, bias=False if model.conv1.bias is None else True)
-            model.fc = nn.Linear(in_features=model.fc.in_features,
-                                 out_features=33, bias=False if model.fc.bias is None else True)
+            model.conv1 = nn.Conv2d(
+                1,
+                model.conv1.out_channels,
+                kernel_size=model.conv1.kernel_size,
+                stride=model.conv1.stride,
+                padding=model.conv1.padding,
+                bias=model.conv1.bias is not None,
+            )
+
+            model.fc = nn.Linear(
+                in_features=model.fc.in_features,
+                out_features=33,
+                bias=model.fc.bias is not None,
+            )
+
             model.to(device)
             chk = torch.load(r"./Engineering/pLoss/ResNeXt-3-class-best-latest.pth", map_location=device)
             model.load_state_dict(chk)
@@ -118,11 +129,21 @@ class PerceptualLoss(torch.nn.Module):
         elif loss_model == "densenet161":
             sys.exit("Weights for DenseNet151 as PLN not available")
             model = torchvision.models.densenet161()
-            model.features.conv0 = nn.Conv2d(1, model.features.conv0.out_channels, kernel_size=model.features.conv0.kernel_size,
-                                             stride=model.features.conv0.stride, padding=model.features.conv0.padding,
-                                             bias=False if model.features.conv0.bias is None else True)
-            model.classifier = nn.Linear(in_features=model.classifier.in_features,
-                                         out_features=33, bias=False if model.classifier.bias is None else True)
+            model.features.conv0 = nn.Conv2d(
+                1,
+                model.features.conv0.out_channels,
+                kernel_size=model.features.conv0.kernel_size,
+                stride=model.features.conv0.stride,
+                padding=model.features.conv0.padding,
+                bias=model.features.conv0.bias is not None,
+            )
+
+            model.classifier = nn.Linear(
+                in_features=model.classifier.in_features,
+                out_features=33,
+                bias=model.classifier.bias is not None,
+            )
+
             model.to(device)
             # chk = torch.load(r"./Engineering/pLoss/ResNet14_IXIT2_Base_d1p75_t0_n10_dir01_5depth_L1Loss_best.pth.tar", map_location=device)
             # model.load_state_dict(chk['state_dict'])

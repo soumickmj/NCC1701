@@ -35,7 +35,7 @@ class CentreKSPMoCoNet(nn.Module):
             self.net = ImResNet(in_channels=in_channels*2, out_channels=out_channels*2, res_blocks=res_blocks, starting_nfeatures=starting_nfeatures, updown_blocks=updown_blocks, is_relu_leaky=is_relu_leaky, do_batchnorm=do_batchnorm, res_drop_prob=res_drop_prob,
                                 is_replicatepad=is_replicatepad, out_act=out_act, forwardV=forwardV, upinterp_algo=upinterp_algo, post_interp_convtrans=post_interp_convtrans, is3D=is3D,
                                 )     
-            
+
         self.apply(CustomInitialiseWeights)
 
     def forward(self, inp, gt=None, loss_func=None):

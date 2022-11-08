@@ -63,8 +63,5 @@ def fnorm_np(x):
 
 
 def fnorm(x):
-    if type(x) is torch.Tensor:
-        return fnorm_pyt(x=x)
-    else:
-        return fnorm_np(x=x)
+    return fnorm_pyt(x=x) if type(x) is torch.Tensor else fnorm_np(x=x)
 #########

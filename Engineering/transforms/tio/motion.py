@@ -113,8 +113,7 @@ class RandomMotionExtended(RandomMotion):
             arguments['translation'][name] = translation_params
             arguments['image_interpolation'][name] = self.image_interpolation
         transform = Motion(**self.add_include_exclude(arguments))
-        transformed = transform(subject)
-        return transformed
+        return transform(subject)
 
 
 class RandomGhostingExtended(RandomGhosting):
@@ -154,8 +153,7 @@ class RandomGhostingExtended(RandomGhosting):
             arguments['intensity'][name] = intensity_param
             arguments['restore'][name] = actual_restore
         transform = Ghosting(**self.add_include_exclude(arguments))
-        transformed = transform(subject)
-        return transformed
+        return transform(subject)
 
 
 def getRandomMotionGhostingFast(
@@ -173,19 +171,24 @@ def getRandomMotionGhostingFast(
     """
         Function that combines RandomMotion and RandomGhosting transforms of TorchIO into one transformation and returns a composed transformation
     """
-    transform = tio.Compose([
-        RandomMotionExtended(degrees=degrees,
-                             translation=translation,
-                             num_transforms=num_transforms,
-                             image_interpolation=motion_image_interpolation,
-                             p=p_motion),
-        RandomGhostingExtended(num_ghosts=num_ghosts,
-                               axes=ghosting_axes,
-                               intensity=intensity,
-                               restore=restore,
-                               p=p_ghosting)
-    ])
-    return transform
+    return tio.Compose(
+        [
+            RandomMotionExtended(
+                degrees=degrees,
+                translation=translation,
+                num_transforms=num_transforms,
+                image_interpolation=motion_image_interpolation,
+                p=p_motion,
+            ),
+            RandomGhostingExtended(
+                num_ghosts=num_ghosts,
+                axes=ghosting_axes,
+                intensity=intensity,
+                restore=restore,
+                p=p_ghosting,
+            ),
+        ]
+    )
 
 ### Extended / Faster Version ###
 
@@ -213,21 +216,19 @@ class RandomMotionGhostingFast(RandomTransform, IntensityTransform, FourierTrans
     ):
         super().__init__(**kwargs)
         if type(degrees) == str:
-            degrees = tuple([float(tmp) for tmp in degrees.split(",")])
+            degrees = tuple(float(tmp) for tmp in degrees.split(","))
         if type(translation) == str:
-            translation = tuple([float(tmp) for tmp in translation.split(",")])
+            translation = tuple(float(tmp) for tmp in translation.split(","))
         if type(num_transforms) == str:
-            num_transforms = tuple([int(tmp)
-                                   for tmp in num_transforms.split(",")])
+            num_transforms = tuple(int(tmp) for tmp in num_transforms.split(","))
         if type(num_ghosts) == str:
-            num_ghosts = tuple([int(tmp) for tmp in num_ghosts.split(",")])
+            num_ghosts = tuple(int(tmp) for tmp in num_ghosts.split(","))
         if type(intensity) == str:
-            intensity = tuple([float(tmp) for tmp in intensity.split(",")])
+            intensity = tuple(float(tmp) for tmp in intensity.split(","))
         if type(restore) == str:
-            restore = tuple([float(tmp) for tmp in restore.split(",")])
+            restore = tuple(float(tmp) for tmp in restore.split(","))
         if type(ghosting_axes) == str:
-            ghosting_axes = tuple([int(tmp)
-                                  for tmp in ghosting_axes.split(",")])
+            ghosting_axes = tuple(int(tmp) for tmp in ghosting_axes.split(","))
 
         self.transform = getRandomMotionGhostingFast(
             degrees=degrees,

@@ -18,7 +18,7 @@ class Engine(object):
     def __init__(self, parser):
 
         _temp_args = parser.parse_args()
-        if _temp_args.taskID == 0 or _temp_args.taskID == 1:
+        if _temp_args.taskID in [0, 1]:
             parser = ReconEngine.add_model_specific_args(parser)
         else:
             # TODO: implement other engines
@@ -32,22 +32,21 @@ class Engine(object):
             json_data = json.load(json_file)
         hparams.__dict__.update(json_data)
 
-        hparams.run_name = hparams.run_prefix + "_" + \
-            hparams.trainID if bool(hparams.run_prefix) else hparams.trainID
+        hparams.run_name = (
+            f"{hparams.run_prefix}_{hparams.trainID}"
+            if bool(hparams.run_prefix)
+            else hparams.trainID
+        )
+
         hparams.res_path = pjoin(
             hparams.save_path, hparams.run_name, "Results")
         os.makedirs(hparams.res_path, exist_ok=True)
 
-        if (hparams.lossID == 0 and hparams.ploss_type == "L1") or (hparams.lossID == 1):
-            hparams.IsNegLoss = False
-        else:
-            hparams.IsNegLoss = True
+        hparams.IsNegLoss = (
+            hparams.lossID != 0 or hparams.ploss_type != "L1"
+        ) and hparams.lossID != 1
 
-        if hparams.run_mode == 1 or hparams.run_mode == 4:
-            hparams.do_val = True
-        else:
-            hparams.do_val = False
-
+        hparams.do_val = hparams.run_mode in [1, 4]
         if bool(hparams.patch_size):
             l, w, d = hparams.patch_size.split(',')
             hparams.patch_size = (int(l), int(w), int(d))
@@ -94,7 +93,7 @@ class Engine(object):
         else:
             self.chkpoint = None
 
-        if hparams.taskID == 0 or hparams.taskID == 1:
+        if hparams.taskID in [0, 1]:
             self.model = ReconEngine(**vars(hparams))
             if hparams.run_mode == 2 and bool(self.chkpoint):
                 # TODO ckpt_path is not working during testing if not trained in the same run. So loading explicitly. check why
@@ -146,11 +145,7 @@ class Engine(object):
                 torch.use_deterministic_algorithms(True)#, warn_only=True)
 
         self.hparams = hparams
-        self.train_done = False
-
-        # Impliest that only testing a "preweights" checkpoint
-        if hparams.run_mode == 2 and bool(hparams.preweights_path):
-            self.train_done = True
+        self.train_done = hparams.run_mode == 2 and bool(hparams.preweights_path)
 
     def train(self):
         self.trainer.fit(self.model)
@@ -159,17 +154,12 @@ class Engine(object):
     def test(self):
         os.makedirs(self.hparams.res_path, exist_ok=True)
 
-        if self.train_done:
-            if self.hparams.do_val:
-                self.trainer.test(
-                    test_dataloaders=self.model.test_dataloader())
-            else:
-                self.trainer.test(
-                    model=self.model, test_dataloaders=self.model.test_dataloader())
+        if self.train_done and self.hparams.do_val:
+            self.trainer.test(
+                test_dataloaders=self.model.test_dataloader())
         else:
-            # , ckpt_path=self.chkpoint) #TODO: ckpt_path not working, check why
-            self.trainer.test(model=self.model,
-                              test_dataloaders=self.model.test_dataloader())
+            self.trainer.test(
+                model=self.model, test_dataloaders=self.model.test_dataloader())
 
     def align(self):
         self.trainer.tune(self.model)

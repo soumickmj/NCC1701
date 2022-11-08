@@ -47,7 +47,7 @@ class DualSpaceResNet(nn.Module):
             x_kspnet_ksp = self.kspnet(fftNc_pyt(x))
             if self.connect_mode == "w_parallel":
                 x_ksp = (1-self.parallel_kspweight)*x_imnet_ksp + \
-                    self.parallel_kspweight*x_kspnet_ksp
+                        self.parallel_kspweight*x_kspnet_ksp
             else:
                 x_ksp = (0.5*x_imnet_ksp) + (0.5*x_kspnet_ksp)
             out = torch.abs(ifftNc_pyt(x_ksp, norm="ortho"))

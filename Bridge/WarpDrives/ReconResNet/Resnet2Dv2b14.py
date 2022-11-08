@@ -47,10 +47,7 @@ class ResNet(nn.Module):
         in_channels = n_channels
         out_channels = n_channels
 
-        if is_relu_leaky:
-            relu = nn.PReLU
-        else:
-            relu = nn.ReLU
+        relu = nn.PReLU if is_relu_leaky else nn.ReLU
         if do_batchnorm:
             print('doing batchnorm')
             norm = nn.BatchNorm2d
@@ -91,11 +88,7 @@ class ResNet(nn.Module):
                   nn.Conv2d(starting_n_features, out_channels, 7)]
 
         # final activation
-        if final_out_sigmoid:
-            model += [nn.Sigmoid(), ]
-        else:
-            model += [relu(), ]
-
+        model += [nn.Sigmoid(), ] if final_out_sigmoid else [relu(), ]
         self.model = nn.Sequential(*model)
 
     def forward(self, input):

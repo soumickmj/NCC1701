@@ -48,34 +48,30 @@ def entropy_np(data, eps=1e-11):  # np.finfo(np.float32).eps):
 
 
 def entropy_loss(ent_out, ent_gt):
-    if ent_out.is_complex:
-        loss = torch.square(ent_gt - ent_out)
-        return torch.abs(loss) + torch.angle(loss)
-        # mag = torch.square(torch.abs(ent_gt) - torch.abs(ent_out))
-        # ph = torch.square(torch.angle(ent_gt) - torch.angle(ent_out))
-        # return mag+ph
-    else:
+    if not ent_out.is_complex:
         return torch.square(ent_gt - ent_out)
+    loss = torch.square(ent_gt - ent_out)
+    return torch.abs(loss) + torch.angle(loss)
 
 class NormUnorm(object):
     def __init__(self, tensor: torch.Tensor = None, type = "zscore", factor = 1.0):
-        if type == "zscore":
-            self.mean = tensor.mean(dim=(-2, -1), keepdims=True)
-            self.std = tensor.std(dim=(-2, -1), keepdims=True)
+        if type == "factor":
+            self.max = factor
+        elif type == "magmax":
+            self.max = torch.abs(tensor).max()
         elif type == "max":
             self.max = tensor.max()
         elif type == "minmax":
             self.min = tensor.min()
             self.max = tensor.max()
-        elif type == "magmax":
-            self.max = torch.abs(tensor).max()
         elif type == "offset_magmax":
             self.realmin = tensor.real.min()
             self.imagmin = tensor.imag.min()
             _tensor_centreoffset = tensor - self.realmin - 1j*self.imagmin
             self.max = torch.abs(_tensor_centreoffset).max()
-        elif type == "factor":
-            self.max = factor
+        elif type == "zscore":
+            self.mean = tensor.mean(dim=(-2, -1), keepdims=True)
+            self.std = tensor.std(dim=(-2, -1), keepdims=True)
         self.type = type
 
     def normalise(self, tensor: torch.Tensor) -> torch.Tensor:

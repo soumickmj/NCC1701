@@ -19,7 +19,7 @@ input_root = "/run/media/soumick/Enterprise/Datasets/ADNI/NewSet2022/Downloaded"
 output_root = "/run/media/soumick/Enterprise/Datasets/ADNI/NewSet2022/IXIProcessed/wPad256"
 pad = True
 
-for f in tqdm(glob(input_root+"/**/*.nii*", recursive=True)):
+for f in tqdm(glob(f"{input_root}/**/*.nii*", recursive=True)):
     img = sitkReader(f)
     arr = sitk.GetArrayFromImage(img)
     arr = np.flip(np.transpose(arr, [2,0,1]), axis=2)

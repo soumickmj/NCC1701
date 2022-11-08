@@ -30,7 +30,7 @@ task = "ReCo" #MoCo or ReCo
 dataset = "fastMRI_AXT2_16Coil_768x396_acc16_cen0p08"
 # dataset = "T1IXI-ax-1mm-iso"
 
-result_root += "/" + task
+result_root += f"/{task}"
 df = pd.read_csv(f"{result_root}/00ResAnalysis/{res_type}_{dataset}.csv")
 
 model_types = df.ModelMeta.unique()
@@ -41,7 +41,7 @@ with open(f"{result_root}/00ResAnalysis/{res_type}_{dataset}.txt","w") as file_o
     groupNwrite(df, "modelTrainID", "NRMSEInp", file_obj)
     groupNwrite(df, "modelTrainID", "PSNRInp", file_obj)
     groupNwrite(df, "modelTrainID", "SDofDiffOut", file_obj)
-    
+
     try:
         groupNwrite(df, "modelTrainID", "SSIMOutCorrected", file_obj)
         groupNwrite(df, "modelTrainID", "NRMSEOutCorrected", file_obj)

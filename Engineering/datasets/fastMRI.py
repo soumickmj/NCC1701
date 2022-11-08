@@ -106,25 +106,20 @@ class fastMRIDataPrep:
         max_value = attrs["max"] if "max" in attrs.keys() else 0.0
         acq_start = attrs["padding_left"] if "padding_left" in attrs.keys() else -1
         acq_end = attrs["padding_right"] if "padding_right" in attrs.keys() else -1
-        if acq_start==-1 or acq_end==-1:
-            padding = None
-        else:
-            padding = (acq_start, acq_end)
-
+        padding = None if acq_start==-1 or acq_end==-1 else (acq_start, acq_end)
         # apply mask
         if self.mask_func:
-            seed = None if not self.use_seed else tuple(map(ord, fname))
+            seed = tuple(map(ord, fname)) if self.use_seed else None
             # we only need first element, which is k-space after masking
             under_kspace, mask, num_low_frequencies = fastMRItransforms.apply_mask(
                 kspace, self.mask_func, seed=seed,  padding=padding 
             )
             attrs['num_low_frequencies'] = num_low_frequencies
+        elif self.is_test:
+            under_kspace = kspace
         else:
-            if self.is_test:
-                under_kspace = kspace
-            else:
-                under_kspace = None
-                mask = None
+            under_kspace = None
+            mask = None
 
         # inverse Fourier transform to get zero filled solution
         under_image = ifftNc_pyt(
@@ -146,9 +141,9 @@ def coilCombiner(image, kspace, do_image, do_kspace):
     if do_image and do_kspace:
         image = root_sum_of_squares_pyt(image)
         kspace = fftNc_pyt(image)
-    elif do_image and not do_kspace:
+    elif do_image:
         image = root_sum_of_squares_pyt(image)
-    elif not do_image and do_kspace:
+    elif do_kspace:
         _tmp = root_sum_of_squares_pyt(image)
         kspace = fftNc_pyt(_tmp)
     return image, kspace
@@ -269,7 +264,7 @@ def createFastMRIDS(root_gt: Union[str, Sequence[str]] = "/mnt/BMMR/data/Soumick
         mask_type_str=mask_type, center_fractions=center_fractions, accelerations=accelerations)
     dataprep = fastMRIDataPrep(
         fastMRI_challenge, mask_func=mask_func, use_seed=True)
-    
+
     dataset = fastMRIDS(root=root_gt, challenge=fastMRI_challenge,
                         dataprep=dataprep, use_dataset_cache=use_dataset_cache,
                         sample_rate=sample_rate, volume_sample_rate=volume_sample_rate,

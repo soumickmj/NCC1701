@@ -44,9 +44,6 @@ sortlisted_files_pdorig = list(df[(df.modelTrainID==model_keys[-2]) & (df["SSIMO
 sortlisted_files_resnet = list(df[(df.modelTrainID==model_keys[-3]) & (df["SSIMOut"].round(3)==round(med_res,3))].sort_values("SSIMOut", ascending=False).file)
 sortlisted_files_common = list(set(sortlisted_files_pdunet).intersection(sortlisted_files_pdorig).intersection(sortlisted_files_resnet))
 
-for f in sortlisted_files_common:
-    pass
-
 for f in sortlisted_files_pdunet:
     dfFile = df[df.file == f]
     for m in model_keys[1:]:

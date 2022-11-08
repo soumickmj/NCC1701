@@ -152,14 +152,29 @@ class PrimalDualNetwork(nn.Module):
                  return_abs = False,
                  output_stages = False):
         super().__init__()
-        self.primal_blocks = nn.ModuleList([
-            (PrimalBlock if use_original_block else PrimalUnetBlock)(
-                n_primary, complex=True if use_complex_primal and transform == "Fourier" else False, complex_weights=complex_weights)
-            for _ in range(n_iterations)
-        ])
-        self.dual_blocks = nn.ModuleList([
-            DualBlock(n_dual, complex=True if transform == "Fourier" else False, kernel_size=kernel_size, complex_weights=complex_weights) for _ in range(n_iterations)
-        ])
+        self.primal_blocks = nn.ModuleList(
+            [
+                (PrimalBlock if use_original_block else PrimalUnetBlock)(
+                    n_primary,
+                    complex=use_complex_primal and transform == "Fourier",
+                    complex_weights=complex_weights,
+                )
+                for _ in range(n_iterations)
+            ]
+        )
+
+        self.dual_blocks = nn.ModuleList(
+            [
+                DualBlock(
+                    n_dual,
+                    complex=transform == "Fourier",
+                    kernel_size=kernel_size,
+                    complex_weights=complex_weights,
+                )
+                for _ in range(n_iterations)
+            ]
+        )
+
         self.in_size = in_size
         self.n_primary = n_primary
         self.n_dual = n_dual
@@ -188,7 +203,7 @@ class PrimalDualNetwork(nn.Module):
         }
 
     def forward(self, f0: torch.Tensor, g: torch.Tensor=None):
-        if g == None:
+        if g is None:
             g = self.T(f0)
 
         g_norm = NormUnorm(g, type=self.g_normtype)
@@ -214,15 +229,12 @@ class PrimalDualNetwork(nn.Module):
             f = primary_block(f_norm.normalise(_tmp_h), f)
             if self.output_stages:
                 stages.append(torch.mean(f, dim=1, keepdim=True))
-                    
+
         out = torch.mean(f_norm.unnormalise(f), dim=1, keepdim=True)
         if self.use_complex_primal and self.transform == "Fourier" and self.return_abs:
             out = torch.abs(out)
 
-        if self.output_stages:
-            return out, stages
-        else:
-            return out
+        return (out, stages) if self.output_stages else out
 
     def custom_step(self, batch, slice_squeeze, loss_func):
         inpI, gtI = slice_squeeze(batch['inp']['data']), slice_squeeze(batch['gt']['data']) 

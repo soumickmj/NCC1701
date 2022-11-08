@@ -11,7 +11,7 @@ class Motion2Dv0(SuperTransformer):
         kwargs['gt2inp'] = True
         super().__init__(**kwargs)
         if type(sigma_range) == str:
-            sigma_range = tuple([float(tmp) for tmp in sigma_range.split(",")])
+            sigma_range = tuple(float(tmp) for tmp in sigma_range.split(","))
         self.sigma_range = sigma_range
         self.n_threads = n_threads
         self.return_meta = return_meta
@@ -55,7 +55,7 @@ class Motion2Dv1(SuperTransformer):
         kwargs['gt2inp'] = True
         super().__init__(**kwargs)
         if type(sigma_range) == str:
-            sigma_range = tuple([float(tmp) for tmp in sigma_range.split(",")])
+            sigma_range = tuple(float(tmp) for tmp in sigma_range.split(","))
         self.sigma_range = sigma_range
         self.restore_original = restore_original
         self.n_threads = n_threads
@@ -75,11 +75,7 @@ class Motion2Dv1(SuperTransformer):
         self.aux = np.zeros(img.shape, dtype=img.dtype) + 0j
         self.axis_selection = np.random.randint(0, 2, 1)[0]
 
-        if self.axis_selection == 0:
-            dim = 1
-        else:
-            dim = 0
-
+        dim = 1 if self.axis_selection == 0 else 0
         n_ = np.random.randint(2, 8, 1)[0]
         intext_ = np.random.randint(0, 2, 1)[0]
         if intext_ == 0:
@@ -100,7 +96,7 @@ class Motion2Dv1(SuperTransformer):
         self.sigma = np.random.uniform(
             self.sigma_range[0], self.sigma_range[1], 1)[0]
         self.random_rots = self.sigma * \
-            np.random.randint(-1, 1, len(self.portion))
+                np.random.randint(-1, 1, len(self.portion))
 
         if self.n_threads > 1:
             pool = multiprocessing.Pool(self.n_threads)

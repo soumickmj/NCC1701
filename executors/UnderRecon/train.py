@@ -22,7 +22,7 @@ def getARGSParser():
     parser.add_argument('--gpu', action="store", default="0")
     parser.add_argument('--seed', action="store", default=1701, type=int)
     parser.add_argument('--num_workers', action="store", default=0, type=int)
-    parser.add_argument('--batch_size', action="store", default=1, type=int)  
+    parser.add_argument('--batch_size', action="store", default=1, type=int)
     parser.add_argument('--accumulate_gradbatch', action="store", default=1, type=int) ## 1 as default  
     # parser.add_argument('--datajson_path', action="store", default="executors/MoCo3D/datainfo_under_dummy.json")
     parser.add_argument('--datajson_path', action="store", default="executors/UnderRecon/datainfo_under.json")
@@ -38,12 +38,19 @@ def getARGSParser():
     #Training params
     parser.add_argument('--num_epochs', action="store", default=2, type=int, help="Total number of epochs. If resuming, then it will continue till a total number of epochs set by this.")
     parser.add_argument('--lr', action="store", default=0.0001, type=float)
-    parser.add_argument('--lossID', action="store", default=1, type=int, help="Loss ID."+str(LOSSID))
+    parser.add_argument(
+        '--lossID',
+        action="store",
+        default=1,
+        type=int,
+        help=f"Loss ID.{str(LOSSID)}",
+    )
+
     parser.add_argument('--ploss_level', action="store", default=math.inf, type=int)
     parser.add_argument('--ploss_type', action="store", default="L1")
     parser.add_argument('--patch_size', action="store", default="", help="length, width, depth")
     parser.add_argument('--input_shape', action="store", default="256,256", help="length, width, depth (to be used if patch_size is not given)")
-    parser.add_argument('--croppad', action=argparse.BooleanOptionalAction, default=False, help="If True, then it will crop or pad the volume/slice to the given input_shape")  
+    parser.add_argument('--croppad', action=argparse.BooleanOptionalAction, default=False, help="If True, then it will crop or pad the volume/slice to the given input_shape")
     parser.add_argument('--patch_qlen', action="store", default=150, type=int)  ## 5000 - 50
     parser.add_argument('--patch_per_vol', action="store", default=150, type=int)  # 1000 - 10
     parser.add_argument('--patch_inference_strides', action="store", default="224,224,1", help="stride_length, stride_width, stride_depth")
@@ -52,7 +59,7 @@ def getARGSParser():
     parser.add_argument('--save_freq', action="store", default=1, type=int, help="For Checkpoint save, n_epochs")
     parser.add_argument('--save_inp', action="store", default=1, type=int, help="Whether to save the input during testing")
     parser.add_argument('--do_savenorm', action="store", default=0, type=int, help="Whether to normalise before saving and calculating metrics during testing")
-    
+
     #Augmentations
     parser.add_argument('--p_contrast_augment', action="store", default=0.0, type=float, help="Probability of using contrast augmentations. Set it to 0 or -1 to avoid using.")
     parser.add_argument('--random_crop', action="store", default="", help="Randomly crop the given image, only ds_mode=1. Set it to None or blank if not to be used.")
@@ -81,7 +88,7 @@ def getARGSParser():
     parser.add_argument('--model_post_interp_convtrans', action=argparse.BooleanOptionalAction, default=True, help="For ReconResNet")
     parser.add_argument('--model_dspace_connect_mode', action="store", default="serial", help='w_parallel, parallel, serial. For DualSpaceReconResNet')
     parser.add_argument('--model_inner_norm_ksp', action=argparse.BooleanOptionalAction, default=True, help="For KSPReconResNet. DualSpaceReconResNet")
-    
+
     parser.add_argument('--use_datacon', action=argparse.BooleanOptionalAction, default=True, help="Use Data Consistency")
 
     parser.add_argument('--lr_decay_type', action="store", default=1, type=int, help='0: No Decay, 1: StepLR, 2: ReduceLROnPlateau')
@@ -119,7 +126,7 @@ def getARGSParser():
     parser.add_argument('--motion_restore_original', action="store", type=float, default=0, help="Amount of original image to restore (Only for Motion2Dv1), set 0 to avoid")
     parser.add_argument('--motion_return_meta', action="store", type=argparse.BooleanOptionalAction, default=False, help="(Not yet ready) Return the meta of the motion coruption")
 
-    
+
     #TODO currently not in use, params are hardcoded 
     #Controlling motion corruption, whether to run on the fly or use the pre-created ones. If live_corrupt is True, only then the following params will be used
     # parser.add_argument('--corrupt_prob', action="store", default=0.75, type=float, help="Probability of the corruption to be applied or corrupted volume to be used")
@@ -139,7 +146,7 @@ def getARGSParser():
     parser.add_argument("-wnbpf", "--wnbprefix", default='', help="WandB: Prefix for TrainID")
     parser.add_argument("-wnbml", "--wnbmodellog", default='all', help="WandB: While watching the model, what to save: gradients, parameters, all, None")
     parser.add_argument("-wnbmf", "--wnbmodelfreq", type=int, default=100, help="WandB: The number of steps between logging gradients")
-    
+
     return parser
 
 if __name__ == '__main__':

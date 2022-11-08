@@ -40,7 +40,7 @@ def _pixel_shuffle(input, upscale_factor):
     )
 
     indicies = list(range(2, 2 + 2 * dimensionality))
-    indicies = indicies[1::2] + indicies[0::2]
+    indicies = indicies[1::2] + indicies[::2]
 
     shuffle_out = input_view.permute(0, 1, *(indicies[::-1])).contiguous()
     return shuffle_out.view(input_size[0], input_size[1], *output_size)

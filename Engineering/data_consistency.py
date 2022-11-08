@@ -36,8 +36,7 @@ class DataConsistency():
         missing_ksp = out_ksp * missing_mask
         if under_ksp is None:
             under_ksp = full_ksp * mask
-        out_corrected_ksp = under_ksp + missing_ksp
-        return out_corrected_ksp
+        return under_ksp + missing_ksp
 
     def radial(self, out_ksp, full_ksp, under_ksp, metadict, device="cpu"): #TODO: switch to cuda
         # om = torch.from_numpy(metadict['om'].transpose()).to(torch.float).to(device)
@@ -109,14 +108,12 @@ class DataConsistency():
 
         out_corrected_img = torch.abs(out_corrected_img)
         out_corrected_img = (out_corrected_img - out_corrected_img.min()) / \
-            (out_corrected_img.max() - out_corrected_img.min())
+                (out_corrected_img.max() - out_corrected_img.min())
 
         if len(out_corrected_img.shape) == 3:
             out_corrected_img = torch.permute(out_corrected_img, dims=(1, 2, 0))
 
-        out_corrected_ksp = fftNc(
-            data=out_corrected_img, dim=(0, 1), norm="ortho").cpu()
-        return out_corrected_ksp
+        return fftNc(data=out_corrected_img, dim=(0, 1), norm="ortho").cpu()
 
     def apply(self, out_ksp, full_ksp, under_ksp, metadict=None):
         if metadict is None:

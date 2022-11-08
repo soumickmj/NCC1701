@@ -71,9 +71,7 @@ class _concat(nn.Module):
         self.X2 = e2 + d2
         self.X3 = e3 + d3
         self.X4 = e4 + d4
-        x = torch.cat([self.X1, self.X2, self.X3, self.X4], dim=1)
-
-        return x
+        return torch.cat([self.X1, self.X2, self.X3, self.X4], dim=1)
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------##
 
@@ -86,9 +84,7 @@ class ShuffleUNet(nn.Module):
 
         num_features = num_features
         filters = [num_features]
-        for _ in range(n_levels):
-            filters.append(filters[-1]*2)
-
+        filters.extend(filters[-1]*2 for _ in range(n_levels))
         if d==3:
             conv_layer = nn.Conv3d
             ps_fact = (2 ** 2)
@@ -105,7 +101,7 @@ class ShuffleUNet(nn.Module):
         self.wave_down = nn.ModuleList()
         self.pix_unshuff = nn.ModuleList()
         self.conv_enc = nn.ModuleList()
-        for i in range(0, n_levels):
+        for i in range(n_levels):
             self.wave_down.append(_conv_decomp(filters[i], filters[i], kernel_size, stride, conv_layer=conv_layer))
             self.pix_unshuff.append(pixel_unshuffle.PixelUnshuffle(num_features * (2**i), num_features * (2**i), kernel_size, stride, d=d))       
             self.conv_enc.append(_double_conv(filters[i], filters[i+1], kernel_size, stride, conv_layer=conv_layer))     

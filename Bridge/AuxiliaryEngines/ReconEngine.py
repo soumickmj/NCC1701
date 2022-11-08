@@ -339,13 +339,12 @@ class ReconEngine(LightningModule):
         if bool(self.hparams.patch_size):
             self.out_aggregators[args[0]['filename'][0]].add_batch(
                 prediction.detach().cpu(), args[0][tio.LOCATION])
+        elif not self.hparams.is3D and 'sliceID' in args[0]:
+            # self.out_aggregators[args[0]['filename'][0]][args[0]['sliceID'][0].item()] = prediction.detach().cpu()
+            process_testbatch(self.out_aggregators, args[0], prediction)
         else:
-            if not self.hparams.is3D and 'sliceID' in args[0]:
-                # self.out_aggregators[args[0]['filename'][0]][args[0]['sliceID'][0].item()] = prediction.detach().cpu()
-                process_testbatch(self.out_aggregators, args[0], prediction)
-            else:
-                self.out_aggregators[args[0]['filename']
-                                     [0]] = prediction.detach().cpu()
+            self.out_aggregators[args[0]['filename']
+                                 [0]] = prediction.detach().cpu()
         return {'test_loss': loss}
 
     def training_epoch_end(self, outputs: List[Any]) -> None:
@@ -407,16 +406,20 @@ class ReconEngine(LightningModule):
                         self.log("running_test_ssim_corrected", test_ssim_corrected[-1])
             except Exception as ex:
                 print(f"For filename: {filename}, encountered error: {str(ex)}")
-        if len(test_metrics) > 0:
+        if test_metrics:
             self.log("test_ssim", median(test_ssim))
-            if len(test_ssim_corrected) > 0:
+            if test_ssim_corrected:
                 self.log("test_ssim_corrected", median(test_ssim_corrected))
             df = pd.DataFrame.from_dict(test_metrics)
             df.to_csv(pjoin(self.hparams.save_path, self.hparams.run_name,
                       'Results.csv'), index=False)
 
     def create_dataset(self, split: str) -> tio.SubjectsDataset:
-        if split == "train":
+        if split == "test":
+            path_gt = self.hparams.test_path_gt
+            path_inp = self.hparams.test_path_inp
+            filename_filter = self.hparams.test_filename_filter
+        elif split == "train":
             path_gt = self.hparams.train_path_gt
             path_inp = self.hparams.train_path_inp
             filename_filter = self.hparams.train_filename_filter
@@ -424,10 +427,6 @@ class ReconEngine(LightningModule):
             path_gt = self.hparams.val_path_gt
             path_inp = self.hparams.val_path_inp
             filename_filter = self.hparams.val_filename_filter
-        elif split == "test":
-            path_gt = self.hparams.test_path_gt
-            path_inp = self.hparams.test_path_inp
-            filename_filter = self.hparams.test_filename_filter
         params = {"root_gt": path_gt, "root_input": path_inp, "filename_filter": filename_filter,
                   "split_csv": self.hparams.split_csv, "split": split, "data_mode": self.hparams.file_type,
                   "isKSpace": False, "isGTNonImg": self.hparams.isGTNonImg, "init_transforms": self.init_transforms,
@@ -460,7 +459,12 @@ class ReconEngine(LightningModule):
 
         if bool(self.hparams.patch_size):
             if self.hparams.ds_mode == 0:
-                if split == "train":
+                if split == "test":
+                    _, _, dataset = create_patchQs(
+                        train_subs=None, val_subs=dataset, patch_size=self.hparams.patch_size,
+                        patch_qlen=self.hparams.patch_qlen, patch_per_vol=self.hparams.patch_per_vol,
+                        inference_strides=self.hparams.patch_inference_strides)
+                elif split == "train":
                     dataset, _, _ = create_patchQs(
                         train_subs=dataset, val_subs=None, patch_size=self.hparams.patch_size,
                         patch_qlen=self.hparams.patch_qlen, patch_per_vol=self.hparams.patch_per_vol,
@@ -470,18 +474,10 @@ class ReconEngine(LightningModule):
                         train_subs=None, val_subs=dataset, patch_size=self.hparams.patch_size,
                         patch_qlen=self.hparams.patch_qlen, patch_per_vol=self.hparams.patch_per_vol,
                         inference_strides=self.hparams.patch_inference_strides)
-                elif split == "test":
-                    _, _, dataset = create_patchQs(
-                        train_subs=None, val_subs=dataset, patch_size=self.hparams.patch_size,
-                        patch_qlen=self.hparams.patch_qlen, patch_per_vol=self.hparams.patch_per_vol,
-                        inference_strides=self.hparams.patch_inference_strides)
             else:
                 sys.exit(
                     "Error: patch_size can only be used with ds_mode 0 (TorchIO)")
-        if split == "test":
-            return dataset, filenames
-        else:
-            return dataset
+        return (dataset, filenames) if split == "test" else dataset
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(self.create_dataset(split="train"),
@@ -523,8 +519,14 @@ class ReconEngine(LightningModule):
                 inp = inp[:, :, central_slice]
                 pred = pred[:, :, central_slice]
                 gt = gt[:, :, central_slice]
-            log_images(self.logger[-1].experiment, inp if not torch.is_complex(inp) else torch.abs(inp),
-                       pred if not torch.is_complex(pred) else torch.abs(pred), gt if not torch.is_complex(gt) else torch.abs(gt), batch_idx, tag)
+            log_images(
+                self.logger[-1].experiment,
+                torch.abs(inp) if torch.is_complex(inp) else inp,
+                torch.abs(pred) if torch.is_complex(pred) else pred,
+                torch.abs(gt) if torch.is_complex(gt) else gt,
+                batch_idx,
+                tag,
+            )
 
     @staticmethod
     def add_model_specific_args(parent_parser):

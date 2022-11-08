@@ -58,9 +58,13 @@ def getSSIM(gt, out, gt_flag=None, data_range=1):
     for i in range(gt.shape[0]):
         if not gt_flag[i]:
             continue
-        for j in range(gt.shape[1]):
-            vals.append(structural_similarity(
-                gt[i, j, ...], out[i, j, ...], data_range=data_range))
+        vals.extend(
+            structural_similarity(
+                gt[i, j, ...], out[i, j, ...], data_range=data_range
+            )
+            for j in range(gt.shape[1])
+        )
+
     return median(vals)
 
 
@@ -85,23 +89,31 @@ def calc_metircs(gt, out, tag, norm4diff=False):
 
 
 def log_images(writer, inputs, outputs, targets, step, section='', imID=0, chID=0):
-    writer.add_image('{}/output'.format(section),
-                     vutils.make_grid(outputs[imID, chID, ...],
-                                      normalize=True,
-                                      scale_each=True),
-                     step)
+    writer.add_image(
+        f'{section}/output',
+        vutils.make_grid(
+            outputs[imID, chID, ...], normalize=True, scale_each=True
+        ),
+        step,
+    )
+
     if inputs is not None:
-        writer.add_image('{}/input'.format(section),
-                         vutils.make_grid(inputs[imID, chID, ...],
-                                          normalize=True,
-                                          scale_each=True),
-                         step)
+        writer.add_image(
+            f'{section}/input',
+            vutils.make_grid(
+                inputs[imID, chID, ...], normalize=True, scale_each=True
+            ),
+            step,
+        )
+
     if targets is not None:
-        writer.add_image('{}/target'.format(section),
-                         vutils.make_grid(targets[imID, chID, ...],
-                                          normalize=True,
-                                          scale_each=True),
-                         step)
+        writer.add_image(
+            f'{section}/target',
+            vutils.make_grid(
+                targets[imID, chID, ...], normalize=True, scale_each=True
+            ),
+            step,
+        )
 
 
 def ReadNIFTI(file_path):
@@ -176,7 +188,11 @@ class DataHandler:
         elif dataspace == 1 or x is None:
             return x
         else:
-            return fftNc(data=x if not imnorm else x/x.max(), dim=self.dataspace_op.data_dim, norm=self.dataspace_op.fftnorm)
+            return fftNc(
+                data=x / x.max() if imnorm else x,
+                dim=self.dataspace_op.data_dim,
+                norm=self.dataspace_op.fftnorm,
+            )
 
     def getKInp(self, imnorm=False):
         return self.__getK(self.inp, self.dataspace_op.model_dataspace_inp, self.inpK, imnorm)
@@ -354,9 +370,7 @@ def process_testbatch(out_aggregators, datum, prediction):
 
 def process_slicedict(dict_sliceout, axis=-1):
     sliceIDs = sorted(list(dict_sliceout.keys()))
-    out = []
-    for s in sliceIDs:
-        out.append(dict_sliceout[s].squeeze())
+    out = [dict_sliceout[s].squeeze() for s in sliceIDs]
     if torch.is_tensor(out[0]):
         return torch.stack(out, axis=axis)
     else:
@@ -373,16 +387,11 @@ def fetch_vol_subds(subjectds, filename, slcaxis=-1):
     for i in ids:
         inp.append(subjectds[i]['inp']['data'].squeeze())
         gt.append(subjectds[i]['gt']['data'].squeeze())
-    sub = {
-        "inp": {
-            "data": np.stack(inp, axis=slcaxis)
-        },
-        "gt": {
-            "data": np.stack(gt, axis=slcaxis)
-        },
-        "filename": filename
+    return {
+        "inp": {"data": np.stack(inp, axis=slcaxis)},
+        "gt": {"data": np.stack(gt, axis=slcaxis)},
+        "filename": filename,
     }
-    return sub
     # else:
     #     return torch.stack(inp, axis=slcaxis), torch.stack(gt, axis=slcaxis)
 
@@ -421,16 +430,15 @@ def fetch_vol_subds_fastMRI(subjectds, filename, slcaxis=-1):
         },
         "filename": filename
     }
-    if len(mask) > 0 and len(fastMRIAttrs) > 0:
+    if mask and fastMRIAttrs:
         sub["metadict"] = {
             "mask": np.stack(mask, axis=slcaxis),
             "fastMRIAttrs": fastMRIAttrs
         }
-    else:
-        if len(mask) > 0:
-            sub["metadict"] = {"mask": np.stack(mask, axis=slcaxis)}
-        elif len(fastMRIAttrs) > 0:
-            sub["metadict"] = {"fastMRIAttrs": fastMRIAttrs}
+    elif mask:
+        sub["metadict"] = {"mask": np.stack(mask, axis=slcaxis)}
+    elif len(fastMRIAttrs) > 0:
+        sub["metadict"] = {"fastMRIAttrs": fastMRIAttrs}
     return sub
     # else:
     #     return torch.stack(inp, axis=slcaxis), torch.stack(gt, axis=slcaxis)

@@ -78,17 +78,16 @@ class UpsamplingBlock(nn.Module):
         self.conv_block = nn.Sequential(*conv_block)
 
     def forward(self, x, out_shape=None):
-        if self.mode == "convtrans":
-            if self.post_interp_convtrans:
-                x = self.conv_block(x)
-                if x.shape[2:] != out_shape:
-                    return self.post_conv(self.interpolator(x, out_shape))
-                else:
-                    return x
-            else:
-                return self.conv_block(x)
-        else:
+        if self.mode != "convtrans":
             return self.conv_block(self.interpolator(x, out_shape))
+        if not self.post_interp_convtrans:
+            return self.conv_block(x)
+        x = self.conv_block(x)
+        return (
+            self.post_conv(self.interpolator(x, out_shape))
+            if x.shape[2:] != out_shape
+            else x
+        )
 
 
 class ResNet(nn.Module):
@@ -109,36 +108,23 @@ class ResNet(nn.Module):
         if is3D:
             layers["layer_conv"] = cnn.Conv3d
             layers["layer_convtrans"] = cnn.ConvTranspose3d
-            if do_batchnorm:
-                layers["layer_norm"] = cnn.BatchNorm3d
-            else:
-                # cnn.BatchNorm3d #cnn.InstanceNorm3d #TODO: complex InstanceNorm
-                layers["layer_norm"] = nn.Identity
+            layers["layer_norm"] = cnn.BatchNorm3d if do_batchnorm else nn.Identity
             layers["layer_drop"] = cnn.Dropout3d
             if is_replicatepad == 0:
                 layers["layer_pad"] = nn.ReflectionPad3d
             elif is_replicatepad == 1:
                 layers["layer_pad"] = nn.ReplicationPad3d
-            layers["interp_mode"] = 'sinc'
         else:
             layers["layer_conv"] = cnn.Conv2d
             layers["layer_convtrans"] = cnn.ConvTranspose2d
-            if do_batchnorm:
-                layers["layer_norm"] = cnn.BatchNorm2d
-            else:
-                # cnn.BatchNorm2d #cnn.InstanceNorm2d #TODO: complex InstanceNorm
-                layers["layer_norm"] = nn.Identity
+            layers["layer_norm"] = cnn.BatchNorm2d if do_batchnorm else nn.Identity
             layers["layer_drop"] = cnn.Dropout2d
             if is_replicatepad == 0:
                 layers["layer_pad"] = nn.ReflectionPad2d
             elif is_replicatepad == 1:
                 layers["layer_pad"] = nn.ReplicationPad2d
-            layers["interp_mode"] = 'sinc'
-        if is_relu_leaky:
-            # cnn.CmodReLU #cnn.AdaptiveCmodReLU
-            layers["act_relu"] = cnn.AdaptiveCmodReLU
-        else:
-            layers["act_relu"] = cnn.zReLU
+        layers["interp_mode"] = 'sinc'
+        layers["act_relu"] = cnn.AdaptiveCmodReLU if is_relu_leaky else cnn.zReLU
         globals().update(layers)
 
         self.forwardV = forwardV
@@ -168,10 +154,12 @@ class ResNet(nn.Module):
             out_features = in_features*2
 
         # Residual blocks
-        resblocks = []
-        for _ in range(res_blocks):
-            resblocks += [ResidualBlock(in_features, res_drop_prob,
-                                        complex_weights=complex_weights)]
+        resblocks = [
+            ResidualBlock(
+                in_features, res_drop_prob, complex_weights=complex_weights
+            )
+            for _ in range(res_blocks)
+        ]
 
         # Upsampling
         upsam = []
@@ -225,14 +213,13 @@ class ResNet(nn.Module):
         if self.inner_norm_ksp:
             out *= factor
 
-        if self.img_out_mode:
-            out = ifftNc_pyt(out, norm=self.fourier_norm_4imgout)
-            if self.img_out_mode == 1:
-                return out
-            elif self.img_out_mode == 2:
-                return torch.abs(out)
-        else:
+        if not self.img_out_mode:
             return out
+        out = ifftNc_pyt(out, norm=self.fourier_norm_4imgout)
+        if self.img_out_mode == 1:
+            return out
+        elif self.img_out_mode == 2:
+            return torch.abs(out)
 
     def forwardV0(self, x):
         # v0: Original Version
@@ -306,7 +293,7 @@ class ResNet(nn.Module):
         # v5: residual of v4 + individual down blocks with individual up blocks
         outs = [x + self.intialConv(x)]
         shapes = []
-        for i, downblock in enumerate(self.downsam):
+        for downblock in self.downsam:
             shapes.append(outs[-1].shape[2:])
             outs.append(downblock(outs[-1]))
         outs[-1] = outs[-1] + self.resblocks(outs[-1])
